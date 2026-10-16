@@ -23,7 +23,12 @@ def _session_factory() -> sessionmaker[Session]:
     return sessionmaker(bind=get_engine(), autoflush=False, expire_on_commit=False)
 
 
+def create_session() -> Session:
+    """Sesión nueva para procesos fuera de una petición HTTP (CLI, tareas)."""
+    return _session_factory()()
+
+
 def get_session() -> Iterator[Session]:
     """Dependencia de FastAPI: una sesión por petición."""
-    with _session_factory()() as session:
+    with create_session() as session:
         yield session

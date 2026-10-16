@@ -4,6 +4,7 @@ from collections.abc import Iterator
 
 import pytest
 from sqlalchemy import Connection, text
+from sqlalchemy.orm import Session
 
 from app.core.database import get_engine
 
@@ -21,6 +22,13 @@ def conn() -> Iterator[Connection]:
             yield connection
         finally:
             transaction.rollback()
+
+
+@pytest.fixture
+def session(conn: Connection) -> Iterator[Session]:
+    """Sesión ORM dentro de la transacción de prueba; sus commit se vuelven savepoints."""
+    with Session(bind=conn, join_transaction_mode="create_savepoint") as orm_session:
+        yield orm_session
 
 
 def insert_user(conn: Connection, email: str = "ciudadano@example.test") -> uuid.UUID:

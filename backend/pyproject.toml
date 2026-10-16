@@ -13,6 +13,7 @@ dependencies = [
     "psycopg[binary]>=3.2",
     "geoalchemy2>=0.16",
     "alembic>=1.14",
+    "httpx>=0.28",
 ]
 
 [dependency-groups]
@@ -21,7 +22,6 @@ dev = [
     "mypy>=1.13",
     "pytest>=8.3",
     "pytest-cov>=6.0",
-    "httpx>=0.28",
     "pip-audit>=2.7",
 ]
 
