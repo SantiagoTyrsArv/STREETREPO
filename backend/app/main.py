@@ -8,6 +8,9 @@ from app.core.errors import register_error_handlers
 from app.core.health import router as health_router
 from app.core.logging import CORRELATION_HEADER, RequestLoggingMiddleware, configure_logging
 from app.core.security_headers import SecurityHeadersMiddleware
+from app.modules.auth.infrastructure.jwt_tokens import JwtAccessTokenService
+from app.modules.auth.presentation.router import router as auth_router
+from app.modules.users.presentation.router import router as users_router
 
 API_V1_PREFIX = "/api/v1"
 
@@ -15,6 +18,9 @@ API_V1_PREFIX = "/api/v1"
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
+    if settings.is_production:
+        # Falla al arrancar, no en el primer inicio de sesión, si falta la clave de los JWT.
+        JwtAccessTokenService(settings.jwt_secret_key, settings.access_token_ttl_minutes)
 
     app = FastAPI(
         title="Street Repo API",
@@ -23,6 +29,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url=None if settings.is_production else "/docs",
         redoc_url=None,
     )
+    app.state.settings = settings
 
     app.add_middleware(SecurityHeadersMiddleware, enable_hsts=settings.is_production)
     app.add_middleware(
@@ -38,6 +45,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     register_error_handlers(app)
     app.include_router(health_router)
+    app.include_router(auth_router, prefix=API_V1_PREFIX)
+    app.include_router(users_router, prefix=API_V1_PREFIX)
     return app
 
 

@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.core.config import Environment, Settings
 from app.core.logging import CORRELATION_HEADER, JsonFormatter
 from app.main import create_app
-from tests.conftest import PANEL_ORIGIN
+from tests.conftest import PANEL_ORIGIN, TEST_JWT_SECRET
 
 
 def test_security_headers_are_present(client: TestClient) -> None:
@@ -19,14 +19,23 @@ def test_security_headers_are_present(client: TestClient) -> None:
     assert "Strict-Transport-Security" not in headers
 
 
+def _production() -> Settings:
+    return Settings(app_env=Environment.PROD, jwt_secret_key=TEST_JWT_SECRET)
+
+
 def test_hsts_only_in_production() -> None:
-    with TestClient(create_app(Settings(app_env=Environment.PROD))) as prod_client:
+    with TestClient(create_app(_production())) as prod_client:
         assert "Strict-Transport-Security" in prod_client.get("/health").headers
 
 
 def test_docs_disabled_in_production() -> None:
-    with TestClient(create_app(Settings(app_env=Environment.PROD))) as prod_client:
+    with TestClient(create_app(_production())) as prod_client:
         assert prod_client.get("/docs").status_code == 404
+
+
+def test_production_refuses_to_start_without_a_strong_jwt_secret() -> None:
+    with pytest.raises(ValueError, match="JWT_SECRET_KEY"):
+        create_app(Settings(app_env=Environment.PROD, jwt_secret_key="corta"))
 
 
 def test_cors_allows_only_panel_origin(client: TestClient) -> None:

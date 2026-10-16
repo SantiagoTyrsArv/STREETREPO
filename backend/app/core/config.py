@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     )
     osm_timeout_s: float = 120.0
 
+    # Autenticación (guía 7.1). La clave firma los JWT de acceso: aleatoria, de al menos
+    # 32 caracteres y solo por variable de entorno (generar con `openssl rand -hex 32`).
+    jwt_secret_key: str = Field(default="", repr=False)
+    access_token_ttl_minutes: int = Field(default=15, ge=1, le=60)
+    refresh_token_ttl_days: int = Field(default=7, ge=1, le=30)
+
+    # Versión vigente de la política de tratamiento de datos (Ley 1581). El registro
+    # exige que el ciudadano haya aceptado exactamente esta versión.
+    privacy_policy_version: str = Field(default="1.0", min_length=1, max_length=20)
+
     # Propiedad simple (no computed_field) para que la clave no aparezca en repr ni en dumps.
     @property
     def database_url(self) -> str:

@@ -14,6 +14,9 @@ dependencies = [
     "geoalchemy2>=0.16",
     "alembic>=1.14",
     "httpx>=0.28",
+    "argon2-cffi>=23.1",
+    "pyjwt>=2.9",
+    "email-validator>=2.2",
 ]
 
 [dependency-groups]
@@ -38,7 +41,7 @@ select = ["E", "W", "F", "I", "B", "UP", "N", "S", "SIM", "RUF", "PL", "PT"]
 ignore = ["PLR0913"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S106", "PLR2004"]
+"tests/**" = ["S101", "S105", "S106", "PLR2004"]
 
 [tool.mypy]
 python_version = "3.13"

@@ -4,6 +4,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Añadido
+- Migración 0006: `usuario.version_politica`, `token_refresco` y `solicitud_supresion` (propuestas 8, 9 y 10).
+- Autenticación: registro de ciudadanos con consentimiento de la versión vigente de la política,
+  inicio de sesión con Argon2id, JWT de acceso de 15 min y refresco rotatorio con detección de
+  reutilización, cierre de sesión, `GET /api/v1/me` y control de acceso por rol en el servidor.
+- Comando `python -m app.cli create-admin` para crear administradores.
+
 ## [0.3.0] - 2026-10-16
 
 Fase 3: dominio y priorización.

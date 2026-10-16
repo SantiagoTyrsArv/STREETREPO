@@ -25,12 +25,14 @@ class AppError(Exception):
         message: str,
         status_code: int = status.HTTP_400_BAD_REQUEST,
         details: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
         self.status_code = status_code
         self.details = details or {}
+        self.headers = headers
 
 
 def error_body(code: str, message: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -52,7 +54,9 @@ _HTTP_CODES: dict[int, tuple[str, str]] = {
 async def _app_error_handler(_: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, AppError)  # noqa: S101 - garantizado por el registro del handler
     return JSONResponse(
-        status_code=exc.status_code, content=error_body(exc.code, exc.message, exc.details)
+        status_code=exc.status_code,
+        content=error_body(exc.code, exc.message, exc.details),
+        headers=exc.headers,
     )
 
 
