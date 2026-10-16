@@ -10,6 +10,9 @@ x-api-env: &api-env
   POSTGRES_USER: ${POSTGRES_USER}
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
   CORS_ORIGINS: ${CORS_ORIGINS:-}
+  OSM_BBOX: ${OSM_BBOX:-1.16,-77.33,1.25,-77.23}
+  OVERPASS_URL: ${OVERPASS_URL:-https://overpass-api.de/api/interpreter}
+  OSM_USER_AGENT: ${OSM_USER_AGENT:-StreetRepo/0.1}
 
 services:
   db:

@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     # Lista separada por comas; solo el origen del panel administrativo (guía 7.3).
     cors_origins: str = ""
 
+    # Carga OSM (guía 3.1). Área: "sur,oeste,norte,este"; por defecto, el casco urbano
+    # aproximado de Pasto. Ajustar si se necesita cubrir corregimientos.
+    osm_bbox: str = "1.16,-77.33,1.25,-77.23"
+    overpass_url: str = "https://overpass-api.de/api/interpreter"
+    osm_user_agent: str = (
+        "StreetRepo/0.1 (proyecto de grado, Universidad Cooperativa de Colombia - Pasto)"
+    )
+    osm_timeout_s: float = 120.0
+
     # Propiedad simple (no computed_field) para que la clave no aparezca en repr ni en dumps.
     @property
     def database_url(self) -> str:

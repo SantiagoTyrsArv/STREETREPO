@@ -22,7 +22,8 @@ Las propuestas 6, 8, 9 y 10 requieren actualizar el diagrama ER en Lucid; la 7 y
 - **Dónde:** diagrama ER (`via.jerarquia_vial`) y regla de F en la tesis/guía 2.2.
 - **Situación actual:** el ENUM tiene primaria, secundaria, terciaria y residencial. La regla de F menciona además
   `unclassified` y `service` (F = 2), y no dice qué hacer con `trunk` ni con los `*_link`. Las vías nacionales
-  (como la Panamericana) se suelen etiquetar `trunk` en OSM; hay que comprobarlo con los datos de Pasto en la fase 2.
+  (como la Panamericana) se suelen etiquetar `trunk` en OSM. **Comprobado en la primera carga (2026-10-15):**
+  19 de los 61 tramos con nombre Panamericana están etiquetados `trunk`/`trunk_link`.
 - **Mejora sugerida:** fijar la correspondencia: `trunk`, `primary` (y sus `_link`) → primaria;
   `secondary` → secundaria; `tertiary` → terciaria; `residential`, `unclassified`, `service`, `living_street` → residencial.
   El resto de etiquetas (`footway`, `track`, etc.) no se cargan.
