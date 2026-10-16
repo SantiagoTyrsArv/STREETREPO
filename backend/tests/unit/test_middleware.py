@@ -1,0 +1,64 @@
+import json
+import logging
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.core.config import Environment, Settings
+from app.core.logging import CORRELATION_HEADER, JsonFormatter
+from app.main import create_app
+from tests.conftest import PANEL_ORIGIN
+
+
+def test_security_headers_are_present(client: TestClient) -> None:
+    headers = client.get("/health").headers
+
+    assert headers["X-Content-Type-Options"] == "nosniff"
+    assert headers["X-Frame-Options"] == "DENY"
+    assert "default-src 'none'" in headers["Content-Security-Policy"]
+    assert "Strict-Transport-Security" not in headers
+
+
+def test_hsts_only_in_production() -> None:
+    with TestClient(create_app(Settings(app_env=Environment.PROD))) as prod_client:
+        assert "Strict-Transport-Security" in prod_client.get("/health").headers
+
+
+def test_docs_disabled_in_production() -> None:
+    with TestClient(create_app(Settings(app_env=Environment.PROD))) as prod_client:
+        assert prod_client.get("/docs").status_code == 404
+
+
+def test_cors_allows_only_panel_origin(client: TestClient) -> None:
+    allowed = client.get("/health", headers={"Origin": PANEL_ORIGIN})
+    denied = client.get("/health", headers={"Origin": "http://malicioso.test"})
+
+    assert allowed.headers["access-control-allow-origin"] == PANEL_ORIGIN
+    assert "access-control-allow-origin" not in denied.headers
+
+
+def test_request_id_is_generated(client: TestClient) -> None:
+    assert len(client.get("/health").headers[CORRELATION_HEADER]) == 32
+
+
+def test_valid_request_id_is_propagated(client: TestClient) -> None:
+    response = client.get("/health", headers={CORRELATION_HEADER: "abc-123"})
+
+    assert response.headers[CORRELATION_HEADER] == "abc-123"
+
+
+@pytest.mark.parametrize("bad_id", ["<script>", "a" * 65, "id con espacios"])
+def test_unsafe_request_id_is_replaced(client: TestClient, bad_id: str) -> None:
+    response = client.get("/health", headers={CORRELATION_HEADER: bad_id})
+
+    assert response.headers[CORRELATION_HEADER] != bad_id
+
+
+def test_json_formatter_outputs_structured_record() -> None:
+    record = logging.LogRecord("app", logging.INFO, __file__, 1, "hola %s", ("mundo",), None)
+
+    payload = json.loads(JsonFormatter().format(record))
+
+    assert payload["message"] == "hola mundo"
+    assert payload["level"] == "INFO"
+    assert payload["request_id"] == "-"
