@@ -9,6 +9,7 @@ from app.modules.critical_services.domain.entities import OsmCriticalService
 from app.modules.critical_services.domain.ports import CriticalServiceRepository
 from app.modules.roads.domain.entities import OsmRoad
 from app.modules.roads.domain.ports import RoadRepository
+from app.shared.application.transaction import TransactionManager
 from app.shared.domain.geo import BoundingBox
 
 logger = logging.getLogger(__name__)
@@ -22,12 +23,6 @@ class OsmDataSource(Protocol):
     def fetch_roads(self, area: BoundingBox) -> Sequence[OsmRoad]: ...
 
     def fetch_critical_services(self, area: BoundingBox) -> Sequence[OsmCriticalService]: ...
-
-
-class TransactionManager(Protocol):
-    def commit(self) -> None: ...
-
-    def rollback(self) -> None: ...
 
 
 @dataclass(frozen=True, slots=True)

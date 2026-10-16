@@ -23,3 +23,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   y orden del ranking con desempate (severidad → confirmaciones → antigüedad).
 - Máquina de estados del reporte (Registrado → Evaluado → Priorizado → Reparado): solo el
   motor evalúa, el resto lo hace un administrador; cada cambio genera un registro de historial.
+- Motor de priorización: evalúa un reporte con PostGIS local (vía a 30 m, servicio crítico a 500 m),
+  guarda la evaluación reproducible, actualiza la U y la vía del reporte y lo pasa a Evaluado.
+- Pesos versionados: cada cambio crea una versión vigente y recalcula los reportes activos en una
+  sola transacción. Migración 0005 con la versión inicial 0,50 / 0,30 / 0,20.
