@@ -1,0 +1,33 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --directory backend ruff check --fix
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --directory backend ruff format
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
+      - id: mypy
+        name: mypy
+        entry: uv run --directory backend mypy
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
