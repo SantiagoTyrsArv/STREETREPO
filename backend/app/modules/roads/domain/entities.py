@@ -21,3 +21,14 @@ class OsmRoad:
     def __post_init__(self) -> None:
         if len(self.points) < _MIN_LINE_POINTS:
             raise InvalidGeometryError(f"La vía {self.osm_id} necesita al menos dos puntos")
+
+
+@dataclass(frozen=True, slots=True)
+class RoadMatch:
+    """Vía más cercana a un punto, dentro del radio de map-matching."""
+
+    road_id: int
+    name: str | None
+    road_class: RoadClass
+    flow_factor: Decimal
+    distance_m: float

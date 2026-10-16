@@ -12,3 +12,13 @@ class OsmCriticalService:
     name: str | None
     service_type: CriticalServiceType
     location: GeoPoint
+
+
+@dataclass(frozen=True, slots=True)
+class NearestCriticalService:
+    """Servicio crítico más cercano a un punto, dentro del radio de proximidad."""
+
+    service_id: int
+    name: str | None
+    service_type: CriticalServiceType
+    distance_m: float

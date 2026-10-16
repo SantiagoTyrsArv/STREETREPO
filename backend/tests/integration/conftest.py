@@ -8,6 +8,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_engine
 
+# osm_id de prueba en un rango que OSM no usa (los ids reales no llegan a 2.000 millones):
+# no chocan con los datos reales de Pasto cargados en la base de desarrollo.
+TEST_OSM_ID = 9_000_000_000
+
 requires_db = pytest.mark.skipif(
     not os.getenv("POSTGRES_HOST"), reason="Requiere POSTGRES_HOST con PostGIS disponible"
 )

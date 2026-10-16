@@ -16,3 +16,5 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Migraciones 0003 y 0004: geometría `LineString` y etiqueta `highway_osm` en `via` (propuestas 6 y 7).
 - Clasificación `highway` → jerarquía vial y factor de flujo F.
 - Carga OSM idempotente (`python -m app.cli osm-import`) desde Overpass, con reintentos.
+- Map-matching a la vía más cercana (≤ 30 m) y proximidad al servicio crítico más cercano (≤ 500 m)
+  con PostGIS; radios como constantes con nombre en `shared/domain/geo_parameters.py`.

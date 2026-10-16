@@ -15,11 +15,13 @@ from app.modules.roads.domain.entities import OsmRoad
 from app.modules.roads.domain.road_class import RoadClass
 from app.modules.roads.infrastructure.repository import SqlRoadRepository
 from app.shared.domain.geo import BoundingBox, GeoPoint
-from tests.integration.conftest import requires_db
+from tests.integration.conftest import TEST_OSM_ID, requires_db
 
 pytestmark = [pytest.mark.integration, requires_db]
 
 AREA = BoundingBox(south=1.16, west=-77.33, north=1.25, east=-77.23)
+ROAD_A, ROAD_B, ROAD_C = TEST_OSM_ID + 1, TEST_OSM_ID + 2, TEST_OSM_ID + 3
+SCHOOL, HOSPITAL_AREA = TEST_OSM_ID + 11, -(TEST_OSM_ID + 12)
 
 
 def _road(osm_id: int, name: str | None = "Calle de prueba", highway: str = "primary") -> OsmRoad:
@@ -46,15 +48,22 @@ def _count(conn: Connection, table: str) -> int:
     return conn.execute(text(f"SELECT count(*) FROM {table}")).scalar_one()  # noqa: S608
 
 
+def _road_name(conn: Connection, osm_id: int) -> str | None:
+    return conn.execute(
+        text("SELECT nombre FROM via WHERE osm_id = :osm_id"), {"osm_id": osm_id}
+    ).scalar_one()
+
+
 def test_roads_are_stored_with_linestring_geometry(session: Session, conn: Connection) -> None:
-    SqlRoadRepository(session).upsert_many([_road(101)])
+    SqlRoadRepository(session).upsert_many([_road(ROAD_A)])
     session.flush()
 
     row = conn.execute(
         text(
             "SELECT nombre, highway_osm, jerarquia_vial, factor_flujo, "
-            "ST_AsText(geom) AS wkt, ST_SRID(geom) AS srid FROM via WHERE osm_id = 101"
-        )
+            "ST_AsText(geom) AS wkt, ST_SRID(geom) AS srid FROM via WHERE osm_id = :osm_id"
+        ),
+        {"osm_id": ROAD_A},
     ).one()
 
     assert row.nombre == "Calle de prueba"
@@ -69,37 +78,39 @@ def test_road_upsert_is_idempotent_and_updates(session: Session, conn: Connectio
     repository = SqlRoadRepository(session)
     before = _count(conn, "via")
 
-    repository.upsert_many([_road(101), _road(102)])
-    repository.upsert_many([_road(101, name="Nombre nuevo"), _road(102)])
+    repository.upsert_many([_road(ROAD_A), _road(ROAD_B)])
+    repository.upsert_many([_road(ROAD_A, name="Nombre nuevo"), _road(ROAD_B)])
     session.flush()
 
     assert _count(conn, "via") == before + 2
-    name = conn.execute(text("SELECT nombre FROM via WHERE osm_id = 101")).scalar_one()
-    assert name == "Nombre nuevo"
+    assert _road_name(conn, ROAD_A) == "Nombre nuevo"
 
 
 def test_duplicate_osm_ids_in_one_batch_keep_the_last(session: Session, conn: Connection) -> None:
-    saved = SqlRoadRepository(session).upsert_many([_road(103, "Primero"), _road(103, "Último")])
+    saved = SqlRoadRepository(session).upsert_many(
+        [_road(ROAD_C, "Primero"), _road(ROAD_C, "Último")]
+    )
     session.flush()
 
     assert saved == 1
-    assert conn.execute(text("SELECT nombre FROM via WHERE osm_id = 103")).scalar_one() == "Último"
+    assert _road_name(conn, ROAD_C) == "Último"
 
 
 def test_critical_services_upsert_is_idempotent(session: Session, conn: Connection) -> None:
     repository = SqlCriticalServiceRepository(session)
     before = _count(conn, "servicio_critico")
 
-    repository.upsert_many([_service(501), _service(-777)])
-    repository.upsert_many([_service(501, name=None), _service(-777)])
+    repository.upsert_many([_service(SCHOOL), _service(HOSPITAL_AREA)])
+    repository.upsert_many([_service(SCHOOL, name=None), _service(HOSPITAL_AREA)])
     session.flush()
 
     assert _count(conn, "servicio_critico") == before + 2
     row = conn.execute(
         text(
             "SELECT nombre, tipo, ST_AsText(ubicacion) AS wkt FROM servicio_critico "
-            "WHERE osm_id = 501"
-        )
+            "WHERE osm_id = :osm_id"
+        ),
+        {"osm_id": SCHOOL},
     ).one()
     assert row.nombre is None
     assert row.tipo == "escuela"
@@ -108,10 +119,10 @@ def test_critical_services_upsert_is_idempotent(session: Session, conn: Connecti
 
 class _StaticSource:
     def fetch_roads(self, area: BoundingBox) -> Sequence[OsmRoad]:
-        return [_road(201), _road(202, highway="trunk")]
+        return [_road(ROAD_A), _road(ROAD_B, highway="trunk")]
 
     def fetch_critical_services(self, area: BoundingBox) -> Sequence[OsmCriticalService]:
-        return [_service(601)]
+        return [_service(SCHOOL)]
 
 
 def test_import_use_case_end_to_end_is_repeatable(session: Session, conn: Connection) -> None:
