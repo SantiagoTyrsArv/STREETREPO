@@ -157,7 +157,10 @@ def test_evaluation_is_deterministic() -> None:
     model = PriorityModel(DEFAULT_WEIGHTS)
     data = DESIGN_EXAMPLES[2].data
 
-    assert model.evaluate(data) == model.evaluate(data)
+    first_result = model.evaluate(data)
+    second_result = model.evaluate(data)
+
+    assert first_result == second_result
 
 
 def test_factor_rules_can_be_replaced() -> None:

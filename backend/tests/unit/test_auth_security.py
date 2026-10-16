@@ -62,7 +62,10 @@ def test_argon2id_hash_verifies_only_the_right_password(hasher: Argon2PasswordHa
 
 
 def test_argon2_hashes_are_salted(hasher: Argon2PasswordHasher) -> None:
-    assert hasher.hash("misma clave segura") != hasher.hash("misma clave segura")
+    first_hash = hasher.hash("misma clave segura")
+    second_hash = hasher.hash("misma clave segura")
+
+    assert first_hash != second_hash
 
 
 def test_invalid_hash_never_verifies(hasher: Argon2PasswordHasher) -> None:
