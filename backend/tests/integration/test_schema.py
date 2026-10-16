@@ -1,5 +1,7 @@
 """El esquema creado por las migraciones cumple el diagrama ER y las reglas de integridad."""
 
+from decimal import Decimal
+
 import pytest
 from alembic import command
 from sqlalchemy import Connection, inspect, text
@@ -151,10 +153,30 @@ def test_accepted_policy_requires_date(conn: Connection) -> None:
         )
 
 
-def test_weights_summing_one_are_accepted(conn: Connection) -> None:
-    _insert_weights(conn, "0.50", "0.30", "0.20", current=True)
+@pytest.fixture
+def empty_weights(conn: Connection) -> Connection:
+    """Sin la versión inicial de la migración 0005 (se restaura al revertir la prueba)."""
+    conn.execute(text("DELETE FROM configuracion_pesos"))
+    return conn
 
-    count = conn.execute(text("SELECT count(*) FROM configuracion_pesos")).scalar_one()
+
+def test_initial_weights_are_loaded_by_the_migration(conn: Connection) -> None:
+    rows = conn.execute(
+        text(
+            "SELECT w_severidad, w_flujo, w_proximidad, id_usuario FROM configuracion_pesos "
+            "WHERE vigente"
+        )
+    ).all()
+
+    assert [tuple(row) for row in rows] == [
+        (Decimal("0.50"), Decimal("0.30"), Decimal("0.20"), None)
+    ]
+
+
+def test_weights_summing_one_are_accepted(empty_weights: Connection) -> None:
+    _insert_weights(empty_weights, "0.50", "0.30", "0.20", current=True)
+
+    count = empty_weights.execute(text("SELECT count(*) FROM configuracion_pesos")).scalar_one()
     assert count == 1
 
 
@@ -173,12 +195,12 @@ def test_weights_outside_rules_are_rejected(
         _insert_weights(conn, s, f, p)
 
 
-def test_only_one_weight_config_can_be_current(conn: Connection) -> None:
-    _insert_weights(conn, "0.50", "0.30", "0.20", current=True)
-    _insert_weights(conn, "0.40", "0.40", "0.20", current=False)
+def test_only_one_weight_config_can_be_current(empty_weights: Connection) -> None:
+    _insert_weights(empty_weights, "0.50", "0.30", "0.20", current=True)
+    _insert_weights(empty_weights, "0.40", "0.40", "0.20", current=False)
 
     with pytest.raises(IntegrityError, match="uq_configuracion_pesos_vigente"):
-        _insert_weights(conn, "0.60", "0.20", "0.20", current=True)
+        _insert_weights(empty_weights, "0.60", "0.20", "0.20", current=True)
 
 
 def test_deleting_report_cascades_to_dependents(conn: Connection) -> None:
