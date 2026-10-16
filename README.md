@@ -3,7 +3,9 @@
 Sistema Ciudadano de Reporte y Priorización de Daños en la Infraestructura Vial de Pasto, Nariño.
 Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colombia, Campus Pasto.
 
-> **Estado:** fase 1 (cimientos) del MVP: API base y esquema de base de datos. Aún no hay funcionalidad de negocio.
+> **Estado:** fases 1 a 3 del MVP cerradas (versión `v0.3.0`): API base, esquema de base de datos,
+> carga OSM y motor de priorización. Aún no hay rutas de negocio (autenticación y reportes: fases 4 y 5).
+> Historial de versiones en [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Componentes
 
@@ -56,7 +58,8 @@ POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 POSTGRES_DB=streetrepo_test uv run py
 Si el volumen de la base se creó antes de existir `infra/db/init/`, crear la base una vez:
 `docker compose -f infra/docker-compose.yml --env-file .env exec db createdb -U streetrepo streetrepo_test`.
 
-Para activar los *hooks* de formato y lint antes de cada commit: `uvx pre-commit install`.
+Para activar los *hooks* de formato, lint y detección de secretos (gitleaks) antes de cada commit:
+`uvx pre-commit install`.
 
 ## Estructura del backend
 
@@ -84,6 +87,20 @@ POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 uv run python -m app.cli osm-import -
 Usa la API pública de Overpass con `User-Agent` identificable y reintentos con espera creciente
 ante 429/5xx (máximo 3 intentos). No se ejecuta por cada reporte: el cálculo de F y P es local.
 Las vías o servicios eliminados de OSM no se borran de la base en una nueva carga.
+
+## Motor de priorización
+
+Calcula la urgencia U = w1·S + w2·F + w3·P (0–10) de cada reporte con datos locales de PostGIS:
+vía más cercana a 30 m (sin vía: F = 2 y "Revisar vía") y servicio crítico más cercano a 500 m.
+Cada cálculo se guarda en `evaluacion_prioridad` con los factores, la distancia y la versión de pesos.
+
+- Pesos versionados: la migración 0005 carga la versión inicial 0,50 / 0,30 / 0,20; guardar pesos
+  nuevos crea otra versión vigente y recalcula los reportes activos en una sola transacción.
+- Estados: Registrado → Evaluado (lo hace el motor) → Priorizado → Reparado; se permiten avances
+  con salto y no retrocesos, y todo cambio queda en `historial_estado`.
+
+Código: `backend/app/modules/priority/` y `backend/app/modules/reports/domain/status_machine.py`.
+Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
 
 ## Base de datos
 

@@ -597,7 +597,7 @@ Cada fase termina con algo **ejecutable y probado**. Ajusta el orden con el resp
 
 Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si algo se desvió del documento, avisar para ajustar la tesis.
 
-**Estado (2026-10-16):** fases 1, 2 y 3 cerradas e integradas en `main`, con la CI en verde (248 pruebas, cobertura del backend 99 %). Pendientes de la fase 3 que se completan después: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez (fase 6); lanzar la evaluación al crear un reporte (fase 5).
+**Estado (2026-10-16):** fases 1, 2 y 3 cerradas e integradas en `main` (etiquetas `v0.1.0`, `v0.2.0` y `v0.3.0`), con la CI en verde (252 pruebas, cobertura del backend 99 %). Pendientes de la fase 3 que se completan después: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez (fase 6); lanzar la evaluación al crear un reporte (fase 5).
 
 ---
 
