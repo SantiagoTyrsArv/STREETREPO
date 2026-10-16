@@ -1,7 +1,11 @@
 # Propuestas derivadas del diagrama ER (2026-10-15)
 
-Detectadas al implementar la migración 0002. El esquema se implementó tal como está en el diagrama;
-estas propuestas esperan decisión del responsable.
+Detectadas al implementar la migración 0002. El esquema se implementó tal como está en el diagrama.
+
+**Decisión (2026-10-15):** el responsable aprobó las seis propuestas con la recomendación indicada en cada una.
+Cada una se implementa en su propia rama `improve/propuesta-NN-…` en la fase señalada.
+Las propuestas 6, 8, 9 y 10 requieren actualizar el diagrama ER en Lucid; la 7 y la 10, el texto de la tesis
+(regla del factor F y tratamiento de la supresión de datos).
 
 ## Propuesta 6 · Geometría de la vía
 
