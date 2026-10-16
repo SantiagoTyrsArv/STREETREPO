@@ -1,7 +1,7 @@
 # Base de datos
 
 Fuente: diagrama ER en Lucid ("Street Repo - Diagrama Entidad-Relación"). Migración:
-`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`).
+`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`, 0005 pesos iniciales).
 
 Las tablas y columnas usan los nombres del diagrama (español). El código usa nombres en inglés
 (guía 9.1); este es el mapeo.
@@ -78,6 +78,9 @@ El diagrama no define nulabilidad, valores por defecto ni reglas de borrado. Se 
 | Borrado de vía, zona o servicio | `SET NULL` | Una recarga de OSM no debe borrar reportes ni evaluaciones |
 | Claves UUID | `gen_random_uuid()` en la base | Disponible en PostgreSQL ≥ 13 sin extensiones |
 | `servicio_critico.osm_id` | Nodos con su id; áreas (vías de OSM) con el id en negativo | Nodos y vías de OSM comparten numeración; misma convención que `osm2pgsql` |
+| Pesos iniciales | La migración 0005 inserta 0,50 / 0,30 / 0,20 como versión vigente del sistema (`id_usuario` NULL) si la tabla está vacía | Dato de referencia del modelo de la tesis, no un dato de prueba: sin pesos vigentes el motor no puede evaluar |
+| `reporte.id_via` y `puntaje_prioridad` | Los escribe el motor en cada evaluación junto con la fila de `evaluacion_prioridad` | `id_via` NULL = "Revisar vía"; el puntaje es la copia de la U vigente para el ranking |
+| Reporte activo | Todo estado salvo `reparado` | Al guardar pesos nuevos se recalculan los activos; un reporte reparado conserva su última evaluación |
 | `servicio_critico.tipo` | `amenity=hospital` → hospital, `amenity=school` → escuela; ubicación del área = centro calculado por Overpass | Tipos del diagrama ER |
 
 ## Índices
