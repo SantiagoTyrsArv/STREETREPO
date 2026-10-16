@@ -7,6 +7,7 @@ from app.core.database import Base
 from app.modules.reports.domain.severity import Severity
 from app.modules.reports.domain.status import ReportStatus
 from app.modules.roads.domain.road_class import RoadClass
+from app.modules.users.domain.deletion_request import DeletionRequestStatus
 from app.modules.users.domain.role import UserRole
 
 
@@ -26,6 +27,8 @@ def test_all_er_entities_are_mapped() -> None:
         "servicio_critico",
         "via",
         "zona",
+        "token_refresco",
+        "solicitud_supresion",
     }
 
 
@@ -33,6 +36,7 @@ def test_enum_values_match_er_diagram() -> None:
     assert [s.value for s in ReportStatus] == ["registrado", "evaluado", "priorizado", "reparado"]
     assert [r.value for r in UserRole] == ["ciudadano", "administrador"]
     assert [c.value for c in RoadClass] == ["primaria", "secundaria", "terciaria", "residencial"]
+    assert [d.value for d in DeletionRequestStatus] == ["pendiente", "atendida"]
 
 
 def test_severity_codes_fit_check_constraint() -> None:

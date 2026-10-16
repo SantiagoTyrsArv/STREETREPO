@@ -18,7 +18,7 @@ PASTO_LON, PASTO_LAT = -77.2811, 1.2136
 ER_TABLES = {
     "usuario": {
         "id_usuario", "nombre", "correo", "password_hash", "rol", "activo",
-        "acepta_politica", "fecha_aceptacion", "fecha_registro",
+        "acepta_politica", "fecha_aceptacion", "version_politica", "fecha_registro",
     },
     "reporte": {
         "id_reporte", "id_usuario", "id_zona", "id_via", "ubicacion", "direccion",
@@ -45,6 +45,12 @@ ER_TABLES = {
         "id_via", "osm_id", "nombre", "jerarquia_vial", "factor_flujo", "geom", "highway_osm",
     },
     "zona": {"id_zona", "nombre", "geom"},
+    "token_refresco": {
+        "id_token", "id_usuario", "hash_token", "emitido", "expira", "revocado", "reemplazado_por",
+    },
+    "solicitud_supresion": {
+        "id_solicitud", "id_usuario", "estado", "fecha_solicitud", "fecha_atencion",
+    },
 }  # fmt: skip
 
 
@@ -257,3 +263,67 @@ def test_geography_index_is_used_for_road_matching(conn: Connection) -> None:
     )
 
     assert "ix_via_geom_geog" in plan
+
+
+def test_accepted_policy_requires_its_version(conn: Connection) -> None:
+    with pytest.raises(IntegrityError, match="ck_usuario_aceptacion_con_version"):
+        conn.execute(
+            text(
+                "INSERT INTO usuario (nombre, correo, password_hash, acepta_politica, "
+                "fecha_aceptacion) VALUES ('Prueba', 'v@example.test', 'hash', true, now())"
+            )
+        )
+
+
+def _insert_refresh_token(conn: Connection, user_id: object, token_hash: str) -> None:
+    conn.execute(
+        text(
+            "INSERT INTO token_refresco (id_usuario, hash_token, expira) "
+            "VALUES (:u, :h, now() + interval '7 days')"
+        ),
+        {"u": user_id, "h": token_hash},
+    )
+
+
+def test_refresh_token_hash_is_unique(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    _insert_refresh_token(conn, user_id, "hash-1")
+
+    with pytest.raises(IntegrityError, match="uq_token_refresco_hash_token"):
+        _insert_refresh_token(conn, user_id, "hash-1")
+
+
+def test_refresh_token_must_expire_after_issue(conn: Connection) -> None:
+    with pytest.raises(IntegrityError, match="ck_token_refresco_expira_despues"):
+        conn.execute(
+            text(
+                "INSERT INTO token_refresco (id_usuario, hash_token, expira) "
+                "VALUES (:u, 'hash-2', now() - interval '1 second')"
+            ),
+            {"u": insert_user(conn)},
+        )
+
+
+def test_only_one_pending_deletion_request_per_user(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    insert = text("INSERT INTO solicitud_supresion (id_usuario) VALUES (:u)")
+    conn.execute(insert, {"u": user_id})
+
+    with pytest.raises(IntegrityError, match="uq_solicitud_supresion_pendiente"):
+        conn.execute(insert, {"u": user_id})
+
+
+def test_attended_deletion_request_requires_its_date(conn: Connection) -> None:
+    with pytest.raises(IntegrityError, match="ck_solicitud_supresion_atencion_con_fecha"):
+        conn.execute(
+            text("INSERT INTO solicitud_supresion (id_usuario, estado) VALUES (:u, 'atendida')"),
+            {"u": insert_user(conn)},
+        )
+
+
+def test_user_with_deletion_request_cannot_be_deleted(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    conn.execute(text("INSERT INTO solicitud_supresion (id_usuario) VALUES (:u)"), {"u": user_id})
+
+    with pytest.raises(IntegrityError, match="solicitud_supresion_id_usuario_fkey"):
+        conn.execute(text("DELETE FROM usuario WHERE id_usuario = :u"), {"u": user_id})

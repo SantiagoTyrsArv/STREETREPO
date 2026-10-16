@@ -1,7 +1,7 @@
 # Base de datos
 
 Fuente: diagrama ER en Lucid ("Street Repo - Diagrama Entidad-Relación"). Migración:
-`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`, 0005 pesos iniciales).
+`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`, 0005 pesos iniciales, 0006 autenticación y derechos del titular).
 
 Las tablas y columnas usan los nombres del diagrama (español). El código usa nombres en inglés
 (guía 9.1); este es el mapeo.
@@ -20,6 +20,8 @@ Las tablas y columnas usan los nombres del diagrama (español). El código usa n
 | `via` | `RoadModel` | `roads` |
 | `zona` | `ZoneModel` | `roads` |
 | `servicio_critico` | `CriticalServiceModel` | `critical_services` |
+| `token_refresco` | `RefreshTokenModel` | `auth` |
+| `solicitud_supresion` | `DataDeletionRequestModel` | `users` |
 
 ## Columnas con nombre distinto en el código
 
@@ -42,7 +44,10 @@ Las tablas y columnas usan los nombres del diagrama (español). El código usa n
 | `u_utilidad` | `urgency_score` | `fecha_calculo` | `calculated_at` |
 | `jerarquia_vial` | `road_class` | `factor_flujo` | `flow_factor` |
 | `tipo` | `service_type` | `geom` | `geom` |
-| `highway_osm` | `highway_tag` | | |
+| `highway_osm` | `highway_tag` | `version_politica` | `policy_version` |
+| `hash_token` | `token_hash` | `emitido` / `expira` | `issued_at` / `expires_at` |
+| `revocado` | `revoked` | `reemplazado_por` | `replaced_by` |
+| `fecha_solicitud` / `fecha_atencion` | `requested_at` / `attended_at` | | |
 
 ## Tipos ENUM
 
@@ -52,6 +57,7 @@ Las tablas y columnas usan los nombres del diagrama (español). El código usa n
 | `estado_reporte` | registrado, evaluado, priorizado, reparado | `ReportStatus` |
 | `jerarquia_vial` | primaria, secundaria, terciaria, residencial | `RoadClass` |
 | `tipo_servicio` | hospital, escuela | `CriticalServiceType` |
+| `estado_solicitud` | pendiente, atendida | `DeletionRequestStatus` |
 
 `historial_estado.estado_anterior` y `estado_nuevo` (ENUM sin valores en el diagrama) usan `estado_reporte`.
 
@@ -81,6 +87,9 @@ El diagrama no define nulabilidad, valores por defecto ni reglas de borrado. Se 
 | Pesos iniciales | La migración 0005 inserta 0,50 / 0,30 / 0,20 como versión vigente del sistema (`id_usuario` NULL) si la tabla está vacía | Dato de referencia del modelo de la tesis, no un dato de prueba: sin pesos vigentes el motor no puede evaluar |
 | `reporte.id_via` y `puntaje_prioridad` | Los escribe el motor en cada evaluación junto con la fila de `evaluacion_prioridad` | `id_via` NULL = "Revisar vía"; el puntaje es la copia de la U vigente para el ranking |
 | Reporte activo | Todo estado salvo `reparado` | Al guardar pesos nuevos se recalculan los activos; un reporte reparado conserva su última evaluación |
+| `usuario.version_politica` | `CHECK`: si `acepta_politica`, la versión no es nula | Ley 1581: constancia de qué versión aceptó (propuesta 8) |
+| `token_refresco` | Solo el hash (`UNIQUE`); `CHECK expira > emitido`; `CASCADE` al borrar el usuario; `reemplazado_por` con `SET NULL` | Refresco rotatorio y revocable; la cadena `reemplazado_por` permite revocar la sesión si se reutiliza un token (propuesta 9) |
+| `solicitud_supresion` | `RESTRICT` sobre el usuario; una sola pendiente por titular (índice único parcial); `CHECK`: atendida si y solo si tiene `fecha_atencion` | La constancia del trámite sobrevive a la anonimización (propuesta 10) |
 | `servicio_critico.tipo` | `amenity=hospital` → hospital, `amenity=school` → escuela; ubicación del área = centro calculado por Overpass | Tipos del diagrama ER |
 
 ## Índices
