@@ -61,6 +61,14 @@ Si el volumen de la base se creó antes de existir `infra/db/init/`, crear la ba
 Para activar los *hooks* de formato, lint y detección de secretos (gitleaks) antes de cada commit:
 `uvx pre-commit install`.
 
+## Integración continua
+
+La CI (`.github/workflows/ci.yml`) corre en cada *push* a cualquier rama: gitleaks, lint, tipos,
+migraciones, pruebas con cobertura, auditoría de dependencias, imagen Docker y el análisis de
+**SonarQube Cloud** (proyecto `SantiagoTyrsArv_STREETREPO`, configuración en
+`sonar-project.properties`). El análisis recibe la cobertura de pytest (`coverage.xml`) y usa solo el
+secreto `SONAR_TOKEN` de GitHub Actions; la puerta de calidad se evalúa sobre el código nuevo.
+
 ## Estructura del backend
 
 ```

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["**"] # también las ramas de trabajo, para avisar antes de integrar
   workflow_dispatch:
 
 permissions:
@@ -69,9 +69,32 @@ jobs:
       - name: Migraciones
         run: uv run alembic upgrade head
       - name: Pruebas (unitarias + integración)
-        run: uv run pytest --cov --cov-report=term-missing
+        run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
+      - name: Guardar informe de cobertura
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-backend
+          path: backend/coverage.xml
+          retention-days: 7
       - name: Auditoría de dependencias
         run: uv export --frozen --no-dev --no-hashes -o /tmp/req.txt && uv run pip-audit -r /tmp/req.txt
+
+  sonar:
+    runs-on: ubuntu-latest
+    needs: [backend]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # el historial completo permite detectar el código nuevo
+      - name: Recuperar informe de cobertura
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: coverage-backend
+          path: backend
+      - name: Análisis de SonarQube Cloud
+        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   docker:
     runs-on: ubuntu-latest
