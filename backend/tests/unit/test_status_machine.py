@@ -6,9 +6,9 @@ from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.domain.status_machine import (
     InvalidStatusTransitionError,
     StatusChange,
+    allowed_next_statuses,
     change_status,
     initial_status_change,
-    next_status,
 )
 
 ADMIN_ID = uuid.UUID("00000000-0000-0000-0000-00000000000a")
@@ -22,12 +22,17 @@ REPAIRED = ReportStatus.REPAIRED
 
 @pytest.mark.parametrize(
     ("current", "expected"),
-    [(REGISTERED, EVALUATED), (EVALUATED, PRIORITIZED), (PRIORITIZED, REPAIRED), (REPAIRED, None)],
+    [
+        (REGISTERED, (EVALUATED,)),
+        (EVALUATED, (PRIORITIZED, REPAIRED)),
+        (PRIORITIZED, (REPAIRED,)),
+        (REPAIRED, ()),
+    ],
 )
-def test_next_status_follows_the_lifecycle(
-    current: ReportStatus, expected: ReportStatus | None
+def test_allowed_next_statuses_only_move_forward(
+    current: ReportStatus, expected: tuple[ReportStatus, ...]
 ) -> None:
-    assert next_status(current) is expected
+    assert allowed_next_statuses(current) == expected
 
 
 def test_initial_record_has_no_previous_status() -> None:
@@ -42,7 +47,14 @@ def test_system_evaluates_a_registered_report() -> None:
     assert change == StatusChange(previous=REGISTERED, new=EVALUATED, changed_by=None, note=None)
 
 
-@pytest.mark.parametrize(("current", "new"), [(EVALUATED, PRIORITIZED), (PRIORITIZED, REPAIRED)])
+@pytest.mark.parametrize(
+    ("current", "new"),
+    [
+        (EVALUATED, PRIORITIZED),
+        (PRIORITIZED, REPAIRED),
+        (EVALUATED, REPAIRED),  # salto: reparado antes de formalizar la prioridad
+    ],
+)
 def test_admin_moves_the_report_forward(current: ReportStatus, new: ReportStatus) -> None:
     change = change_status(current, new, changed_by=ADMIN_ID, note="Cuadrilla asignada")
 
@@ -54,14 +66,14 @@ def test_admin_moves_the_report_forward(current: ReportStatus, new: ReportStatus
 @pytest.mark.parametrize(
     ("current", "new"),
     [
-        (REGISTERED, PRIORITIZED),  # salta un estado
-        (REGISTERED, REPAIRED),
-        (EVALUATED, REPAIRED),
         (EVALUATED, REGISTERED),  # retrocede
         (PRIORITIZED, EVALUATED),
+        (PRIORITIZED, REGISTERED),
         (REPAIRED, PRIORITIZED),
+        (REPAIRED, EVALUATED),
         (REPAIRED, REPAIRED),  # sin cambio
         (EVALUATED, EVALUATED),
+        (REGISTERED, REGISTERED),
     ],
 )
 def test_invalid_transitions_are_rejected(current: ReportStatus, new: ReportStatus) -> None:
@@ -72,12 +84,20 @@ def test_invalid_transitions_are_rejected(current: ReportStatus, new: ReportStat
     assert error.value.new is new
 
 
+@pytest.mark.parametrize("new", [PRIORITIZED, REPAIRED])
+def test_a_registered_report_cannot_skip_the_evaluation(new: ReportStatus) -> None:
+    with pytest.raises(InvalidStatusTransitionError, match="primero lo evalúa el motor"):
+        change_status(REGISTERED, new, changed_by=ADMIN_ID)
+
+
 def test_a_person_cannot_mark_a_report_as_evaluated() -> None:
     with pytest.raises(InvalidStatusTransitionError, match="motor de priorización"):
         change_status(REGISTERED, EVALUATED, changed_by=ADMIN_ID)
 
 
-@pytest.mark.parametrize(("current", "new"), [(EVALUATED, PRIORITIZED), (PRIORITIZED, REPAIRED)])
+@pytest.mark.parametrize(
+    ("current", "new"), [(EVALUATED, PRIORITIZED), (PRIORITIZED, REPAIRED), (EVALUATED, REPAIRED)]
+)
 def test_the_system_cannot_make_administrative_transitions(
     current: ReportStatus, new: ReportStatus
 ) -> None:
