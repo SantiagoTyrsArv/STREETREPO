@@ -10,6 +10,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   inicio de sesión con Argon2id, JWT de acceso de 15 min y refresco rotatorio con detección de
   reutilización, cierre de sesión, `GET /api/v1/me` y control de acceso por rol en el servidor.
 - Comando `python -m app.cli create-admin` para crear administradores.
+- Análisis de SonarQube Cloud en la CI con la cobertura del backend (propuesta 22).
+
+### Cambiado
+- La CI corre también al subir ramas de trabajo, no solo con *push* a `main`.
 
 ## [0.3.0] - 2026-10-16
 
