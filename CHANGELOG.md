@@ -11,3 +11,5 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Alembic con migración inicial que habilita PostGIS.
 - Docker Compose (PostGIS 17-3.5, migraciones, API) e imagen de la API sin root.
 - CI en GitHub Actions: ruff, mypy, pytest con PostGIS, pip-audit y build de Docker.
+- Migración 0002 con las 10 entidades del diagrama ER, restricciones de integridad e índices
+  GiST (`geometry` y `geography`); modelos ORM por módulo y mapeo en `docs/base-de-datos.md`.
