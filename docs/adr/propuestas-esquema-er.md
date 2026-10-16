@@ -64,7 +64,8 @@ Las propuestas 6, 8, 9 y 10 requieren actualizar el diagrama ER en Lucid; la 7 y
 
 - **Dónde:** diagrama ER (`reporte`) y guía 6.1 / 10.3.
 - **Situación actual:** no hay columna para una clave de idempotencia.
-- **Mejora sugerida:** `clave_idempotencia UUID UNIQUE` (nullable) en `reporte`, enviada por la app en la cabecera `Idempotency-Key`.
+- **Mejora sugerida:** `clave_idempotencia UUID` (nullable) en `reporte`, enviada por la app en la cabecera `Idempotency-Key`.
+  **Ajuste aprobado:** restricción única por par (`id_usuario`, `clave_idempotencia`), no global, para evitar colisiones entre usuarios.
 - **Justificación:** con red móvil inestable un reintento puede crear el mismo reporte dos veces (patrón de las APIs de pago, p. ej. Stripe).
 - **Impacto:** una columna y un índice único; fase 5.
 - **Recomendación:** aplicar en la fase 5.
