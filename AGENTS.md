@@ -5,6 +5,8 @@
 
 Este archivo es la fuente de instrucciones para construir el software. Léelo completo antes de escribir código y vuelve a él cada vez que haya una duda de alcance, arquitectura o diseño.
 
+> **Versionado de esta guía:** `AGENTS.md` es la **fuente canónica** y se versiona en git. `CLAUDE.md` es un archivo local, excluido de git, que solo contiene `@AGENTS.md` para que Claude Code lea este mismo contenido sin duplicarlo. **Edita siempre `AGENTS.md`** (también la bitácora de la sección 17) y confirma el cambio en una rama `docs/…` según la sección 8.4.
+
 ---
 
 ## 0. Cómo usar esta guía
@@ -581,7 +583,8 @@ Cada fase termina con algo **ejecutable y probado**. Ajusta el orden con el resp
 1. Escribir y ejecutar las **pruebas unitarias** de lo construido (sección 8.3) y las de integración que apliquen.
 2. Confirmar que **todo el conjunto de pruebas existente sigue pasando** (sin regresiones), con lint y tipos limpios.
 3. **Integrar la rama de la fase a `main`** mediante *merge* directo y subirla, con commits detallados (sección 8.4), sin abrir PR. Cada funcionalidad o mejora dentro de la fase tiene su propia rama.
-4. Reportar al responsable: qué se construyó, cuántas pruebas pasaron, qué quedó pendiente y las propuestas de mejora (0.3).
+4. **Etiquetar la versión** de cierre con una etiqueta anotada SemVer (`v0.<n>.0` al cerrar la fase *n*), mover lo de «Sin publicar» del `CHANGELOG.md` a esa versión y subir la etiqueta (`git push origin <etiqueta>`).
+5. Reportar al responsable: qué se construyó, cuántas pruebas pasaron, qué quedó pendiente y las propuestas de mejora (0.3).
 
 1. **Cimientos:** repositorio, Docker Compose, PostgreSQL + PostGIS, FastAPI con `/health`, CI, linters, estructura de carpetas, migraciones base según el diagrama ER.
 2. **Datos geográficos:** script de carga OSM (vías con `highway`, servicios críticos) a PostGIS; consultas de *map-matching* y proximidad con pruebas.
@@ -670,6 +673,9 @@ Mantén esta tabla actualizada (o un directorio `docs/adr/` con un archivo por d
 | 16 | 2026-10-16 | Corrección | El commit `ebc960d` (modelo U) cita `Refs: HU-05`; según la sección 2.6 debía ser **HU-03**. No se reescribe `main` (`push --force` prohibido); queda registrado aquí. Trazabilidad correcta de la fase 3: modelo U → HU-03 · motor de evaluación → HU-05 · máquina de estados → HU-12 · pesos versionados → HU-14 · pruebas del motor → HU-18 | Registrada |
 | 17 | 2026-10-16 | Decisión menor | Distancias con `geometry` en SRID 4326 e índice GiST de expresión sobre `::geography` (`docs/adr/0003-distancias-geography.md`) | Aceptada |
 | 18 | 2026-10-16 | Propuesta (ER) | `configuracion_pesos.id_usuario` permite `NULL`, que significa "configuración del sistema", porque la fila inicial se crea en una migración antes de que exista algún administrador; así se evita crear un usuario ficticio | **Aprobada** · **Aplicada** · columna opcional desde la migración 0002; la 0005 la usa para insertar la fila del sistema · ER actualizado en Lucid |
+| 19 | 2026-10-16 | Decisión (versionado) | `AGENTS.md` es la fuente canónica de la guía y se versiona en git; `CLAUDE.md` es local (excluido de git) y solo importa `@AGENTS.md`, para tener una única copia y evitar que se desincronicen | **Aprobada** · **Aplicada** (2026-10-16) |
+| 20 | 2026-10-16 | Propuesta (versionado) | Etiquetar cada cierre de fase con una etiqueta anotada SemVer (`v0.1.0` fase 1, `v0.2.0` fase 2, …) y mover lo de «Sin publicar» del `CHANGELOG.md` a cada versión. Las fases 1 a 3, ya cerradas, se etiquetan retroactivamente sobre el *merge* de cierre de cada una | **Aprobada** (autorización general del responsable) · pendiente de aplicar |
+| 21 | 2026-10-16 | Propuesta (seguridad / versionado) | Añadir `gitleaks` a `.pre-commit-config.yaml` y a la CI para detectar secretos en los commits; complementa `detect-private-key`, que solo cubre claves privadas | **Aprobada** (autorización general del responsable) · pendiente de aplicar |
 
 ---
 
