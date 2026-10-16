@@ -42,13 +42,14 @@ uv run mypy
 uv run pytest --cov                  # unitarias; las de integración se omiten sin base de datos
 ```
 
-Pruebas de integración contra PostGIS (con la base de datos de Compose levantada):
+Pruebas de integración contra PostGIS (con la base de datos de Compose levantada). Usar `127.0.0.1`
+y no `localhost`: en Windows `localhost` intenta primero IPv6 y Docker solo publica en IPv4.
 
 ```bash
 docker compose -f infra/docker-compose.yml --env-file .env up -d db
 cd backend
-POSTGRES_HOST=localhost uv run alembic upgrade head
-POSTGRES_HOST=localhost uv run pytest -m integration
+POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 uv run alembic upgrade head
+POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 uv run pytest -m integration
 ```
 
 Para activar los *hooks* de formato y lint antes de cada commit: `uvx pre-commit install`.

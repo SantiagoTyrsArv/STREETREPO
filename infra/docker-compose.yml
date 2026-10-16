@@ -19,7 +19,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_HOST_PORT:-5433}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
