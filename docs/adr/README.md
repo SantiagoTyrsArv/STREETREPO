@@ -13,7 +13,7 @@ dejan un `TODO(propuesta-N)` en el código.
 | 5 | — | Propuesta | Documentar en la tesis los límites de uso de Nominatim, Overpass y *tiles* de OSM | Pendiente |
 | — | 2026-10-15 | Decisión menor | [Distancias con `geometry` 4326 + índice `geography`](0003-distancias-geography.md) | Aceptada |
 | 6 | 2026-10-15 | Propuesta | Añadir geometría (`LineString`) a `via` para el *map-matching* a 30 m | Aplicada (2026-10-15) · migración 0003 |
-| 7 | 2026-10-15 | Propuesta | Correspondencia `highway` de OSM → `jerarquia_vial` (incluye `trunk`, `unclassified`, `service`) | Aprobada (2026-10-15) · aplicar en la fase 2 |
+| 7 | 2026-10-15 | Propuesta | Correspondencia `highway` de OSM → `jerarquia_vial` (incluye `trunk`, `unclassified`, `service`) | Aplicada (2026-10-15) · `roads/domain/classification.py`, migración 0004 |
 | 8 | 2026-10-15 | Propuesta | Guardar la versión de la política aceptada en `usuario` (Ley 1581) | Aprobada (2026-10-15) · aplicar en la fase 4 |
 | 9 | 2026-10-15 | Propuesta | Tabla de tokens de refresco revocables (guía 7.1) | Aprobada (2026-10-15) · aplicar en la fase 4 |
 | 10 | 2026-10-15 | Propuesta | Supresión de datos por anonimización en lugar de borrado del usuario | Aprobada (2026-10-15) · aplicar en la fase 4 |

@@ -26,6 +26,8 @@ class RoadModel(Base):
         "jerarquia_vial", pg_enum(RoadClass, "jerarquia_vial")
     )
     flow_factor: Mapped[Decimal] = mapped_column("factor_flujo", Numeric(4, 2))
+    # Etiqueta original de OSM para auditar la clasificación (propuesta 7).
+    highway_tag: Mapped[str] = mapped_column("highway_osm", String(30))
     geom: Mapped[Geometry] = mapped_column("geom", linestring())
 
 

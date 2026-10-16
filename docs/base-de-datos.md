@@ -1,7 +1,7 @@
 # Base de datos
 
 Fuente: diagrama ER en Lucid ("Street Repo - Diagrama Entidad-Relación"). Migración:
-`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`).
+`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`).
 
 Las tablas y columnas usan los nombres del diagrama (español). El código usa nombres en inglés
 (guía 9.1); este es el mapeo.
@@ -42,6 +42,7 @@ Las tablas y columnas usan los nombres del diagrama (español). El código usa n
 | `u_utilidad` | `urgency_score` | `fecha_calculo` | `calculated_at` |
 | `jerarquia_vial` | `road_class` | `factor_flujo` | `flow_factor` |
 | `tipo` | `service_type` | `geom` | `geom` |
+| `highway_osm` | `highway_tag` | | |
 
 ## Tipos ENUM
 

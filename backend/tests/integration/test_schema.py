@@ -44,7 +44,9 @@ ER_TABLES = {
         "s_severidad", "f_flujo", "p_proximidad", "u_utilidad", "fecha_calculo",
     },
     "servicio_critico": {"id_servicio", "osm_id", "nombre", "tipo", "ubicacion"},
-    "via": {"id_via", "osm_id", "nombre", "jerarquia_vial", "factor_flujo", "geom"},
+    "via": {
+        "id_via", "osm_id", "nombre", "jerarquia_vial", "factor_flujo", "geom", "highway_osm",
+    },
     "zona": {"id_zona", "nombre", "geom"},
 }  # fmt: skip
 
