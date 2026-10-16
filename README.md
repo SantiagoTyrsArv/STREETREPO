@@ -42,15 +42,19 @@ uv run mypy
 uv run pytest --cov                  # unitarias; las de integración se omiten sin base de datos
 ```
 
-Pruebas de integración contra PostGIS (con la base de datos de Compose levantada). Usar `127.0.0.1`
-y no `localhost`: en Windows `localhost` intenta primero IPv6 y Docker solo publica en IPv4.
+Pruebas de integración contra PostGIS. Corren **solo** contra una base cuyo nombre termina en
+`_test` (algunas borran tablas al probar las migraciones); Compose crea `streetrepo_test` junto a la
+de desarrollo y las pruebas aplican las migraciones solas. Usar `127.0.0.1` y no `localhost`: en
+Windows `localhost` intenta primero IPv6 y Docker solo publica en IPv4.
 
 ```bash
 docker compose -f infra/docker-compose.yml --env-file .env up -d db
 cd backend
-POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 uv run alembic upgrade head
-POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 uv run pytest -m integration
+POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 POSTGRES_DB=streetrepo_test uv run pytest
 ```
+
+Si el volumen de la base se creó antes de existir `infra/db/init/`, crear la base una vez:
+`docker compose -f infra/docker-compose.yml --env-file .env exec db createdb -U streetrepo streetrepo_test`.
 
 Para activar los *hooks* de formato y lint antes de cada commit: `uvx pre-commit install`.
 

@@ -22,7 +22,7 @@ jobs:
       db:
         image: postgis/postgis:17-3.5
         env:
-          POSTGRES_DB: streetrepo
+          POSTGRES_DB: streetrepo_test
           POSTGRES_USER: streetrepo
           POSTGRES_PASSWORD: ci-only-password
         ports: ["5432:5432"]
@@ -32,7 +32,7 @@ jobs:
     env:
       APP_ENV: test
       POSTGRES_HOST: localhost
-      POSTGRES_DB: streetrepo
+      POSTGRES_DB: streetrepo_test
       POSTGRES_USER: streetrepo
       POSTGRES_PASSWORD: ci-only-password
     steps:

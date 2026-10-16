@@ -1,20 +1,47 @@
-import os
 import uuid
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import Connection, text
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.database import get_engine
 
 # osm_id de prueba en un rango que OSM no usa (los ids reales no llegan a 2.000 millones):
 # no chocan con los datos reales de Pasto cargados en la base de desarrollo.
 TEST_OSM_ID = 9_000_000_000
 
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+TEST_DATABASE_SUFFIX = "_test"
+
+
+def is_test_database() -> bool:
+    # Protección: algunas pruebas borran tablas (downgrade de migraciones). Nunca deben
+    # correr contra la base de desarrollo ni de producción.
+    return get_settings().postgres_db.endswith(TEST_DATABASE_SUFFIX)
+
+
 requires_db = pytest.mark.skipif(
-    not os.getenv("POSTGRES_HOST"), reason="Requiere POSTGRES_HOST con PostGIS disponible"
+    not is_test_database(),
+    reason="Requiere POSTGRES_DB terminada en _test (p. ej. streetrepo_test) con PostGIS",
 )
+
+
+def alembic_config() -> Config:
+    config = Config(str(BACKEND_DIR / "alembic.ini"))
+    config.set_main_option("script_location", str(BACKEND_DIR / "migrations"))
+    return config
+
+
+@pytest.fixture(scope="session", autouse=True)
+def migrated_test_database() -> None:
+    """Deja la base de pruebas en la última migración antes de la primera prueba."""
+    if is_test_database():
+        command.upgrade(alembic_config(), "head")
 
 
 @pytest.fixture

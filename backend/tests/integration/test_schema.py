@@ -1,19 +1,14 @@
 """El esquema creado por las migraciones cumple el diagrama ER y las reglas de integridad."""
 
-from pathlib import Path
-
 import pytest
 from alembic import command
-from alembic.config import Config
 from sqlalchemy import Connection, inspect, text
 from sqlalchemy.exc import IntegrityError
 
 from app.core.database import get_engine
-from tests.integration.conftest import insert_report, insert_user, requires_db
+from tests.integration.conftest import alembic_config, insert_report, insert_user, requires_db
 
 pytestmark = [pytest.mark.integration, requires_db]
-
-BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 # Centro de Pasto, solo como coordenada de prueba.
 PASTO_LON, PASTO_LAT = -77.2811, 1.2136
@@ -51,12 +46,6 @@ ER_TABLES = {
 }  # fmt: skip
 
 
-def _alembic_config() -> Config:
-    config = Config(str(BACKEND_DIR / "alembic.ini"))
-    config.set_main_option("script_location", str(BACKEND_DIR / "migrations"))
-    return config
-
-
 def _insert_weights(conn: Connection, s: str, f: str, p: str, current: bool = False) -> None:
     conn.execute(
         text(
@@ -77,7 +66,7 @@ def test_tables_and_columns_match_er_diagram() -> None:
 
 def test_models_and_migrations_are_in_sync() -> None:
     # Falla si un modelo ORM cambió sin su migración correspondiente.
-    command.check(_alembic_config())
+    command.check(alembic_config())
 
 
 def test_spatial_columns_use_srid_4326(conn: Connection) -> None:
@@ -224,7 +213,7 @@ def test_user_with_reports_cannot_be_deleted(conn: Connection) -> None:
 
 
 def test_downgrade_and_upgrade_round_trip() -> None:
-    config = _alembic_config()
+    config = alembic_config()
 
     command.downgrade(config, "0001")
     assert "reporte" not in inspect(get_engine()).get_table_names()

@@ -1,20 +1,14 @@
 """Pruebas contra PostgreSQL + PostGIS real (docker compose o servicio de CI)."""
 
-import os
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.core.database import get_engine
 from app.main import create_app
+from tests.integration.conftest import requires_db
 
-pytestmark = [
-    pytest.mark.integration,
-    pytest.mark.skipif(
-        not os.getenv("POSTGRES_HOST"), reason="Requiere POSTGRES_HOST con PostGIS disponible"
-    ),
-]
+pytestmark = [pytest.mark.integration, requires_db]
 
 
 def test_postgis_extension_is_installed() -> None:
