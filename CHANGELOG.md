@@ -18,3 +18,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Carga OSM idempotente (`python -m app.cli osm-import`) desde Overpass, con reintentos.
 - Map-matching a la vía más cercana (≤ 30 m) y proximidad al servicio crítico más cercano (≤ 500 m)
   con PostGIS; radios como constantes con nombre en `shared/domain/geo_parameters.py`.
+- Modelo de urgencia U = w1·S + w2·F + w3·P: pesos validados (rango 0–1, dos decimales,
+  suma 1,00), normalización de S, F y P como estrategias intercambiables, marca "Revisar vía"
+  y orden del ranking con desempate (severidad → confirmaciones → antigüedad).

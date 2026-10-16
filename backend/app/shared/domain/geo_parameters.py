@@ -14,5 +14,9 @@ DEDUPLICATION_RADIUS_M: Final = 25.0
 # y el reporte se marca "Revisar vía" (guía 2.2).
 ROAD_MATCHING_RADIUS_M: Final = 30.0
 
+# Hasta esta distancia a un servicio crítico la proximidad P vale 10; desde aquí
+# decrece linealmente hasta 0 en PROXIMITY_MAX_RADIUS_M (guía 2.2).
+PROXIMITY_FULL_SCORE_RADIUS_M: Final = 100.0
+
 # A partir de esta distancia a un servicio crítico la proximidad P vale 0 (guía 2.2).
 PROXIMITY_MAX_RADIUS_M: Final = 500.0
