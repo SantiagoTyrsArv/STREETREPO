@@ -67,7 +67,19 @@ backend/app/
 
 ## Carga de datos OSM
 
-Pendiente (fase 2).
+Descarga de Overpass las vías (`highway` según la propuesta 7) y los servicios críticos
+(`amenity=hospital|school`) del área `OSM_BBOX` y los guarda en PostGIS. Es idempotente:
+se puede repetir y actualiza por `osm_id` sin duplicar; si falla, no guarda nada.
+
+```bash
+docker compose -f infra/docker-compose.yml --env-file .env run --rm api python -m app.cli osm-import
+# o desde backend/ (base de Compose en 127.0.0.1:5433):
+POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 uv run python -m app.cli osm-import --bbox 1.16,-77.33,1.25,-77.23
+```
+
+Usa la API pública de Overpass con `User-Agent` identificable y reintentos con espera creciente
+ante 429/5xx (máximo 3 intentos). No se ejecuta por cada reporte: el cálculo de F y P es local.
+Las vías o servicios eliminados de OSM no se borran de la base en una nueva carga.
 
 ## Base de datos
 

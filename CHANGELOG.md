@@ -13,3 +13,6 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - CI en GitHub Actions: ruff, mypy, pytest con PostGIS, pip-audit y build de Docker.
 - Migración 0002 con las 10 entidades del diagrama ER, restricciones de integridad e índices
   GiST (`geometry` y `geography`); modelos ORM por módulo y mapeo en `docs/base-de-datos.md`.
+- Migraciones 0003 y 0004: geometría `LineString` y etiqueta `highway_osm` en `via` (propuestas 6 y 7).
+- Clasificación `highway` → jerarquía vial y factor de flujo F.
+- Carga OSM idempotente (`python -m app.cli osm-import`) desde Overpass, con reintentos.

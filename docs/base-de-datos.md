@@ -77,6 +77,8 @@ El diagrama no define nulabilidad, valores por defecto ni reglas de borrado. Se 
 | Borrado de un usuario con reportes | `RESTRICT` | Ver propuesta 10 (supresión con anonimización) |
 | Borrado de vía, zona o servicio | `SET NULL` | Una recarga de OSM no debe borrar reportes ni evaluaciones |
 | Claves UUID | `gen_random_uuid()` en la base | Disponible en PostgreSQL ≥ 13 sin extensiones |
+| `servicio_critico.osm_id` | Nodos con su id; áreas (vías de OSM) con el id en negativo | Nodos y vías de OSM comparten numeración; misma convención que `osm2pgsql` |
+| `servicio_critico.tipo` | `amenity=hospital` → hospital, `amenity=school` → escuela; ubicación del área = centro calculado por Overpass | Tipos del diagrama ER |
 
 ## Índices
 
