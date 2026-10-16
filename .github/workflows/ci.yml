@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      db:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_DB: streetrepo
+          POSTGRES_USER: streetrepo
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U streetrepo" --health-interval 5s
+          --health-timeout 3s --health-retries 10
+    env:
+      APP_ENV: test
+      POSTGRES_HOST: localhost
+      POSTGRES_DB: streetrepo
+      POSTGRES_USER: streetrepo
+      POSTGRES_PASSWORD: ci-only-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Instalar dependencias
+        run: uv sync --frozen
+      - name: Lint y formato
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: Tipos
+        run: uv run mypy
+      - name: Migraciones
+        run: uv run alembic upgrade head
+      - name: Pruebas (unitarias + integración)
+        run: uv run pytest --cov --cov-report=term-missing
+      - name: Auditoría de dependencias
+        run: uv export --frozen --no-dev --no-hashes -o /tmp/req.txt && uv run pip-audit -r /tmp/req.txt
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir imagen de la API
+        run: docker build -f infra/docker/api.Dockerfile -t street-repo-api:ci backend
