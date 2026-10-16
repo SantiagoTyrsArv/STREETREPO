@@ -669,7 +669,7 @@ Mantén esta tabla actualizada (o un directorio `docs/adr/` con un archivo por d
 | 15 | 2026-10-16 | Corrección | Tabla de pruebas 8.3: Carrera 27 tiene P = 3,75 (d = 350 m), no 3,8; 3,8 era el redondeo a un decimal. Corregidas la guía y el texto de Figma; la tesis no repite el valor | Aplicada |
 | 16 | 2026-10-16 | Corrección | El commit `ebc960d` (modelo U) cita `Refs: HU-05`; según la sección 2.6 debía ser **HU-03**. No se reescribe `main` (`push --force` prohibido); queda registrado aquí. Trazabilidad correcta de la fase 3: modelo U → HU-03 · motor de evaluación → HU-05 · máquina de estados → HU-12 · pesos versionados → HU-14 · pruebas del motor → HU-18 | Registrada |
 | 17 | 2026-10-16 | Decisión menor | Distancias con `geometry` en SRID 4326 e índice GiST de expresión sobre `::geography` (`docs/adr/0003-distancias-geography.md`) | Aceptada |
-| 18 | 2026-10-16 | Propuesta (ER) | `configuracion_pesos.id_usuario` permite `NULL`, que significa "configuración del sistema", porque la fila inicial se crea en una migración antes de que exista algún administrador; así se evita crear un usuario ficticio | **Aprobada** · **Aplicada** (2026-10-16) · migración 0005 · ER actualizado en Lucid |
+| 18 | 2026-10-16 | Propuesta (ER) | `configuracion_pesos.id_usuario` permite `NULL`, que significa "configuración del sistema", porque la fila inicial se crea en una migración antes de que exista algún administrador; así se evita crear un usuario ficticio | **Aprobada** · **Aplicada** · columna opcional desde la migración 0002; la 0005 la usa para insertar la fila del sistema · ER actualizado en Lucid |
 
 ---
 

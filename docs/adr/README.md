@@ -23,6 +23,6 @@ dejan un `TODO(propuesta-N)` en el código.
 | 15 | 2026-10-16 | Corrección | Tabla de pruebas de la guía: Carrera 27 tiene P = 3,75 (d = 350 m), no 3,8 (redondeo a un decimal). Corregidas la guía y el texto de Figma; la tesis no repite el valor | Aplicada |
 | 16 | 2026-10-16 | Corrección | El commit `ebc960d` (modelo U) cita `Refs: HU-05`; debía ser HU-03. No se reescribe `main`. Trazabilidad de la fase 3: modelo U → HU-03 · motor de evaluación → HU-05 · máquina de estados → HU-12 · pesos versionados → HU-14 · pruebas del motor → HU-18 | Registrada |
 | 17 | 2026-10-15 | Decisión menor | [Distancias con `geometry` 4326 + índice `geography`](0003-distancias-geography.md) | Aceptada |
-| 18 | 2026-10-16 | Propuesta (ER) | `configuracion_pesos.id_usuario` permite `NULL`, que significa "configuración del sistema", porque la fila inicial se crea en una migración antes de que exista algún administrador; así se evita crear un usuario ficticio | Aprobada · Aplicada (2026-10-16) · migración 0005 · ER actualizado en Lucid |
+| 18 | 2026-10-16 | Propuesta (ER) | `configuracion_pesos.id_usuario` permite `NULL`, que significa "configuración del sistema", porque la fila inicial se crea en una migración antes de que exista algún administrador; así se evita crear un usuario ficticio | Aprobada · Aplicada · columna opcional desde la migración 0002; la 0005 la usa para insertar la fila del sistema · ER actualizado en Lucid |
 
 El detalle de las propuestas 6–11 está en [propuestas-esquema-er.md](propuestas-esquema-er.md).
