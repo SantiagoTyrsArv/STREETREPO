@@ -21,3 +21,5 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Modelo de urgencia U = w1·S + w2·F + w3·P: pesos validados (rango 0–1, dos decimales,
   suma 1,00), normalización de S, F y P como estrategias intercambiables, marca "Revisar vía"
   y orden del ranking con desempate (severidad → confirmaciones → antigüedad).
+- Máquina de estados del reporte (Registrado → Evaluado → Priorizado → Reparado): solo el
+  motor evalúa, el resto lo hace un administrador; cada cambio genera un registro de historial.
