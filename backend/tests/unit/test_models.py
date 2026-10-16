@@ -68,6 +68,7 @@ def test_spatial_columns_use_wgs84() -> None:
     for table, column in [
         ("reporte", "ubicacion"),
         ("servicio_critico", "ubicacion"),
+        ("via", "geom"),
         ("zona", "geom"),
     ]:
         assert _table(table).c[column].type.srid == 4326  # type: ignore[attr-defined]

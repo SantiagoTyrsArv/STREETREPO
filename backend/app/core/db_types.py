@@ -27,5 +27,9 @@ def point() -> Geometry:
     return Geometry("POINT", srid=SRID_WGS84, spatial_index=False)
 
 
+def linestring() -> Geometry:
+    return Geometry("LINESTRING", srid=SRID_WGS84, spatial_index=False)
+
+
 def polygon() -> Geometry:
     return Geometry("POLYGON", srid=SRID_WGS84, spatial_index=False)

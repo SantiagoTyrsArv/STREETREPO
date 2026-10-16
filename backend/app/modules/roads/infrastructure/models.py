@@ -1,11 +1,11 @@
 from decimal import Decimal
 
 from geoalchemy2 import Geometry
-from sqlalchemy import BigInteger, CheckConstraint, Index, Integer, Numeric, String
+from sqlalchemy import BigInteger, CheckConstraint, Index, Integer, Numeric, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.core.db_types import pg_enum, polygon
+from app.core.db_types import linestring, pg_enum, polygon
 from app.modules.roads.domain.road_class import RoadClass
 
 
@@ -13,6 +13,9 @@ class RoadModel(Base):
     __tablename__ = "via"
     __table_args__ = (
         CheckConstraint("factor_flujo BETWEEN 0 AND 10", name="ck_via_factor_flujo_rango"),
+        Index("ix_via_geom", "geom", postgresql_using="gist"),
+        # Map-matching a 30 m sobre geography (ADR 0003).
+        Index("ix_via_geom_geog", text("(geom::geography)"), postgresql_using="gist"),
     )
 
     id: Mapped[int] = mapped_column("id_via", Integer, primary_key=True)
@@ -23,7 +26,7 @@ class RoadModel(Base):
         "jerarquia_vial", pg_enum(RoadClass, "jerarquia_vial")
     )
     flow_factor: Mapped[Decimal] = mapped_column("factor_flujo", Numeric(4, 2))
-    # TODO(propuesta-6): el ER no tiene geometría de la vía; sin ella no hay map-matching a 30 m.
+    geom: Mapped[Geometry] = mapped_column("geom", linestring())
 
 
 class ZoneModel(Base):

@@ -12,7 +12,7 @@ dejan un `TODO(propuesta-N)` en el código.
 | 4 | — | Propuesta | Diseñar estados vacío, carga, error y sin conexión de cada pantalla | Pendiente |
 | 5 | — | Propuesta | Documentar en la tesis los límites de uso de Nominatim, Overpass y *tiles* de OSM | Pendiente |
 | — | 2026-10-15 | Decisión menor | [Distancias con `geometry` 4326 + índice `geography`](0003-distancias-geography.md) | Aceptada |
-| 6 | 2026-10-15 | Propuesta | Añadir geometría (`LineString`) a `via` para el *map-matching* a 30 m | Aprobada (2026-10-15) · aplicar antes de la fase 2 |
+| 6 | 2026-10-15 | Propuesta | Añadir geometría (`LineString`) a `via` para el *map-matching* a 30 m | Aplicada (2026-10-15) · migración 0003 |
 | 7 | 2026-10-15 | Propuesta | Correspondencia `highway` de OSM → `jerarquia_vial` (incluye `trunk`, `unclassified`, `service`) | Aprobada (2026-10-15) · aplicar en la fase 2 |
 | 8 | 2026-10-15 | Propuesta | Guardar la versión de la política aceptada en `usuario` (Ley 1581) | Aprobada (2026-10-15) · aplicar en la fase 4 |
 | 9 | 2026-10-15 | Propuesta | Tabla de tokens de refresco revocables (guía 7.1) | Aprobada (2026-10-15) · aplicar en la fase 4 |

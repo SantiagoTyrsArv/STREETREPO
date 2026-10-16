@@ -1,7 +1,7 @@
 # Base de datos
 
 Fuente: diagrama ER en Lucid ("Street Repo - Diagrama Entidad-Relación"). Migración:
-`backend/migrations/versions/20261015_0002_esquema_er_inicial.py`.
+`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`).
 
 Las tablas y columnas usan los nombres del diagrama (español). El código usa nombres en inglés
 (guía 9.1); este es el mapeo.
@@ -79,7 +79,7 @@ El diagrama no define nulabilidad, valores por defecto ni reglas de borrado. Se 
 
 ## Índices
 
-- GiST sobre `reporte.ubicacion`, `servicio_critico.ubicacion` y `zona.geom`.
-- GiST de expresión sobre `(ubicacion::geography)` en `reporte` y `servicio_critico` (ADR 0003).
+- GiST sobre `reporte.ubicacion`, `servicio_critico.ubicacion`, `via.geom` y `zona.geom`.
+- GiST de expresión sobre `::geography` en `reporte.ubicacion`, `servicio_critico.ubicacion` y `via.geom` (ADR 0003).
 - Ranking: `reporte (estado, puntaje_prioridad DESC)`; además `fecha_creacion` e `id_usuario`.
 - Historial y evaluaciones: `(id_reporte, fecha)`.

@@ -44,7 +44,7 @@ ER_TABLES = {
         "s_severidad", "f_flujo", "p_proximidad", "u_utilidad", "fecha_calculo",
     },
     "servicio_critico": {"id_servicio", "osm_id", "nombre", "tipo", "ubicacion"},
-    "via": {"id_via", "osm_id", "nombre", "jerarquia_vial", "factor_flujo"},
+    "via": {"id_via", "osm_id", "nombre", "jerarquia_vial", "factor_flujo", "geom"},
     "zona": {"id_zona", "nombre", "geom"},
 }  # fmt: skip
 
@@ -89,6 +89,7 @@ def test_spatial_columns_use_srid_4326(conn: Connection) -> None:
     assert {(row.f_table_name, row.srid, row.type) for row in rows} == {
         ("reporte", 4326, "POINT"),
         ("servicio_critico", 4326, "POINT"),
+        ("via", 4326, "LINESTRING"),
         ("zona", 4326, "POLYGON"),
     }
 
@@ -228,3 +229,18 @@ def test_downgrade_and_upgrade_round_trip() -> None:
 
     command.upgrade(config, "head")
     assert set(ER_TABLES) <= set(inspect(get_engine()).get_table_names())
+
+
+def test_geography_index_is_used_for_road_matching(conn: Connection) -> None:
+    conn.execute(text("SET LOCAL enable_seqscan = off"))
+    plan = "\n".join(
+        conn.execute(
+            text(
+                "EXPLAIN SELECT id_via FROM via WHERE ST_DWithin("
+                "geom::geography, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, 30)"
+            ),
+            {"lon": PASTO_LON, "lat": PASTO_LAT},
+        ).scalars()
+    )
+
+    assert "ix_via_geom_geog" in plan
