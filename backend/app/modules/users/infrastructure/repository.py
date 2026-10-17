@@ -1,12 +1,19 @@
 import uuid
+from datetime import datetime
 
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.modules.users.domain.anonymization import (
+    ANONYMIZED_NAME,
+    UNUSABLE_PASSWORD_HASH,
+    anonymized_email,
+)
+from app.modules.users.domain.deletion_request import DeletionRequest, DeletionRequestStatus
 from app.modules.users.domain.entities import NewUser, PolicyConsent, User
 from app.modules.users.domain.ports import EmailAlreadyRegisteredError
-from app.modules.users.infrastructure.models import UserModel
+from app.modules.users.infrastructure.models import DataDeletionRequestModel, UserModel
 
 # Nombre que PostgreSQL da a la restricción UNIQUE de usuario.correo (migración 0002).
 _EMAIL_UNIQUE_CONSTRAINT = "usuario_correo_key"
@@ -58,6 +65,33 @@ class SqlUserRepository:
             accepted_policy_at=None if consent is None else consent.accepted_at,
             policy_version=None if consent is None else consent.version,
         )
+        self._flush_checking_email(row)
+        self._session.refresh(row)
+        return _to_entity(row)
+
+    def update_profile(self, user_id: uuid.UUID, name: str, email: str) -> User:
+        row = self._session.get_one(UserModel, user_id)
+        row.name = name
+        row.email = email
+        self._flush_checking_email(row)
+        return _to_entity(row)
+
+    def anonymize(self, user_id: uuid.UUID) -> None:
+        # Se conservan rol, fecha de registro y el consentimiento (versión y fecha): son la
+        # constancia de que hubo autorización, no datos que identifiquen al titular.
+        self._session.execute(
+            update(UserModel)
+            .where(UserModel.id == user_id)
+            .values(
+                name=ANONYMIZED_NAME,
+                email=anonymized_email(user_id),
+                password_hash=UNUSABLE_PASSWORD_HASH,
+                is_active=False,
+            )
+        )
+        self._session.expire_all()
+
+    def _flush_checking_email(self, row: UserModel) -> None:
         try:
             # Savepoint: un correo repetido no invalida el resto de la transacción.
             with self._session.begin_nested():
@@ -67,5 +101,27 @@ class SqlUserRepository:
             if _EMAIL_UNIQUE_CONSTRAINT in str(exc.orig):
                 raise EmailAlreadyRegisteredError("Ya existe una cuenta con ese correo") from exc
             raise
-        self._session.refresh(row)
-        return _to_entity(row)
+
+
+class SqlDeletionRequestRepository:
+    """Implementa ``DeletionRequestRepository`` sobre ``solicitud_supresion``."""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add_attended(self, user_id: uuid.UUID, at: datetime) -> DeletionRequest:
+        row = DataDeletionRequestModel(
+            user_id=user_id,
+            status=DeletionRequestStatus.ATTENDED,
+            requested_at=at,
+            attended_at=at,
+        )
+        self._session.add(row)
+        self._session.flush()
+        return DeletionRequest(
+            id=row.id,
+            user_id=row.user_id,
+            status=row.status,
+            requested_at=row.requested_at,
+            attended_at=row.attended_at,
+        )
