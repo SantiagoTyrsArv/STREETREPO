@@ -25,6 +25,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ### Cambiado
 - La CI corre también al subir ramas de trabajo, no solo con *push* a `main`.
+- uv 0.13.1 en la imagen de la API, en la CI y en desarrollo, fijado con `required-version` en
+  `pyproject.toml`; una prueba verifica que el Dockerfile use la misma versión.
 
 ## [0.3.0] - 2026-10-16
 
