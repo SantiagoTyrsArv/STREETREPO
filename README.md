@@ -20,7 +20,8 @@ Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colom
 ## Requisitos
 
 - Docker Desktop (con Docker Compose v2)
-- [uv](https://docs.astral.sh/uv/) para desarrollar el backend fuera de Docker
+- [uv](https://docs.astral.sh/uv/) 0.13.1 para desarrollar el backend fuera de Docker (la fija
+  `required-version` en `backend/pyproject.toml`; actualizar con `uv self update 0.13.1`)
 
 ## Arranque rápido
 
