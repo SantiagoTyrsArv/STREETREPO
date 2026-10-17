@@ -3,6 +3,10 @@ repos:
     rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
     hooks:
       - id: check-yaml
+      # Marcadores de un merge o cherry-pick sin resolver (propuesta 31). --assume-in-merge
+      # revisa siempre, también tras un `cherry-pick -n`, que no deja un merge en curso.
+      - id: check-merge-conflict
+        args: [--assume-in-merge]
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-added-large-files
