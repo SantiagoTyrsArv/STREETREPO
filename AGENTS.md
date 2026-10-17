@@ -600,12 +600,12 @@ Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si al
 **Estado (2026-10-16):** fases 1, 2 y 3 cerradas e integradas en `main` (etiquetas `v0.1.0`, `v0.2.0` y `v0.3.0`), con la CI en verde (252 pruebas, cobertura del backend 99 %). Pendientes de la fase 3 que se completan después: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez (fase 6); lanzar la evaluación al crear un reporte (fase 5).
 
 **Avance de la fase 4 (2026-10-16, para retomar en la próxima sesión):**
-- Hecho e integrado en `main` (CI en verde, 328 pruebas, cobertura 98 %):
+- Hecho e integrado en `main` (CI en verde, 361 pruebas, cobertura 98 %):
   - Migración 0006 (`usuario.version_politica`, `token_refresco`, `solicitud_supresion`), commit `32f853c`.
   - Autenticación (commit `76e27f2`): registro con consentimiento, login Argon2id, JWT de acceso de 15 min, refresco rotatorio con detección de reutilización, logout, `GET /api/v1/me`, RBAC (`require_admin`) y `python -m app.cli create-admin`. Decisiones en `docs/adr/0004-autenticacion.md`.
 - Pendiente, en este orden y cada uno en su rama:
   1. ~~`chore/sonarcloud`: aplicar la propuesta 22~~ (hecho).
-  2. `feat/auth-limite-intentos`: rate limiting en login, registro y (más adelante) reportes, con bloqueo progresivo (guía 7.1 y 7.3).
+  2. ~~`feat/auth-limite-intentos`~~ (hecho, decisión 25): bloqueo progresivo por correo y límite por IP en login y registro, en memoria del proceso; el límite de reportes llega en la fase 5.
   3. `feat/users-derechos-titular`: `PATCH /api/v1/me` (actualizar) y `POST /api/v1/me/data-deletion-requests` con supresión **inmediata** por anonimización (decisión 23).
   4. Cierre de la fase 4: README, CHANGELOG, etiqueta `v0.4.0` y versión del backend.
 
@@ -689,6 +689,7 @@ Mantén esta tabla actualizada (o un directorio `docs/adr/` con un archivo por d
 | 22 | 2026-10-16 | Propuesta (calidad / seguridad) | Integrar **SonarQube Cloud** como complemento del CI (análisis estático de seguridad y calidad, duplicación, tendencia de cobertura y puerta de calidad sobre el código nuevo). Pasos: (1) el responsable ya importó el repositorio y guardó el secreto `SONAR_TOKEN` en GitHub; (2) en una rama `chore/sonarcloud`: `sonar-project.properties`, informe de cobertura XML desde pytest (`--cov-report=xml`) y un job de análisis en `ci.yml` con acción de versión fija verificada, usando solo `SONAR_TOKEN` desde los secretos; (3) arrancar con la puerta de calidad estándar sobre el código nuevo, sin exigir arreglar todo lo previo; (4) corregir el disparador de `ci.yml` para que también corra al subir ramas de trabajo (hoy solo con push a `main`), de modo que el análisis y las pruebas avisen antes de integrar. Nunca imprimir ni versionar el token. Más adelante, añadir la cobertura y el análisis del panel (React) y de la app (Flutter) | **Aplicada** (2026-10-16) · rama `chore/sonarcloud` · `sonar-project.properties`, job `sonar` con `sonarqube-scan-action` v8.3.0 fijada por commit · requiere desactivar el *Automatic Analysis* en SonarQube Cloud |
 | 23 | 2026-10-16 | Decisión (responsable) | Fase 4: (a) la supresión de datos se atiende **de inmediato**: en la misma transacción se anonimiza al titular, se revocan sus sesiones y la solicitud queda `atendida` con fecha; (b) los administradores se crean **solo por CLI** (`create-admin`, contraseña sin eco); (c) la versión de la política de datos es `1.0`, configurable con `PRIVACY_POLICY_VERSION` | **Aprobada** · (b) y (c) aplicadas (commit `76e27f2`) · (a) pendiente de aplicar |
 | 24 | 2026-10-16 | Decisión menor | Autenticación: Argon2id (`argon2-cffi`), JWT HS256 (`PyJWT`), `email-validator`, contraseñas de 12 a 128 caracteres (OWASP ASVS V2.1), refresco opaco con SHA-256 y rotación con detección de reutilización, usuario y rol leídos de la base en cada petición (`docs/adr/0004-autenticacion.md`) | Aceptada · aplicada (commit `76e27f2`) |
+| 25 | 2026-10-16 | Decisión menor | Límite de intentos: bloqueo por correo (exista o no la cuenta) tras 5 fallos seguidos, 1 → 2 → 4 → 8 → 15 min; límite por IP con ventana deslizante en login (30/5 min) y registro (10/h); 429 con `Retry-After`; contadores en memoria del proceso tras los puertos `RateLimiter` y `LoginAttemptStore`. Al poner el proxy HTTPS (HU-17) configurar `FORWARDED_ALLOW_IPS`; con varios procesos, pasar a PostgreSQL o Redis (`docs/adr/0005-limite-de-intentos.md`) | Aceptada · aplicada (commit `78cd7cc`) |
 
 ---
 
