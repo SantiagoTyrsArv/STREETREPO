@@ -12,3 +12,7 @@ updates:
     directory: /infra/docker
     schedule:
       interval: weekly
+    ignore:
+      # Python 3.13 por la decisión 2; quitar esta regla si se decide migrar a 3.14 o superior.
+      - dependency-name: python
+        versions: [">= 3.14"]
