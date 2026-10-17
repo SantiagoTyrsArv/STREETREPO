@@ -39,5 +39,13 @@ dejan un `TODO(propuesta-N)` en el código.
 | 31 | 2026-10-17 | Propuesta (versionado) | Hook `check-merge-conflict` en pre-commit | Aprobada · Aplicada (commit `002a12d`) |
 | 32 | 2026-10-17 | Propuesta (CI) | Job `sonar` fuera de las ramas de Dependabot (no reciben `SONAR_TOKEN`) | Aprobada · Aplicada (commit `b3887cf`) |
 | 33 | 2026-10-17 | Propuesta (seguridad) | `PRIVACY_POLICY_URL` con https obligatorio en producción | Aprobada · Aplicada (commit `09badd2`) |
+| 34 | 2026-10-17 | Propuesta (arquitectura) | Fotos en disco tras el puerto `PhotoStorage` (`PHOTO_STORAGE_DIR`), servidas por la API con control de acceso | Pendiente |
+| 35 | 2026-10-17 | Propuesta (seguridad) + decisión menor | Procesado de fotos con Pillow: 10 MB, JPEG/PNG/WebP por contenido, recodificar a JPEG 1600 px sin metadatos, miniatura 400 px | Pendiente |
+| 36 | 2026-10-17 | Propuesta (API) | `GET /reports/nearby` y 409 `REPORT_DUPLICATE_NEARBY` en `POST /reports` salvo `create_anyway` | Pendiente |
+| 37 | 2026-10-17 | Propuesta (seguridad) | 422 fuera de `REPORT_AREA_BBOX` (por defecto, el casco urbano de Pasto) | Pendiente |
+| 38 | 2026-10-17 | Propuesta (seguridad) | Límite de reportes: 10/h por usuario y 30/h por IP | Pendiente |
+| 39 | 2026-10-17 | Propuesta (Ley 1581) | Supresión: borrar las fotos de los reportes del titular | Pendiente |
+| 40 | 2026-10-17 | Propuesta (privacidad) | Coordenadas de reportes ajenos redondeadas a 4 decimales (~11 m) | Pendiente |
+| 41 | 2026-10-17 | Propuesta (datos / OSM) | Dirección = nombre de la vía OSM; Nominatim después del MVP | Pendiente |
 
 El detalle de las propuestas 6–11 está en [propuestas-esquema-er.md](propuestas-esquema-er.md).
