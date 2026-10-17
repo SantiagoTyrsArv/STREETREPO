@@ -25,6 +25,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ### Cambiado
 - La CI corre también al subir ramas de trabajo, no solo con *push* a `main`.
+- CI: `actions/checkout` v7.0.1 y `astral-sh/setup-uv` v10.3.0, que ya corren en Node 24 (quitan el
+  aviso de Node 20 obsoleto).
+- Dependabot ya no propone Python 3.14 o superior (decisión 2: Python 3.13).
 - uv 0.13.1 en la imagen de la API, en la CI y en desarrollo, fijado con `required-version` en
   `pyproject.toml`; una prueba verifica que el Dockerfile use la misma versión.
 
