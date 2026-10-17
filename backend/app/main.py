@@ -27,6 +27,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # La pantalla «Política de datos» debe poder mostrar el texto que se acepta (Ley 1581).
         if settings.privacy_policy_url is None:
             raise ValueError("PRIVACY_POLICY_URL es obligatoria en producción")
+        # El texto que se acepta no debe poder alterarse en tránsito (guía 7.3, propuesta 33).
+        if settings.privacy_policy_url.scheme != "https":
+            raise ValueError("PRIVACY_POLICY_URL debe usar https en producción")
 
     app = FastAPI(
         title="Street Repo API",

@@ -45,3 +45,14 @@ def test_privacy_policy_returns_the_configured_version_and_url() -> None:
 def test_production_refuses_to_start_without_a_policy_url() -> None:
     with pytest.raises(ValueError, match="PRIVACY_POLICY_URL"):
         create_app(Settings(app_env=Environment.PROD, jwt_secret_key=TEST_JWT_SECRET))
+
+
+def test_production_refuses_to_start_with_a_policy_url_without_https() -> None:
+    settings = Settings(
+        app_env=Environment.PROD,
+        jwt_secret_key=TEST_JWT_SECRET,
+        privacy_policy_url="http://streetrepo.example.test/politica-de-datos",
+    )
+
+    with pytest.raises(ValueError, match="https"):
+        create_app(settings)
