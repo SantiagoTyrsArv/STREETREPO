@@ -1,3 +1,6 @@
+import pytest
+from pydantic import ValidationError
+
 from app.core.config import Environment, Settings
 
 
@@ -30,3 +33,14 @@ def test_password_is_not_exposed_in_repr() -> None:
 def test_is_production_only_for_prod() -> None:
     assert Settings(app_env=Environment.PROD).is_production
     assert not Settings(app_env=Environment.DEV).is_production
+
+
+def test_forwarded_allow_ips_trusts_only_localhost_by_default() -> None:
+    assert Settings().forwarded_allow_ips == "127.0.0.1"
+    assert Settings(forwarded_allow_ips="172.18.0.5, 10.0.0.2").forwarded_allow_ips
+
+
+@pytest.mark.parametrize("value", ["*", "10.0.0.2, *", " * "])
+def test_forwarded_allow_ips_never_trusts_every_proxy(value: str) -> None:
+    with pytest.raises(ValidationError, match="nunca"):
+        Settings(forwarded_allow_ips=value)
