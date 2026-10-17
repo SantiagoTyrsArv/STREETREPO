@@ -1,3 +1,6 @@
+import secrets
+from functools import cached_property
+
 from argon2 import PasswordHasher as Argon2Hasher
 from argon2.exceptions import InvalidHashError, VerificationError
 
@@ -21,6 +24,12 @@ class Argon2PasswordHasher:
             return self._hasher.verify(password_hash, password)
         except (VerificationError, InvalidHashError):
             return False
+
+    @cached_property
+    def dummy_hash(self) -> str:
+        # Una instancia por proceso (dependencies.py): el hash se calcula una vez y no en
+        # cada inicio de sesión con un correo inexistente (corrección 29a).
+        return self._hasher.hash(secrets.token_urlsafe(32))
 
     def needs_rehash(self, password_hash: str) -> bool:
         try:

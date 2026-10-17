@@ -15,6 +15,7 @@ from app.modules.auth.domain.passwords import (
 from app.modules.auth.domain.ports import InvalidAccessTokenError
 from app.modules.auth.infrastructure.jwt_tokens import ISSUER, JwtAccessTokenService
 from app.modules.auth.infrastructure.passwords import Argon2PasswordHasher
+from app.modules.auth.presentation.dependencies import get_password_hasher
 from app.modules.users.domain.entities import normalize_email
 from app.modules.users.domain.role import UserRole
 from tests.conftest import TEST_JWT_SECRET
@@ -71,6 +72,21 @@ def test_argon2_hashes_are_salted(hasher: Argon2PasswordHasher) -> None:
 def test_invalid_hash_never_verifies(hasher: Argon2PasswordHasher) -> None:
     assert not hasher.verify("no-es-un-hash", "lo que sea")
     assert hasher.needs_rehash("no-es-un-hash")
+
+
+def test_dummy_hash_is_computed_once_and_matches_no_password(
+    hasher: Argon2PasswordHasher,
+) -> None:
+    dummy = hasher.dummy_hash
+
+    assert hasher.dummy_hash is dummy
+    assert dummy.startswith("$argon2id$")
+    assert not hasher.needs_rehash(dummy)  # mismos parámetros que un hash real
+    assert not hasher.verify(dummy, "contraseña-de-relleno-para-igualar-tiempos")
+
+
+def test_the_process_wide_hasher_is_shared() -> None:
+    assert get_password_hasher() is get_password_hasher()
 
 
 def test_current_hash_does_not_need_rehash(hasher: Argon2PasswordHasher) -> None:
