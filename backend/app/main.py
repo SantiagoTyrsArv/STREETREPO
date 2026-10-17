@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app import __version__
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.health import router as health_router
@@ -34,7 +35,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title="Street Repo API",
         description="Reporte ciudadano y priorización de daños viales en Pasto, Nariño.",
-        version="0.1.0",
+        version=__version__,
         docs_url=None if settings.is_production else "/docs",
         redoc_url=None,
     )
