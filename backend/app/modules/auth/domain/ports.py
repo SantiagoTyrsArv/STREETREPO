@@ -22,6 +22,12 @@ class PasswordHasher(Protocol):
         """``True`` si el hash se hizo con parámetros más débiles que los actuales."""
         ...
 
+    @property
+    def dummy_hash(self) -> str:
+        """Hash de una contraseña que nadie conoce, con los parámetros actuales. Se calcula
+        una sola vez: verificar contra él cuesta lo mismo que contra un hash real."""
+        ...
+
 
 class AccessTokenService(Protocol):
     @property

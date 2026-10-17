@@ -32,10 +32,14 @@ PASSWORD = "una frase de paso larga"
 class FakeHasher:
     """Hash reversible solo para pruebas; ``outdated:`` simula parámetros viejos."""
 
+    dummy_hash = "hash:relleno-que-nadie-conoce"
+
     def __init__(self) -> None:
         self.verified: list[str] = []
+        self.hashed = 0
 
     def hash(self, password: str) -> str:
+        self.hashed += 1
         return f"hash:{password}"
 
     def verify(self, password_hash: str, password: str) -> bool:
@@ -263,7 +267,17 @@ def test_login_with_unknown_email_still_verifies_a_hash(auth: Auth) -> None:
     # Mismo trabajo que con un correo real: el tiempo no revela qué correos existen.
     with pytest.raises(InvalidCredentialsError):
         auth.login(email="nadie@example.test")
-    assert len(auth.hasher.verified) == 1
+    assert auth.hasher.verified == [FakeHasher.dummy_hash]
+
+
+def test_login_with_unknown_email_never_computes_a_hash(auth: Auth) -> None:
+    # Cada petición crea su propio Login: si el relleno se calculara aquí, un correo
+    # inexistente costaría un hash más que uno real (corrección 29a).
+    for email in ("nadie@example.test", "tampoco@example.test"):
+        with pytest.raises(InvalidCredentialsError):
+            auth.login(email=email)
+
+    assert auth.hasher.hashed == 0
 
 
 def test_inactive_user_cannot_log_in(auth: Auth) -> None:

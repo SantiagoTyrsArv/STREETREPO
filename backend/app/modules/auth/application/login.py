@@ -2,7 +2,6 @@
 
 import hashlib
 from datetime import datetime
-from functools import cached_property
 
 from app.modules.auth.application.errors import (
     AccountLockedError,
@@ -55,10 +54,6 @@ class Login:
         self._attempts = attempts
         self._lockout = lockout
 
-    @cached_property
-    def _dummy_hash(self) -> str:
-        return self._hasher.hash("contraseña-de-relleno-para-igualar-tiempos")
-
     def execute(self, email: str, password: str) -> TokenPair:
         now = self._clock.now()
         key = login_attempt_key(email)
@@ -67,9 +62,10 @@ class Login:
             raise AccountLockedError(remaining)
         user = self._users.get_by_email(normalize_email(email))
         # Se verifica un hash aunque el correo no exista, para que el tiempo de
-        # respuesta no revele qué correos están registrados.
+        # respuesta no revele qué correos están registrados. El de relleno ya está
+        # calculado: aquí solo se verifica, igual que con una cuenta real.
         password_ok = self._hasher.verify(
-            user.password_hash if user else self._dummy_hash, password
+            user.password_hash if user else self._hasher.dummy_hash, password
         )
         if user is None or not password_ok or not user.is_active:
             self._register_failure(key, now)
