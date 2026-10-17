@@ -29,8 +29,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   `actions/download-artifact` v8.0.2, que ya corren en Node 24 (quitan el aviso de Node 20 obsoleto).
   La descarga del informe de cobertura falla si su hash no coincide.
 - Dependabot ya no propone Python 3.14 o superior (decisión 2: Python 3.13).
+- El job `sonar` no corre en las ramas de Dependabot, que no reciben `SONAR_TOKEN` (propuesta 32).
+- En `main`, el job `sonar` espera la puerta de calidad y falla si no pasa (propuesta 28).
+- pre-commit rechaza marcadores de conflicto sin resolver (`check-merge-conflict`, propuesta 31).
 - uv 0.13.1 en la imagen de la API, en la CI y en desarrollo, fijado con `required-version` en
   `pyproject.toml`; una prueba verifica que el Dockerfile use la misma versión.
+
+### Corregido
+- El inicio de sesión tardaba el doble con un correo inexistente, lo que permitía saber si una
+  cuenta existía; ahora tarda lo mismo (decisión 29a).
+- Hallazgos de SonarQube Cloud que tumbaban la puerta de calidad, entre ellos CORS como capa más
+  externa para que sus cabeceras lleguen también en los errores (decisión 29b).
 
 ## [0.3.0] - 2026-10-16
 
