@@ -103,6 +103,13 @@ Las vías o servicios eliminados de OSM no se borran de la base en una nueva car
   `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout` y `GET /api/v1/me`.
 - `GET /api/v1/privacy-policy` (pública): versión vigente de la política y su dirección
   (`PRIVACY_POLICY_URL`, obligatoria y con https en producción; en dev y test puede quedar vacía y responde `null`).
+- Derechos del titular (Ley 1581): `PATCH /api/v1/me` actualiza nombre y correo, y
+  `POST /api/v1/me/data-deletion-requests` suprime los datos de inmediato por anonimización (conserva
+  los reportes sin descripción y revoca las sesiones). Cambiar el correo o suprimir la cuenta exige la
+  contraseña actual. Decisiones en [ADR 0006](docs/adr/0006-derechos-del-titular.md).
+- Límite de intentos: bloqueo progresivo por correo tras 5 fallos seguidos (1 a 15 min) y límite por
+  IP en inicio de sesión (30 cada 5 min) y registro (10 por hora); responde 429 con `Retry-After`.
+  Contadores en memoria de un solo proceso ([ADR 0005](docs/adr/0005-limite-de-intentos.md)).
 - Requiere `JWT_SECRET_KEY` (al menos 32 caracteres: `openssl rand -hex 32`) en `.env`.
 - Administradores: `python -m app.cli create-admin --name "Nombre" --email correo@dominio.co`
   (pide la contraseña sin mostrarla). Decisiones en [ADR 0004](docs/adr/0004-autenticacion.md).
