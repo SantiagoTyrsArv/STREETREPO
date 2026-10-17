@@ -599,9 +599,9 @@ Cada fase termina con algo **ejecutable y probado**. Ajusta el orden con el resp
 
 Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si algo se desvió del documento, avisar para ajustar la tesis.
 
-**Estado (2026-10-16):** fases 1, 2 y 3 cerradas e integradas en `main` (etiquetas `v0.1.0`, `v0.2.0` y `v0.3.0`), con la CI en verde (252 pruebas, cobertura del backend 99 %). Pendientes de la fase 3 que se completan después: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez (fase 6); lanzar la evaluación al crear un reporte (fase 5).
+**Estado (2026-10-17):** fases 1 a 4 cerradas e integradas en `main` (etiquetas `v0.1.0` a `v0.4.0`), con la CI en verde (403 pruebas, cobertura del backend 98 %). Pendientes de la fase 3 que se completan después: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez (fase 6); lanzar la evaluación al crear un reporte (fase 5).
 
-**Avance de la fase 4 (2026-10-17, para retomar en la próxima sesión):**
+**Fase 4 (cerrada el 2026-10-17, `v0.4.0`):**
 - Hecho e integrado en `main` (CI en verde, 401 pruebas, cobertura del backend 98 %):
   - Migración 0006 (`usuario.version_politica`, `token_refresco`, `solicitud_supresion`), commit `32f853c`.
   - Autenticación (commit `76e27f2`): registro con consentimiento, login Argon2id, JWT de acceso de 15 min, refresco rotatorio con detección de reutilización, logout, `GET /api/v1/me`, RBAC (`require_admin`) y `python -m app.cli create-admin`. Decisiones en `docs/adr/0004-autenticacion.md`.

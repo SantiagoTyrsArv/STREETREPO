@@ -4,6 +4,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+## [0.4.0] - 2026-10-17
+
+Fase 4: autenticación y usuarios.
+
 ### Añadido
 - Migración 0006: `usuario.version_politica`, `token_refresco` y `solicitud_supresion` (propuestas 8, 9 y 10).
 - Autenticación: registro de ciudadanos con consentimiento de la versión vigente de la política,
@@ -36,6 +40,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - pre-commit rechaza marcadores de conflicto sin resolver (`check-merge-conflict`, propuesta 31).
 - uv 0.13.1 en la imagen de la API, en la CI y en desarrollo, fijado con `required-version` en
   `pyproject.toml`; una prueba verifica que el Dockerfile use la misma versión.
+- `uv.lock` en el formato de uv 0.13 (`revision = 5`), sin cambios de paquetes; la CI comprueba con
+  `uv lock --check` que el lock corresponda a `pyproject.toml`.
 
 ### Corregido
 - El inicio de sesión tardaba el doble con un correo inexistente, lo que permitía saber si una
@@ -87,7 +93,8 @@ Fase 1: cimientos.
 - Migración 0002 con las 10 entidades del diagrama ER, restricciones de integridad e índices
   GiST (`geometry` y `geography`); modelos ORM por módulo y mapeo en `docs/base-de-datos.md`.
 
-[Sin publicar]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.3.0...HEAD
+[Sin publicar]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/SantiagoTyrsArv/STREETREPO/releases/tag/v0.1.0
