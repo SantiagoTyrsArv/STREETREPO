@@ -8,7 +8,7 @@ import uuid
 
 ANONYMIZED_NAME = "Titular suprimido"
 # No es un hash Argon2: ninguna contraseña puede coincidir con él.
-UNUSABLE_PASSWORD_HASH = "!suprimido"  # noqa: S105 - marcador, no un secreto
+DISABLED_CREDENTIAL_MARKER = "!suprimido"
 # ``.invalid`` está reservado (RFC 2606): el correo no puede pertenecer a nadie.
 _ANONYMIZED_EMAIL_DOMAIN = "anonimo.invalid"
 

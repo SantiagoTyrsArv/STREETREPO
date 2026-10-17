@@ -46,6 +46,27 @@ def test_cors_allows_only_panel_origin(client: TestClient) -> None:
     assert "access-control-allow-origin" not in denied.headers
 
 
+def test_cors_wraps_errors_and_exposes_the_request_id(client: TestClient) -> None:
+    # CORS es la capa más externa: el panel puede leer los errores y su X-Request-ID.
+    response = client.get("/no-existe", headers={"Origin": PANEL_ORIGIN})
+
+    assert response.status_code == 404
+    assert response.headers["access-control-allow-origin"] == PANEL_ORIGIN
+    assert CORRELATION_HEADER in response.headers
+    assert CORRELATION_HEADER.lower() in response.headers["access-control-expose-headers"].lower()
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+
+def test_preflight_is_answered_for_the_panel(client: TestClient) -> None:
+    response = client.options(
+        "/api/v1/me",
+        headers={"Origin": PANEL_ORIGIN, "Access-Control-Request-Method": "PATCH"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == PANEL_ORIGIN
+
+
 def test_request_id_is_generated(client: TestClient) -> None:
     assert len(client.get("/health").headers[CORRELATION_HEADER]) == 32
 

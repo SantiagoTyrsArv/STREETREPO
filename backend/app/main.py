@@ -36,7 +36,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.rate_limiter = InMemoryRateLimiter()
     app.state.login_attempts = InMemoryLoginAttemptStore()
 
+    # Starlette ejecuta primero el último middleware añadido.
     app.add_middleware(SecurityHeadersMiddleware, enable_hsts=settings.is_production)
+    app.add_middleware(RequestLoggingMiddleware)
+    # CORS va por fuera de todos: responde el preflight antes que nada y añade sus
+    # cabeceras a toda respuesta, incluidos los errores de los demás middlewares.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
@@ -45,8 +49,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "Idempotency-Key", CORRELATION_HEADER],
         expose_headers=[CORRELATION_HEADER],
     )
-    # Se añade al final para ejecutarse primero y envolver a los demás.
-    app.add_middleware(RequestLoggingMiddleware)
 
     register_error_handlers(app)
     app.include_router(health_router)

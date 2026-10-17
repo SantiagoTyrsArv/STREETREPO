@@ -22,7 +22,7 @@ from app.modules.users.application.data_rights import (
 )
 from app.modules.users.domain.anonymization import (
     ANONYMIZED_NAME,
-    UNUSABLE_PASSWORD_HASH,
+    DISABLED_CREDENTIAL_MARKER,
     anonymized_email,
 )
 from app.modules.users.domain.deletion_request import DeletionRequest, DeletionRequestStatus
@@ -52,7 +52,7 @@ class DataRightsUsers(FakeUsers):
             self.by_id[user_id],
             name=ANONYMIZED_NAME,
             email=anonymized_email(user_id),
-            password_hash=UNUSABLE_PASSWORD_HASH,
+            password_hash=DISABLED_CREDENTIAL_MARKER,
             is_active=False,
         )
 
@@ -143,8 +143,10 @@ def rights() -> Rights:
 
 
 def test_confirmation_requires_a_password(rights: Rights) -> None:
+    user, confirmation = rights.add_user(), rights.confirmation
+
     with pytest.raises(PasswordConfirmationRequiredError):
-        rights.confirmation.confirm(rights.add_user(), None)
+        confirmation.confirm(user, None)
 
 
 def test_wrong_confirmations_count_towards_the_login_lockout(rights: Rights) -> None:
@@ -229,7 +231,7 @@ def test_deletion_anonymizes_revokes_and_records_the_request(rights: Rights) -> 
 
     stored = rights.users.by_id[user.id]
     assert (stored.name, stored.email) == (ANONYMIZED_NAME, anonymized_email(user.id))
-    assert stored.password_hash == UNUSABLE_PASSWORD_HASH
+    assert stored.password_hash == DISABLED_CREDENTIAL_MARKER
     assert not stored.is_active
     assert rights.report_texts.cleared == [user.id]
     assert rights.sessions.revoked_for == [user.id]

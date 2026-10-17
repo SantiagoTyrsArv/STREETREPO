@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.users.domain.anonymization import (
     ANONYMIZED_NAME,
-    UNUSABLE_PASSWORD_HASH,
+    DISABLED_CREDENTIAL_MARKER,
     anonymized_email,
 )
 from app.modules.users.domain.deletion_request import DeletionRequest, DeletionRequestStatus
@@ -85,7 +85,7 @@ class SqlUserRepository:
             .values(
                 name=ANONYMIZED_NAME,
                 email=anonymized_email(user_id),
-                password_hash=UNUSABLE_PASSWORD_HASH,
+                password_hash=DISABLED_CREDENTIAL_MARKER,
                 is_active=False,
             )
         )

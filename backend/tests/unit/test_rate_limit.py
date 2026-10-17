@@ -29,8 +29,10 @@ def test_limiter_allows_up_to_the_limit_and_then_rejects() -> None:
     for i in range(3):
         limiter.hit("ip", THREE_PER_MINUTE, NOW + timedelta(seconds=i))
 
+    ten_seconds_later = NOW + timedelta(seconds=10)
+
     with pytest.raises(RateLimitExceededError) as exceeded:
-        limiter.hit("ip", THREE_PER_MINUTE, NOW + timedelta(seconds=10))
+        limiter.hit("ip", THREE_PER_MINUTE, ten_seconds_later)
 
     # El primer cupo se libera un minuto después de la primera solicitud.
     assert exceeded.value.retry_after == timedelta(seconds=50)
@@ -40,13 +42,14 @@ def test_window_slides_and_rejected_requests_do_not_consume_quota() -> None:
     limiter = InMemoryRateLimiter()
     for i in range(3):
         limiter.hit("ip", THREE_PER_MINUTE, NOW + timedelta(seconds=i))
+    half_a_minute_later, a_minute_later = NOW + timedelta(seconds=30), NOW + timedelta(minutes=1)
     with pytest.raises(RateLimitExceededError):
-        limiter.hit("ip", THREE_PER_MINUTE, NOW + timedelta(seconds=30))
+        limiter.hit("ip", THREE_PER_MINUTE, half_a_minute_later)
 
-    limiter.hit("ip", THREE_PER_MINUTE, NOW + timedelta(minutes=1))
+    limiter.hit("ip", THREE_PER_MINUTE, a_minute_later)
 
     with pytest.raises(RateLimitExceededError):
-        limiter.hit("ip", THREE_PER_MINUTE, NOW + timedelta(minutes=1))
+        limiter.hit("ip", THREE_PER_MINUTE, a_minute_later)
 
 
 def test_keys_have_independent_quotas() -> None:
