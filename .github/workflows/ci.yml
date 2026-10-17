@@ -60,6 +60,9 @@ jobs:
           enable-cache: true
           # Toma required-version de aquí; sin esto busca en la raíz e instala la última.
           version-file: backend/pyproject.toml
+      - name: Lock al día con pyproject.toml
+        # --frozen instala el lock tal cual; esto falla si el lock no corresponde a pyproject.toml.
+        run: uv lock --check
       - name: Instalar dependencias
         run: uv sync --frozen
       - name: Lint y formato
