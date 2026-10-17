@@ -1,14 +1,14 @@
 # Imagen de la API: multi-etapa, sin herramientas de compilación ni secretos, usuario no root.
 FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
 
-FROM python:3.13-slim AS build
+FROM python:3.14-slim AS build
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 WORKDIR /srv
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-FROM python:3.13-slim AS runtime
+FROM python:3.14-slim AS runtime
 ENV PATH="/srv/.venv/bin:$PATH" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 RUN groupadd --system app && useradd --system --gid app --no-create-home app
 WORKDIR /srv
