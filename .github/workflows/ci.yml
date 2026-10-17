@@ -19,7 +19,7 @@ jobs:
       GITLEAKS_VERSION: 8.21.2
       GITLEAKS_SHA256: 5bc41815076e6ed6ef8fbecc9d9b75bcae31f39029ceb55da08086315316e3ba
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # todo el historial, no solo el último commit
       - name: Instalar gitleaks (versión fija y suma verificada)
@@ -54,7 +54,7 @@ jobs:
       POSTGRES_USER: streetrepo
       POSTGRES_PASSWORD: ci-only-password
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           enable-cache: true
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [backend]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # el historial completo permite detectar el código nuevo
       - name: Recuperar informe de cobertura
@@ -103,6 +103,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [backend, secrets]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Construir imagen de la API
         run: docker build -f infra/docker/api.Dockerfile -t street-repo-api:ci backend
