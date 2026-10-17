@@ -8,7 +8,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.dependencies import SessionDep, SettingsDep
 from app.core.errors import AppError
+from app.modules.auth.application.reauthentication import PasswordConfirmation
 from app.modules.auth.application.sessions import SessionIssuer
+from app.modules.auth.domain.lockout import DEFAULT_LOCKOUT_POLICY
 from app.modules.auth.domain.ports import InvalidAccessTokenError, LoginAttemptStore
 from app.modules.auth.infrastructure.jwt_tokens import JwtAccessTokenService
 from app.modules.auth.infrastructure.passwords import Argon2PasswordHasher
@@ -16,6 +18,7 @@ from app.modules.auth.infrastructure.refresh_repository import SqlRefreshTokenRe
 from app.modules.users.domain.entities import User
 from app.modules.users.domain.role import UserRole
 from app.modules.users.infrastructure.repository import SqlUserRepository
+from app.shared.application.clock import SystemClock
 
 _bearer = HTTPBearer(auto_error=False, description="Token de acceso (JWT) de /auth/login")
 _password_hasher = Argon2PasswordHasher()
@@ -41,6 +44,15 @@ def get_login_attempts(request: Request) -> LoginAttemptStore:
 
 
 LoginAttemptsDep = Annotated[LoginAttemptStore, Depends(get_login_attempts)]
+
+
+def get_password_confirmation(
+    hasher: PasswordHasherDep, attempts: LoginAttemptsDep
+) -> PasswordConfirmation:
+    return PasswordConfirmation(hasher, attempts, DEFAULT_LOCKOUT_POLICY, SystemClock())
+
+
+PasswordConfirmationDep = Annotated[PasswordConfirmation, Depends(get_password_confirmation)]
 
 
 def get_session_issuer(

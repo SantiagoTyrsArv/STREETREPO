@@ -23,3 +23,11 @@ class AccountLockedError(Exception):
     def __init__(self, retry_after: timedelta) -> None:
         super().__init__(f"Cuenta bloqueada; reintentar en {retry_after}")
         self.retry_after = retry_after
+
+
+class PasswordConfirmationRequiredError(Exception):
+    """La acción es sensible y exige confirmar la contraseña actual (propuesta 26)."""
+
+
+class WrongPasswordError(Exception):
+    """La contraseña de confirmación no coincide."""
