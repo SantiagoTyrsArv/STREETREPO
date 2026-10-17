@@ -28,7 +28,7 @@ Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colom
 ```bash
 cp .env.example .env                 # y cambiar POSTGRES_PASSWORD
 docker compose -f infra/docker-compose.yml --env-file .env up --build
-curl http://localhost:8000/health    # {"status":"ok"}
+curl http://localhost:8000/health    # {"status":"ok","version":"<versión de la API>"}
 curl http://localhost:8000/ready     # comprueba PostgreSQL + PostGIS
 # Documentación OpenAPI: http://localhost:8000/docs
 ```

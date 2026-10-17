@@ -10,6 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app import __version__
 from app.core.database import get_session
 from app.core.errors import error_body
 
@@ -20,6 +21,7 @@ router = APIRouter(tags=["salud"])
 
 class HealthResponse(BaseModel):
     status: str
+    version: str = __version__
 
 
 @router.get("/health", response_model=HealthResponse)

@@ -29,6 +29,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   `actions/download-artifact` v8.0.2, que ya corren en Node 24 (quitan el aviso de Node 20 obsoleto).
   La descarga del informe de cobertura falla si su hash no coincide.
 - Dependabot ya no propone Python 3.14 o superior (decisión 2: Python 3.13).
+- La versión de la API vive solo en `app/__init__.py` (`__version__`), la usan OpenAPI y
+  `/health` y `/ready` (campo `version`), y una prueba la compara con `pyproject.toml` (decisión 30a).
 - El job `sonar` no corre en las ramas de Dependabot, que no reciben `SONAR_TOKEN` (propuesta 32).
 - En `main`, el job `sonar` espera la puerta de calidad y falla si no pasa (propuesta 28).
 - pre-commit rechaza marcadores de conflicto sin resolver (`check-merge-conflict`, propuesta 31).
