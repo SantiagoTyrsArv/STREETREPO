@@ -7,16 +7,19 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from app.modules.auth.application.errors import (
+    AccountLockedError,
     InvalidCredentialsError,
     InvalidRefreshTokenError,
     PolicyNotAcceptedError,
     PolicyVersionMismatchError,
 )
-from app.modules.auth.application.login import Login, Logout, RefreshSession
+from app.modules.auth.application.login import Login, Logout, RefreshSession, login_attempt_key
 from app.modules.auth.application.register import RegisterCitizen, Registration
 from app.modules.auth.application.sessions import SessionIssuer, hash_refresh_token
 from app.modules.auth.domain.entities import AccessClaims, StoredRefreshToken
+from app.modules.auth.domain.lockout import DEFAULT_LOCKOUT_POLICY
 from app.modules.auth.domain.passwords import WeakPasswordError
+from app.modules.auth.infrastructure.memory_login_attempts import InMemoryLoginAttemptStore
 from app.modules.users.domain.entities import NewUser, User
 from app.modules.users.domain.ports import EmailAlreadyRegisteredError
 from app.modules.users.domain.role import UserRole
@@ -149,6 +152,7 @@ class Auth:
     refresh_tokens: FakeRefreshTokens = field(default_factory=FakeRefreshTokens)
     clock: FakeClock = field(default_factory=FakeClock)
     transaction: Transaction = field(default_factory=Transaction)
+    attempts: InMemoryLoginAttemptStore = field(default_factory=InMemoryLoginAttemptStore)
 
     def register(self, **overrides: object) -> User:
         data = {
@@ -166,7 +170,15 @@ class Auth:
         return SessionIssuer(FakeAccessTokens(), self.refresh_tokens, timedelta(days=7))
 
     def login(self, email: str = "ana@example.test", password: str = PASSWORD) -> str:
-        use_case = Login(self.users, self.hasher, self.sessions, self.clock, self.transaction)
+        use_case = Login(
+            self.users,
+            self.hasher,
+            self.sessions,
+            self.clock,
+            self.transaction,
+            attempts=self.attempts,
+            lockout=DEFAULT_LOCKOUT_POLICY,
+        )
         return use_case.execute(email, password).refresh_token
 
     def refresh(self, token: str) -> str:
@@ -269,6 +281,79 @@ def test_login_upgrades_an_outdated_hash(auth: Auth) -> None:
     auth.login()
 
     assert auth.users.by_id[user.id].password_hash == f"hash:{PASSWORD}"
+
+
+# --- Bloqueo progresivo ------------------------------------------------------
+
+WRONG = "otra frase cualquiera"
+
+
+def _fail_logins(auth: Auth, times: int, email: str = "ana@example.test") -> None:
+    for _ in range(times):
+        with pytest.raises(InvalidCredentialsError):
+            auth.login(email=email, password=WRONG)
+
+
+def test_login_locks_after_five_consecutive_failures(auth: Auth) -> None:
+    auth.register()
+    _fail_logins(auth, 4)
+    auth.clock.current += timedelta(seconds=1)
+    _fail_logins(auth, 1)
+    verified_before = len(auth.hasher.verified)
+
+    # Ni la contraseña correcta entra, y durante el bloqueo no se verifica ningún hash.
+    with pytest.raises(AccountLockedError) as locked:
+        auth.login()
+    assert locked.value.retry_after == timedelta(minutes=1)
+    assert len(auth.hasher.verified) == verified_before
+
+
+def test_lock_expires_and_success_resets_the_count(auth: Auth) -> None:
+    auth.register()
+    _fail_logins(auth, 5)
+
+    auth.clock.current += timedelta(minutes=1)
+    auth.login()
+
+    assert auth.attempts.get(login_attempt_key("ana@example.test")) is None
+    _fail_logins(auth, 4)  # vuelve a tener 5 intentos libres
+    auth.login()
+
+
+def test_each_failure_after_the_lock_doubles_it(auth: Auth) -> None:
+    auth.register()
+    _fail_logins(auth, 5)
+    auth.clock.current += timedelta(minutes=1)
+    _fail_logins(auth, 1)
+
+    with pytest.raises(AccountLockedError) as locked:
+        auth.login()
+    assert locked.value.retry_after == timedelta(minutes=2)
+
+
+def test_unknown_emails_are_locked_too(auth: Auth) -> None:
+    # Si solo se bloquearan las cuentas reales, el bloqueo revelaría qué correos existen.
+    _fail_logins(auth, 5, email="nadie@example.test")
+
+    with pytest.raises(AccountLockedError):
+        auth.login(email="nadie@example.test")
+
+
+def test_lock_is_per_email_and_ignores_case_and_spaces(auth: Auth) -> None:
+    auth.register()
+    auth.register(email="otra@example.test")
+    _fail_logins(auth, 5, email=" ANA@example.test ")
+
+    with pytest.raises(AccountLockedError):
+        auth.login(email="ana@example.test")
+    auth.login(email="otra@example.test")
+
+
+def test_attempt_key_does_not_contain_the_email() -> None:
+    key = login_attempt_key(" Ana@Example.test ")
+
+    assert "ana" not in key
+    assert key == login_attempt_key("ana@example.test")
 
 
 # --- Refresco con rotación ---------------------------------------------------

@@ -3,13 +3,13 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import Depends, status
+from fastapi import Depends, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.dependencies import SessionDep, SettingsDep
 from app.core.errors import AppError
 from app.modules.auth.application.sessions import SessionIssuer
-from app.modules.auth.domain.ports import InvalidAccessTokenError
+from app.modules.auth.domain.ports import InvalidAccessTokenError, LoginAttemptStore
 from app.modules.auth.infrastructure.jwt_tokens import JwtAccessTokenService
 from app.modules.auth.infrastructure.passwords import Argon2PasswordHasher
 from app.modules.auth.infrastructure.refresh_repository import SqlRefreshTokenRepository
@@ -33,6 +33,14 @@ def get_access_token_service(settings: SettingsDep) -> JwtAccessTokenService:
 
 AccessTokensDep = Annotated[JwtAccessTokenService, Depends(get_access_token_service)]
 PasswordHasherDep = Annotated[Argon2PasswordHasher, Depends(get_password_hasher)]
+
+
+def get_login_attempts(request: Request) -> LoginAttemptStore:
+    attempts: LoginAttemptStore = request.app.state.login_attempts
+    return attempts
+
+
+LoginAttemptsDep = Annotated[LoginAttemptStore, Depends(get_login_attempts)]
 
 
 def get_session_issuer(

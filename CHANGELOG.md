@@ -11,6 +11,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   reutilización, cierre de sesión, `GET /api/v1/me` y control de acceso por rol en el servidor.
 - Comando `python -m app.cli create-admin` para crear administradores.
 - Análisis de SonarQube Cloud en la CI con la cobertura del backend (propuesta 22).
+- Límite de intentos: bloqueo progresivo del inicio de sesión por correo tras 5 fallos seguidos
+  (1, 2, 4, 8 y hasta 15 min) y límite por IP en inicio de sesión (30 cada 5 min) y registro
+  (10 por hora); responden 429 con `Retry-After` (decisión 25).
 
 ### Cambiado
 - La CI corre también al subir ramas de trabajo, no solo con *push* a `main`.

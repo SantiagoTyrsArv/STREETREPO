@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+
 class InvalidCredentialsError(Exception):
     """Correo o contraseña incorrectos, o cuenta inactiva (sin decir cuál, anti enumeración)."""
 
@@ -12,3 +15,11 @@ class PolicyNotAcceptedError(Exception):
 
 class PolicyVersionMismatchError(Exception):
     """El ciudadano aceptó una versión de la política que ya no está vigente."""
+
+
+class AccountLockedError(Exception):
+    """Demasiados intentos fallidos seguidos: la cuenta está bloqueada por un tiempo."""
+
+    def __init__(self, retry_after: timedelta) -> None:
+        super().__init__(f"Cuenta bloqueada; reintentar en {retry_after}")
+        self.retry_after = retry_after

@@ -1,18 +1,41 @@
 """Casos de uso de sesión: iniciar, refrescar (rotación) y cerrar (guía 7.1)."""
 
+import hashlib
+from datetime import datetime
 from functools import cached_property
 
-from app.modules.auth.application.errors import InvalidCredentialsError, InvalidRefreshTokenError
+from app.modules.auth.application.errors import (
+    AccountLockedError,
+    InvalidCredentialsError,
+    InvalidRefreshTokenError,
+)
 from app.modules.auth.application.sessions import SessionIssuer, hash_refresh_token
 from app.modules.auth.domain.entities import TokenPair
-from app.modules.auth.domain.ports import PasswordHasher, RefreshTokenRepository
+from app.modules.auth.domain.lockout import LockoutPolicy
+from app.modules.auth.domain.ports import (
+    LoginAttemptStore,
+    PasswordHasher,
+    RefreshTokenRepository,
+)
 from app.modules.users.domain.entities import normalize_email
 from app.modules.users.domain.ports import UserRepository
 from app.shared.application.clock import Clock
 from app.shared.application.transaction import TransactionManager
 
 
+def login_attempt_key(email: str) -> str:
+    """Clave de los intentos fallidos: un hash del correo normalizado, para no guardar
+    correos en memoria (minimización, guía 7.2)."""
+    return hashlib.sha256(normalize_email(email).encode()).hexdigest()
+
+
 class Login:
+    """Inicia sesión con bloqueo progresivo por fallos seguidos (guía 7.1).
+
+    El bloqueo se lleva por correo, exista o no la cuenta: así no revela qué correos
+    están registrados. Mientras dura, ni siquiera se verifica la contraseña.
+    """
+
     def __init__(
         self,
         users: UserRepository,
@@ -20,18 +43,28 @@ class Login:
         sessions: SessionIssuer,
         clock: Clock,
         transaction: TransactionManager,
+        *,
+        attempts: LoginAttemptStore,
+        lockout: LockoutPolicy,
     ) -> None:
         self._users = users
         self._hasher = hasher
         self._sessions = sessions
         self._clock = clock
         self._transaction = transaction
+        self._attempts = attempts
+        self._lockout = lockout
 
     @cached_property
     def _dummy_hash(self) -> str:
         return self._hasher.hash("contraseña-de-relleno-para-igualar-tiempos")
 
     def execute(self, email: str, password: str) -> TokenPair:
+        now = self._clock.now()
+        key = login_attempt_key(email)
+        remaining = self._lockout.remaining_lock(self._attempts.get(key), now)
+        if remaining is not None:
+            raise AccountLockedError(remaining)
         user = self._users.get_by_email(normalize_email(email))
         # Se verifica un hash aunque el correo no exista, para que el tiempo de
         # respuesta no revele qué correos están registrados.
@@ -39,16 +72,21 @@ class Login:
             user.password_hash if user else self._dummy_hash, password
         )
         if user is None or not password_ok or not user.is_active:
+            self._register_failure(key, now)
             raise InvalidCredentialsError("Correo o contraseña incorrectos")
         try:
             if self._hasher.needs_rehash(user.password_hash):
                 self._users.update_password_hash(user.id, self._hasher.hash(password))
-            session = self._sessions.issue(user, self._clock.now())
+            session = self._sessions.issue(user, now)
             self._transaction.commit()
         except Exception:
             self._transaction.rollback()
             raise
+        self._attempts.clear(key)
         return session.tokens
+
+    def _register_failure(self, key: str, now: datetime) -> None:
+        self._attempts.save(key, self._lockout.register_failure(self._attempts.get(key), now))
 
 
 class RefreshSession:

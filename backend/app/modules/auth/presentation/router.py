@@ -1,12 +1,19 @@
 """Rutas de autenticación: /api/v1/auth (HU-10, HU-11)."""
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Response, status
 
 from app.core.dependencies import SessionDep, SettingsDep
 from app.core.errors import AppError
+from app.core.rate_limiting import (
+    LOGIN_LIMIT_PER_IP,
+    REGISTER_LIMIT_PER_IP,
+    limit_per_client_ip,
+    too_many_requests,
+)
 from app.modules.auth.application.errors import (
+    AccountLockedError,
     InvalidCredentialsError,
     InvalidRefreshTokenError,
     PolicyNotAcceptedError,
@@ -16,9 +23,14 @@ from app.modules.auth.application.login import Login, Logout, RefreshSession
 from app.modules.auth.application.register import RegisterCitizen, Registration
 from app.modules.auth.application.sessions import SessionIssuer
 from app.modules.auth.domain.entities import TokenPair
+from app.modules.auth.domain.lockout import DEFAULT_LOCKOUT_POLICY
 from app.modules.auth.domain.passwords import WeakPasswordError
 from app.modules.auth.infrastructure.refresh_repository import SqlRefreshTokenRepository
-from app.modules.auth.presentation.dependencies import PasswordHasherDep, get_session_issuer
+from app.modules.auth.presentation.dependencies import (
+    LoginAttemptsDep,
+    PasswordHasherDep,
+    get_session_issuer,
+)
 from app.modules.auth.presentation.schemas import (
     LoginRequest,
     RefreshRequest,
@@ -33,6 +45,10 @@ from app.shared.application.clock import SystemClock
 router = APIRouter(prefix="/auth", tags=["autenticación"])
 
 SessionIssuerDep = Annotated[SessionIssuer, Depends(get_session_issuer)]
+
+_TOO_MANY_REQUESTS_DOC: dict[int | str, dict[str, Any]] = {
+    status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Demasiados intentos; ver Retry-After"}
+}
 
 _INVALID_SESSION = AppError(
     "INVALID_REFRESH_TOKEN",
@@ -53,9 +69,11 @@ def _token_response(tokens: TokenPair) -> TokenResponse:
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(limit_per_client_ip("register", REGISTER_LIMIT_PER_IP))],
     responses={
         status.HTTP_409_CONFLICT: {"description": "Correo ya registrado o política desactualizada"},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Datos inválidos"},
+        **_TOO_MANY_REQUESTS_DOC,
     },
 )
 def register(
@@ -116,24 +134,41 @@ def register(
 @router.post(
     "/login",
     response_model=TokenResponse,
-    responses={status.HTTP_401_UNAUTHORIZED: {"description": "Credenciales incorrectas"}},
+    dependencies=[Depends(limit_per_client_ip("login", LOGIN_LIMIT_PER_IP))],
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {"description": "Credenciales incorrectas"},
+        **_TOO_MANY_REQUESTS_DOC,
+    },
 )
 def login(
     body: LoginRequest,
     session: SessionDep,
     hasher: PasswordHasherDep,
     sessions: SessionIssuerDep,
+    attempts: LoginAttemptsDep,
 ) -> TokenResponse:
-    """Inicia sesión: token de acceso corto y token de refresco de un solo uso."""
+    """Inicia sesión: token de acceso corto y token de refresco de un solo uso.
+
+    Tras 5 fallos seguidos con el mismo correo, bloquea los intentos de forma progresiva
+    (1, 2, 4, 8 y hasta 15 min) y responde 429 con ``Retry-After``.
+    """
     use_case = Login(
         users=SqlUserRepository(session),
         hasher=hasher,
         sessions=sessions,
         clock=SystemClock(),
         transaction=session,
+        attempts=attempts,
+        lockout=DEFAULT_LOCKOUT_POLICY,
     )
     try:
         tokens = use_case.execute(body.email, body.password)
+    except AccountLockedError as exc:
+        raise too_many_requests(
+            "TOO_MANY_LOGIN_ATTEMPTS",
+            "Demasiados intentos fallidos. Espera un momento e intenta de nuevo.",
+            exc.retry_after,
+        ) from exc
     except InvalidCredentialsError as exc:
         raise AppError(
             "INVALID_CREDENTIALS",
