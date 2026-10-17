@@ -1,5 +1,6 @@
 """El esquema creado por las migraciones cumple el diagrama ER y las reglas de integridad."""
 
+import uuid
 from decimal import Decimal
 
 import pytest
@@ -23,6 +24,7 @@ ER_TABLES = {
     "reporte": {
         "id_reporte", "id_usuario", "id_zona", "id_via", "ubicacion", "direccion",
         "severidad", "descripcion", "estado", "puntaje_prioridad", "fecha_creacion",
+        "clave_idempotencia",
     },
     "confirmacion": {"id_confirmacion", "id_reporte", "id_usuario", "fecha"},
     "evidencia": {
@@ -329,3 +331,33 @@ def test_user_with_deletion_request_cannot_be_deleted(conn: Connection) -> None:
 
     with pytest.raises(IntegrityError, match="solicitud_supresion_id_usuario_fkey"):
         conn.execute(delete, {"u": user_id})
+
+
+_INSERT_WITH_KEY = text(
+    "INSERT INTO reporte (id_usuario, ubicacion, severidad, clave_idempotencia) "
+    "VALUES (:u, ST_SetSRID(ST_MakePoint(-77.28, 1.21), 4326), 2, :k)"
+)
+
+
+def test_idempotency_key_is_unique_per_user(conn: Connection) -> None:
+    user_id, key = insert_user(conn), uuid.uuid4()
+    conn.execute(_INSERT_WITH_KEY, {"u": user_id, "k": key})
+
+    with pytest.raises(IntegrityError, match="uq_reporte_usuario_clave_idempotencia"):
+        conn.execute(_INSERT_WITH_KEY, {"u": user_id, "k": key})
+
+
+def test_same_idempotency_key_is_allowed_for_another_user(conn: Connection) -> None:
+    # Única por par (usuario, clave) y no global: dos clientes no chocan (propuesta 11).
+    key = uuid.uuid4()
+    first, second = insert_user(conn, "a@example.test"), insert_user(conn, "b@example.test")
+
+    conn.execute(_INSERT_WITH_KEY, {"u": first, "k": key})
+    conn.execute(_INSERT_WITH_KEY, {"u": second, "k": key})
+
+
+def test_idempotency_key_is_optional(conn: Connection) -> None:
+    user_id = insert_user(conn)
+
+    conn.execute(_INSERT_WITH_KEY, {"u": user_id, "k": None})
+    conn.execute(_INSERT_WITH_KEY, {"u": user_id, "k": None})

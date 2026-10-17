@@ -14,6 +14,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Text,
+    UniqueConstraint,
     func,
     text,
 )
@@ -40,6 +41,11 @@ class ReportModel(Base):
         Index("ix_reporte_estado_puntaje", "estado", text("puntaje_prioridad DESC")),
         Index("ix_reporte_fecha_creacion", "fecha_creacion"),
         Index("ix_reporte_id_usuario", "id_usuario"),
+        # Reintentos de la app móvil sin duplicar el reporte; única por usuario, no global
+        # (propuesta 11).
+        UniqueConstraint(
+            "id_usuario", "clave_idempotencia", name="uq_reporte_usuario_clave_idempotencia"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -70,6 +76,8 @@ class ReportModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         "fecha_creacion", DateTime(timezone=True), server_default=func.now()
     )
+    # Cabecera Idempotency-Key del envío; opcional.
+    idempotency_key: Mapped[uuid.UUID | None] = mapped_column("clave_idempotencia")
 
 
 class EvidenceModel(Base):
