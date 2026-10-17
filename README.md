@@ -3,8 +3,8 @@
 Sistema Ciudadano de Reporte y Priorización de Daños en la Infraestructura Vial de Pasto, Nariño.
 Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colombia, Campus Pasto.
 
-> **Estado:** fases 1 a 3 del MVP cerradas (versión `v0.3.0`): API base, esquema de base de datos,
-> carga OSM y motor de priorización. Aún no hay rutas de negocio (autenticación y reportes: fases 4 y 5).
+> **Estado:** fases 1 a 4 del MVP cerradas (versión `v0.4.0`): API base, esquema de base de datos,
+> carga OSM, motor de priorización, autenticación y derechos del titular. Los reportes llegan en la fase 5.
 > Historial de versiones en [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Componentes
@@ -103,6 +103,13 @@ Las vías o servicios eliminados de OSM no se borran de la base en una nueva car
   `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout` y `GET /api/v1/me`.
 - `GET /api/v1/privacy-policy` (pública): versión vigente de la política y su dirección
   (`PRIVACY_POLICY_URL`, obligatoria y con https en producción; en dev y test puede quedar vacía y responde `null`).
+- Derechos del titular (Ley 1581): `PATCH /api/v1/me` actualiza nombre y correo, y
+  `POST /api/v1/me/data-deletion-requests` suprime los datos de inmediato por anonimización (conserva
+  los reportes sin descripción y revoca las sesiones). Cambiar el correo o suprimir la cuenta exige la
+  contraseña actual. Decisiones en [ADR 0006](docs/adr/0006-derechos-del-titular.md).
+- Límite de intentos: bloqueo progresivo por correo tras 5 fallos seguidos (1 a 15 min) y límite por
+  IP en inicio de sesión (30 cada 5 min) y registro (10 por hora); responde 429 con `Retry-After`.
+  Contadores en memoria de un solo proceso ([ADR 0005](docs/adr/0005-limite-de-intentos.md)).
 - Requiere `JWT_SECRET_KEY` (al menos 32 caracteres: `openssl rand -hex 32`) en `.env`.
 - Administradores: `python -m app.cli create-admin --name "Nombre" --email correo@dominio.co`
   (pide la contraseña sin mostrarla). Decisiones en [ADR 0004](docs/adr/0004-autenticacion.md).
