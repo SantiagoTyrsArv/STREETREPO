@@ -18,6 +18,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   `POST /api/v1/me/data-deletion-requests` para suprimir los datos de inmediato por anonimización
   (conserva los reportes, borra su descripción, revoca las sesiones y deja la constancia atendida).
   Suprimir la cuenta o cambiar el correo exige la contraseña actual (propuesta 26).
+- `GET /api/v1/privacy-policy`, pública: versión vigente de la política de datos y su dirección
+  (`PRIVACY_POLICY_URL`, obligatoria en producción) (propuesta 27).
 - `FORWARDED_ALLOW_IPS` configurable: la API no arranca si vale `*`; uvicorn corre con
   `--workers 1` (condiciones de la decisión 25).
 

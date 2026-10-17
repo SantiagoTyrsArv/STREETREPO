@@ -3,7 +3,7 @@
 from enum import StrEnum
 from functools import lru_cache
 
-from pydantic import Field, PostgresDsn, field_validator
+from pydantic import Field, HttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -51,6 +51,17 @@ class Settings(BaseSettings):
     # Versión vigente de la política de tratamiento de datos (Ley 1581). El registro
     # exige que el ciudadano haya aceptado exactamente esta versión.
     privacy_policy_version: str = Field(default="1.0", min_length=1, max_length=20)
+    # Dónde se publica el texto de esa versión. Opcional en dev y test; en producción la
+    # API no arranca sin ella (propuesta 27).
+    privacy_policy_url: HttpUrl | None = None
+
+    @field_validator("privacy_policy_url", mode="before")
+    @classmethod
+    def _blank_policy_url_means_none(cls, value: object) -> object:
+        # `.env.example` y Compose la dejan vacía cuando no se define.
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     @field_validator("forwarded_allow_ips")
     @classmethod

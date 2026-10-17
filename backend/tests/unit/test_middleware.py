@@ -20,7 +20,11 @@ def test_security_headers_are_present(client: TestClient) -> None:
 
 
 def _production() -> Settings:
-    return Settings(app_env=Environment.PROD, jwt_secret_key=TEST_JWT_SECRET)
+    return Settings(
+        app_env=Environment.PROD,
+        jwt_secret_key=TEST_JWT_SECRET,
+        privacy_policy_url="https://streetrepo.example.test/politica-de-datos",
+    )
 
 
 def test_hsts_only_in_production() -> None:
