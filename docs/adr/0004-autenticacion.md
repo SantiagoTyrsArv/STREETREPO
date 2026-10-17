@@ -17,5 +17,5 @@
 | Anti enumeración | El inicio de sesión responde igual y hace el mismo trabajo (verifica un hash de relleno) si el correo no existe | OWASP ASVS V2.2 |
 | Correo | Se valida con `email-validator` (rechaza dominios reservados como `.test`) y se guarda en minúsculas | `usuario.correo` es UNIQUE |
 | Administradores | Solo por CLI: `python -m app.cli create-admin --name … --email …` (contraseña sin eco, nunca en argumentos) | Decisión del responsable (2026-10-16); el registro público solo crea ciudadanos |
-| Versión de la política | `PRIVACY_POLICY_VERSION` (por defecto `1.0`); el registro exige aceptar exactamente la vigente | Decisión del responsable (2026-10-16); propuesta 8 |
+| Versión de la política | `PRIVACY_POLICY_VERSION` (por defecto `1.0`); el registro exige aceptar exactamente la vigente. `GET /api/v1/privacy-policy` (pública) la publica con `PRIVACY_POLICY_URL`, la dirección del texto; en producción la API no arranca sin ella | Decisión del responsable (2026-10-16); propuestas 8 y 27 |
 | Transporte de tokens | En el cuerpo JSON (app móvil). Para el panel web se evaluará cookie `HttpOnly` + `SameSite` + CSRF en la fase 6 (guía 7.3) | Pendiente de la fase 6 |

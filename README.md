@@ -100,6 +100,8 @@ Las vías o servicios eliminados de OSM no se borran de la base en una nueva car
 
 - `POST /api/v1/auth/register` (ciudadano; exige aceptar la política vigente, `PRIVACY_POLICY_VERSION`),
   `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout` y `GET /api/v1/me`.
+- `GET /api/v1/privacy-policy` (pública): versión vigente de la política y su dirección
+  (`PRIVACY_POLICY_URL`, obligatoria en producción; en dev y test puede quedar vacía y responde `null`).
 - Requiere `JWT_SECRET_KEY` (al menos 32 caracteres: `openssl rand -hex 32`) en `.env`.
 - Administradores: `python -m app.cli create-admin --name "Nombre" --email correo@dominio.co`
   (pide la contraseña sin mostrarla). Decisiones en [ADR 0004](docs/adr/0004-autenticacion.md).

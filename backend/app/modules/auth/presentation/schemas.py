@@ -40,6 +40,14 @@ class RefreshRequest(_Request):
     refresh_token: Annotated[str, Field(min_length=1, max_length=REFRESH_TOKEN_MAX_LENGTH)]
 
 
+class PrivacyPolicyResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    version: str
+    # Null mientras no se haya publicado el texto (solo en dev y test).
+    url: str | None
+
+
 class TokenResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
