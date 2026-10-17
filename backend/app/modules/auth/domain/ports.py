@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Protocol
 
 from app.modules.auth.domain.entities import AccessClaims, StoredRefreshToken
+from app.modules.auth.domain.lockout import FailedLogins
 from app.modules.users.domain.role import UserRole
 
 
@@ -49,3 +50,13 @@ class RefreshTokenRepository(Protocol):
         ...
 
     def revoke_all_for_user(self, user_id: uuid.UUID) -> None: ...
+
+
+class LoginAttemptStore(Protocol):
+    """Fallos de inicio de sesión por clave de cuenta (un hash del correo, no el correo)."""
+
+    def get(self, key: str) -> FailedLogins | None: ...
+
+    def save(self, key: str, record: FailedLogins) -> None: ...
+
+    def clear(self, key: str) -> None: ...

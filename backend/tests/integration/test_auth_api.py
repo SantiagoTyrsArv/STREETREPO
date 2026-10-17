@@ -149,6 +149,18 @@ def test_login_failures_look_the_same(api: TestClient, email: str, password: str
     assert result["code"] == "INVALID_CREDENTIALS"
 
 
+def test_login_locks_the_email_after_repeated_failures(api: TestClient) -> None:
+    _register(api)
+    failures = [_login(api, password="otra frase de paso")["_status"] for _ in range(5)]
+
+    locked = api.post(f"{API_V1_PREFIX}/auth/login", json={"email": EMAIL, "password": PASSWORD})
+
+    assert failures == [401] * 5
+    assert locked.status_code == 429
+    assert locked.json()["code"] == "TOO_MANY_LOGIN_ATTEMPTS"
+    assert 0 < int(locked.headers["Retry-After"]) <= 60
+
+
 @pytest.mark.parametrize(
     "headers", [{}, {"Authorization": "Bearer basura"}, {"Authorization": "Basic abc"}]
 )

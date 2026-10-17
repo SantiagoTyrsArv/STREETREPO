@@ -9,8 +9,10 @@ from app.core.health import router as health_router
 from app.core.logging import CORRELATION_HEADER, RequestLoggingMiddleware, configure_logging
 from app.core.security_headers import SecurityHeadersMiddleware
 from app.modules.auth.infrastructure.jwt_tokens import JwtAccessTokenService
+from app.modules.auth.infrastructure.memory_login_attempts import InMemoryLoginAttemptStore
 from app.modules.auth.presentation.router import router as auth_router
 from app.modules.users.presentation.router import router as users_router
+from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
 
 API_V1_PREFIX = "/api/v1"
 
@@ -30,6 +32,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
     )
     app.state.settings = settings
+    # Contadores anti abuso en memoria de este proceso (decisión 25).
+    app.state.rate_limiter = InMemoryRateLimiter()
+    app.state.login_attempts = InMemoryLoginAttemptStore()
 
     app.add_middleware(SecurityHeadersMiddleware, enable_hsts=settings.is_production)
     app.add_middleware(
