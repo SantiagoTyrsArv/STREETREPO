@@ -53,6 +53,17 @@ def test_confirmation_has_unique_user_report_pair() -> None:
     assert ("id_reporte", "id_usuario") in uniques
 
 
+def test_report_idempotency_key_is_unique_per_user() -> None:
+    uniques = {
+        tuple(sorted(c.name for c in constraint.columns))
+        for constraint in _table("reporte").constraints
+        if isinstance(constraint, UniqueConstraint)
+    }
+
+    assert ("clave_idempotencia", "id_usuario") in uniques
+    assert _table("reporte").c.clave_idempotencia.nullable
+
+
 def test_weights_have_sum_and_range_checks() -> None:
     checks = {
         constraint.name

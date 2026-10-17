@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Añadido
+- Migración 0007: `reporte.clave_idempotencia`, única por par (usuario, clave) (propuesta 11).
+
 ## [0.4.0] - 2026-10-17
 
 Fase 4: autenticación y usuarios.

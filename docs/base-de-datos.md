@@ -1,7 +1,7 @@
 # Base de datos
 
 Fuente: diagrama ER en Lucid ("Street Repo - Diagrama Entidad-Relación"). Migración:
-`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`, 0005 pesos iniciales, 0006 autenticación y derechos del titular).
+`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`, 0005 pesos iniciales, 0006 autenticación y derechos del titular, 0007 clave de idempotencia del reporte).
 
 Las tablas y columnas usan los nombres del diagrama (español). El código usa nombres en inglés
 (guía 9.1); este es el mapeo.
@@ -70,6 +70,7 @@ El diagrama no define nulabilidad, valores por defecto ni reglas de borrado. Se 
 | `reporte.severidad` | Código 1 = baja, 2 = media, 3 = alta (`CHECK 1..3`) | La normalización a S (3/6/10) vive en el dominio y puede ajustarse sin migrar datos |
 | `reporte.id_via` | Opcional | NULL = sin vía a 30 m: F = 2 y "Revisar vía" (guía 2.2) |
 | `reporte.id_zona`, `direccion` | Opcionales | El punto puede no caer en una zona; Nominatim puede no responder |
+| `reporte.clave_idempotencia` | Opcional; `UNIQUE (id_usuario, clave_idempotencia)` | Cabecera `Idempotency-Key`: un reintento de la app móvil no duplica el reporte. Única por usuario y no global, para que dos usuarios no choquen (propuesta 11) |
 | `reporte.puntaje_prioridad` | Opcional, `CHECK 0..10` | Copia de la U vigente para ordenar el ranking; NULL hasta la primera evaluación |
 | `historial_estado.id_usuario` | Opcional | NULL = transición automática del motor (Registrado → Evaluado) |
 | `historial_estado.estado_anterior` | Opcional | NULL en el registro inicial |
