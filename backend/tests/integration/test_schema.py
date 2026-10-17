@@ -266,13 +266,13 @@ def test_geography_index_is_used_for_road_matching(conn: Connection) -> None:
 
 
 def test_accepted_policy_requires_its_version(conn: Connection) -> None:
+    insert = text(
+        "INSERT INTO usuario (nombre, correo, password_hash, acepta_politica, "
+        "fecha_aceptacion) VALUES ('Prueba', 'v@example.test', 'hash', true, now())"
+    )
+
     with pytest.raises(IntegrityError, match="ck_usuario_aceptacion_con_version"):
-        conn.execute(
-            text(
-                "INSERT INTO usuario (nombre, correo, password_hash, acepta_politica, "
-                "fecha_aceptacion) VALUES ('Prueba', 'v@example.test', 'hash', true, now())"
-            )
-        )
+        conn.execute(insert)
 
 
 def _insert_refresh_token(conn: Connection, user_id: object, token_hash: str) -> None:
@@ -294,14 +294,14 @@ def test_refresh_token_hash_is_unique(conn: Connection) -> None:
 
 
 def test_refresh_token_must_expire_after_issue(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    insert = text(
+        "INSERT INTO token_refresco (id_usuario, hash_token, expira) "
+        "VALUES (:u, 'hash-2', now() - interval '1 second')"
+    )
+
     with pytest.raises(IntegrityError, match="ck_token_refresco_expira_despues"):
-        conn.execute(
-            text(
-                "INSERT INTO token_refresco (id_usuario, hash_token, expira) "
-                "VALUES (:u, 'hash-2', now() - interval '1 second')"
-            ),
-            {"u": insert_user(conn)},
-        )
+        conn.execute(insert, {"u": user_id})
 
 
 def test_only_one_pending_deletion_request_per_user(conn: Connection) -> None:
@@ -314,16 +314,18 @@ def test_only_one_pending_deletion_request_per_user(conn: Connection) -> None:
 
 
 def test_attended_deletion_request_requires_its_date(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    insert = text("INSERT INTO solicitud_supresion (id_usuario, estado) VALUES (:u, 'atendida')")
+
     with pytest.raises(IntegrityError, match="ck_solicitud_supresion_atencion_con_fecha"):
-        conn.execute(
-            text("INSERT INTO solicitud_supresion (id_usuario, estado) VALUES (:u, 'atendida')"),
-            {"u": insert_user(conn)},
-        )
+        conn.execute(insert, {"u": user_id})
 
 
 def test_user_with_deletion_request_cannot_be_deleted(conn: Connection) -> None:
     user_id = insert_user(conn)
     conn.execute(text("INSERT INTO solicitud_supresion (id_usuario) VALUES (:u)"), {"u": user_id})
 
+    delete = text("DELETE FROM usuario WHERE id_usuario = :u")
+
     with pytest.raises(IntegrityError, match="solicitud_supresion_id_usuario_fkey"):
-        conn.execute(text("DELETE FROM usuario WHERE id_usuario = :u"), {"u": user_id})
+        conn.execute(delete, {"u": user_id})

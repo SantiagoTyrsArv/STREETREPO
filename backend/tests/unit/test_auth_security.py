@@ -133,9 +133,10 @@ def test_expired_access_token_is_rejected(tokens: JwtAccessTokenService) -> None
 
 def test_token_signed_with_another_key_is_rejected(tokens: JwtAccessTokenService) -> None:
     other = JwtAccessTokenService("f" * 64, ttl_minutes=15)
+    token = other.issue(USER_ID, UserRole.ADMIN, datetime.now(UTC))
 
     with pytest.raises(InvalidAccessTokenError):
-        tokens.verify(other.issue(USER_ID, UserRole.ADMIN, datetime.now(UTC)))
+        tokens.verify(token)
 
 
 def _forge(payload: dict[str, object], algorithm: str = "HS256") -> str:
@@ -157,13 +158,17 @@ def _valid_payload() -> dict[str, object]:
 
 def test_unsigned_token_is_rejected(tokens: JwtAccessTokenService) -> None:
     # Ataque clásico: "alg": "none" sin firma.
+    token = _forge(_valid_payload(), algorithm="none")
+
     with pytest.raises(InvalidAccessTokenError):
-        tokens.verify(_forge(_valid_payload(), algorithm="none"))
+        tokens.verify(token)
 
 
 def test_token_with_another_algorithm_is_rejected(tokens: JwtAccessTokenService) -> None:
+    token = _forge(_valid_payload(), algorithm="HS512")
+
     with pytest.raises(InvalidAccessTokenError):
-        tokens.verify(_forge(_valid_payload(), algorithm="HS512"))
+        tokens.verify(token)
 
 
 @pytest.mark.parametrize("claim", ["sub", "role", "typ", "iss", "iat", "exp"])
@@ -172,9 +177,10 @@ def test_token_without_a_required_claim_is_rejected(
 ) -> None:
     payload = _valid_payload()
     del payload[claim]
+    token = _forge(payload)
 
     with pytest.raises(InvalidAccessTokenError):
-        tokens.verify(_forge(payload))
+        tokens.verify(token)
 
 
 @pytest.mark.parametrize(
@@ -184,10 +190,10 @@ def test_token_without_a_required_claim_is_rejected(
 def test_token_with_a_wrong_claim_is_rejected(
     tokens: JwtAccessTokenService, claim: str, value: str
 ) -> None:
-    payload = _valid_payload() | {claim: value}
+    token = _forge(_valid_payload() | {claim: value})
 
     with pytest.raises(InvalidAccessTokenError):
-        tokens.verify(_forge(payload))
+        tokens.verify(token)
 
 
 def test_garbage_token_is_rejected(tokens: JwtAccessTokenService) -> None:
