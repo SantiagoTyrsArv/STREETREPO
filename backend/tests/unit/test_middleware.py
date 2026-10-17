@@ -38,8 +38,10 @@ def test_docs_disabled_in_production() -> None:
 
 
 def test_production_refuses_to_start_without_a_strong_jwt_secret() -> None:
+    settings = Settings(app_env=Environment.PROD, jwt_secret_key="corta")
+
     with pytest.raises(ValueError, match="JWT_SECRET_KEY"):
-        create_app(Settings(app_env=Environment.PROD, jwt_secret_key="corta"))
+        create_app(settings)
 
 
 def test_cors_allows_only_panel_origin(client: TestClient) -> None:
