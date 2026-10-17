@@ -1,7 +1,7 @@
 # 0005 · Límite de intentos y bloqueo progresivo
 
 - **Fecha:** 2026-10-16
-- **Estado:** Aceptada (decisión menor, guía 7.1 y 7.3)
+- **Estado:** Aceptada con condiciones del responsable (decisión menor, guía 7.1 y 7.3)
 - **Refs:** HU-10
 
 ## Decisiones
@@ -15,10 +15,20 @@
 | Almacenamiento | **En memoria del proceso**, detrás de los puertos `RateLimiter` y `LoginAttemptStore`; cada aplicación crea los suyos en `app.state`. Máximo 10 000 claves por almacén; al llenarse se descarta la menos reciente | La API corre en un solo proceso uvicorn; no exige tablas nuevas ni Redis, que no está en el stack (cambiarlo requiere el protocolo 0.3) |
 | Valores | Constantes con nombre: `DEFAULT_LOCKOUT_POLICY` (`auth/domain/lockout.py`) y `LOGIN_LIMIT_PER_IP` / `REGISTER_LIMIT_PER_IP` (`core/rate_limiting.py`) | Guía 8.1: sin números mágicos |
 
+## Condiciones del responsable (2026-10-16)
+
+| # | Condición | Cómo se cumple |
+|---|---|---|
+| 1 | Un solo proceso | El contenedor arranca uvicorn con `--workers 1` (`infra/docker/api.Dockerfile`). Verificarlo de nuevo al montar el despliegue HTTPS (HU-17) |
+| 2 | `FORWARDED_ALLOW_IPS` con la dirección del proxy, nunca `*` | Variable en `Settings`, `docker-compose.yml` y `.env.example`, con `127.0.0.1` por defecto. La API **no arranca** si incluye `*`; hay prueba en `tests/unit/test_config.py`. Uvicorn lee la misma variable |
+| 3 | Purga o tope de entradas, con prueba | Cada almacén guarda como máximo 10 000 claves y descarta la menos reciente; hay pruebas en `test_rate_limit.py` y `test_login_lockout.py` |
+| 4 | Mantener el bloqueo por correo con respuesta idéntica exista o no la cuenta | Así está implementado; el riesgo de bloqueo intencional se acepta (ver abajo) |
+| 5 | Mencionarlo en la tesis como limitación conocida | Pendiente en el documento: contadores en memoria, un solo proceso y reinicio del conteo al reiniciar la API |
+
 ## Limitaciones conocidas
 
 - **Un solo proceso.** Con varios *workers* o réplicas cada uno lleva su propia cuenta, lo que multiplica el límite real, y las cuentas se pierden al reiniciar la API. Si se escala, sustituir las implementaciones en memoria por unas en PostgreSQL o Redis, sin tocar los casos de uso.
-- **IP real detrás de un proxy.** Uvicorn arranca con `--proxy-headers` y solo confía en `127.0.0.1`. Cuando se ponga el proxy HTTPS (HU-17, fase 6), hay que configurar `FORWARDED_ALLOW_IPS` con la IP del proxy. Si no se hace, todos los clientes compartirían el cupo de la IP del proxy.
+- **IP real detrás de un proxy.** Uvicorn arranca con `--proxy-headers` y por defecto solo confía en `127.0.0.1`. Cuando se ponga el proxy HTTPS (HU-17, fase 6), hay que poner su dirección en `FORWARDED_ALLOW_IPS`. Si no se hace, todos los clientes compartirían el cupo de la IP del proxy.
 - **Bloqueo intencional.** Alguien que conozca un correo puede mantener esa cuenta bloqueada hasta 15 min seguidos. Es el compromiso habitual del bloqueo por cuenta. El límite por IP lo encarece.
 - **Concurrencia.** Varios intentos simultáneos con el mismo correo pueden pasar la verificación antes de que se registre el fallo. El límite por IP acota ese margen.
 - **Pendiente:** el límite en la creación de reportes llega con la fase 5. Reutilizará `limit_per_client_ip` o un límite por usuario.

@@ -3,7 +3,7 @@
 from enum import StrEnum
 from functools import lru_cache
 
-from pydantic import Field, PostgresDsn
+from pydantic import Field, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     # Lista separada por comas; solo el origen del panel administrativo (guía 7.3).
     cors_origins: str = ""
 
+    # Proxies de los que uvicorn acepta X-Forwarded-For (la lee él mismo de esta variable).
+    # Se valida aquí para que la API no arranque con "*": cualquiera podría falsificar su IP
+    # y saltarse el límite de intentos (decisión 25, condición 2).
+    forwarded_allow_ips: str = "127.0.0.1"
+
     # Carga OSM (guía 3.1). Área: "sur,oeste,norte,este"; por defecto, el casco urbano
     # aproximado de Pasto. Ajustar si se necesita cubrir corregimientos.
     osm_bbox: str = "1.16,-77.33,1.25,-77.23"
@@ -46,6 +51,13 @@ class Settings(BaseSettings):
     # Versión vigente de la política de tratamiento de datos (Ley 1581). El registro
     # exige que el ciudadano haya aceptado exactamente esta versión.
     privacy_policy_version: str = Field(default="1.0", min_length=1, max_length=20)
+
+    @field_validator("forwarded_allow_ips")
+    @classmethod
+    def _reject_trusting_every_proxy(cls, value: str) -> str:
+        if any(address.strip() == "*" for address in value.split(",")):
+            raise ValueError("FORWARDED_ALLOW_IPS debe listar la dirección del proxy, nunca '*'")
+        return value
 
     # Propiedad simple (no computed_field) para que la clave no aparezca en repr ni en dumps.
     @property
