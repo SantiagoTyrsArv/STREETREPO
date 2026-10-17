@@ -12,7 +12,8 @@ from app.modules.users.domain.role import UserRole
 # token (evita "alg": "none" y la confusión de algoritmos, guía 7.1).
 ALGORITHM: Final = "HS256"
 ISSUER: Final = "street-repo"
-TOKEN_TYPE: Final = "access"  # noqa: S105 - tipo de token, no un secreto
+# Tipo de token, no un secreto.
+TOKEN_TYPE: Final = "access"  # noqa: S105
 # RFC 7518 §3.2: la clave de HS256 debe tener al menos 256 bits.
 MIN_SECRET_LENGTH: Final = 32
 

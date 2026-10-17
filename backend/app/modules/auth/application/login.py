@@ -21,6 +21,8 @@ from app.modules.users.domain.ports import UserRepository
 from app.shared.application.clock import Clock
 from app.shared.application.transaction import TransactionManager
 
+_INVALID_SESSION = "Sesión no válida"
+
 
 def login_attempt_key(email: str) -> str:
     """Clave de los intentos fallidos: un hash del correo normalizado, para no guardar
@@ -110,19 +112,19 @@ class RefreshSession:
         now = self._clock.now()
         stored = self._refresh_tokens.get_by_hash(hash_refresh_token(refresh_token))
         if stored is None:
-            raise InvalidRefreshTokenError("Sesión no válida")
+            raise InvalidRefreshTokenError(_INVALID_SESSION)
         if stored.revoked:
             if stored.replaced_by is not None:
                 self._refresh_tokens.revoke_chain(stored.id)
                 self._transaction.commit()
-            raise InvalidRefreshTokenError("Sesión no válida")
+            raise InvalidRefreshTokenError(_INVALID_SESSION)
         if stored.expires_at <= now:
             raise InvalidRefreshTokenError("La sesión venció")
         user = self._users.get_by_id(stored.user_id)
         if user is None or not user.is_active:
             self._refresh_tokens.revoke_all_for_user(stored.user_id)
             self._transaction.commit()
-            raise InvalidRefreshTokenError("Sesión no válida")
+            raise InvalidRefreshTokenError(_INVALID_SESSION)
         try:
             session = self._sessions.issue(user, now)
             self._refresh_tokens.mark_replaced(stored.id, session.refresh_token_id)

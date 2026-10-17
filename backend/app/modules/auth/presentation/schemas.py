@@ -44,6 +44,7 @@ class TokenResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     access_token: str
-    token_type: Literal["bearer"] = "bearer"  # noqa: S105 - esquema OAuth 2, no un secreto
+    # Esquema OAuth 2, no un secreto.
+    token_type: Literal["bearer"] = "bearer"  # noqa: S105
     expires_in: int
     refresh_token: str
