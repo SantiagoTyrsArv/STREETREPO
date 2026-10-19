@@ -16,6 +16,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   usuario y 30 por IP, configurables (propuestas 37 y 38).
 - La dirección del reporte es el nombre de la vía OSM asociada, con texto de reserva (propuesta 41).
 - README: sección de respaldos de la base y de las fotos.
+- Posible duplicado (HU-15): `GET /api/v1/reports/nearby` lista los reportes activos a 25 m sin
+  datos del autor, y `POST /api/v1/reports` responde 409 `REPORT_DUPLICATE_NEARBY` con ellos salvo
+  `create_anyway=true`. Un candado de transacción evita que dos envíos simultáneos esquiven la
+  verificación; un reintento con la misma `Idempotency-Key` sigue respondiendo 200 (propuesta 36).
 
 ## [0.4.0] - 2026-10-17
 

@@ -11,6 +11,7 @@ from app.modules.reports.application.create_report import (
     CreateReportPolicy,
     ReportSubmission,
 )
+from app.modules.reports.domain.duplicates import DuplicateCandidate, PossibleDuplicateError
 from app.modules.reports.domain.entities import ReportDetails
 from app.modules.reports.domain.new_report import LocationOutsideServiceAreaError, NewReport
 from app.modules.reports.domain.photos import (
@@ -28,6 +29,7 @@ from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.domain.status_machine import StatusChange
 from app.shared.application.rate_limit import RateLimit, RateLimitExceededError
 from app.shared.domain.geo import BoundingBox, GeoPoint
+from app.shared.domain.geo_parameters import DEDUPLICATION_RADIUS_M
 from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
 
 USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
@@ -149,6 +151,45 @@ class FakeStorage:
         self.files.pop(key, None)
 
 
+def candidate(distance_m: float = 12.5) -> DuplicateCandidate:
+    return DuplicateCandidate(
+        id=uuid.uuid4(),
+        distance_m=distance_m,
+        status=ReportStatus.EVALUATED,
+        severity=Severity.MEDIUM,
+        confirmations=3,
+        road_id=1,
+        road_name="Carrera 27",
+        created_at=NOW,
+    )
+
+
+class FakeNearby:
+    """Responde en orden lo que haya en ``responses``; después, ``default``."""
+
+    def __init__(self) -> None:
+        self.default: list[DuplicateCandidate] = []
+        self.responses: list[list[DuplicateCandidate]] = []
+        self.calls: list[tuple[GeoPoint, float]] = []
+
+    def find_active_within(
+        self, point: GeoPoint, radius_m: float, limit: int
+    ) -> list[DuplicateCandidate]:
+        self.calls.append((point, radius_m))
+        return self.responses.pop(0) if self.responses else self.default
+
+
+class FakeLock:
+    def __init__(self, events: list[str], on_acquire: object = None) -> None:
+        self._events = events
+        self.on_acquire = on_acquire
+
+    def acquire(self) -> None:
+        self._events.append("lock")
+        if callable(self.on_acquire):
+            self.on_acquire()
+
+
 class FixedClock:
     def now(self) -> datetime:
         return NOW
@@ -159,6 +200,9 @@ class Harness:
         self, *, evaluator: FakeEvaluator | None = None, processor: PhotoProcessor | None = None
     ) -> None:
         self.reports = FakeReports()
+        self.events: list[str] = []
+        self.nearby = FakeNearby()
+        self.lock = FakeLock(self.events)
         self.transaction = FakeTransaction(self.reports)
         self.statuses = FakeStatuses()
         self.evaluator = evaluator or FakeEvaluator()
@@ -167,6 +211,8 @@ class Harness:
         self.limiter = InMemoryRateLimiter()
         self.use_case = CreateReport(
             reports=self.reports,
+            nearby=self.nearby,
+            creation_lock=self.lock,
             statuses=self.statuses,
             evaluator=self.evaluator,
             photo_processor=self.processor,
@@ -186,6 +232,7 @@ def _submission(
     location: GeoPoint = PASTO,
     key: uuid.UUID | None = None,
     photo: bytes = b"foto-original",
+    create_anyway: bool = False,
 ) -> ReportSubmission:
     return ReportSubmission(
         user_id=USER_ID,
@@ -194,6 +241,7 @@ def _submission(
         description="  Hueco profundo  ",
         idempotency_key=key,
         photo=photo,
+        create_anyway=create_anyway,
     )
 
 
@@ -329,3 +377,99 @@ def test_a_failed_cleanup_does_not_hide_the_original_error() -> None:
 
     with pytest.raises(RuntimeError, match="motor"):
         harness.use_case.execute(_submission())
+
+
+# --- Posible duplicado a 25 m (propuesta 36) -------------------------------------
+
+
+def test_active_report_nearby_is_offered_instead_of_creating_another() -> None:
+    harness = Harness()
+    existing = candidate()
+    harness.nearby.default = [existing]
+
+    with pytest.raises(PossibleDuplicateError) as duplicate:
+        harness.use_case.execute(_submission())
+
+    assert duplicate.value.candidates == (existing,)
+    assert harness.nearby.calls == [(PASTO, DEDUPLICATION_RADIUS_M)]
+    # Se avisa antes de procesar la foto y sin consumir cupo.
+    assert harness.processor.calls == 0
+    assert harness.reports.saved == {}
+    harness.nearby.default = []
+    for _ in range(TWO_PER_HOUR.max_requests):
+        harness.use_case.execute(_submission())
+
+
+def test_create_anyway_creates_the_report_next_to_the_existing_one() -> None:
+    harness = Harness()
+    harness.nearby.default = [candidate()]
+
+    result = harness.use_case.execute(_submission(create_anyway=True))
+
+    assert result.created
+    assert harness.nearby.calls == []
+
+
+def test_retry_of_a_created_report_is_not_taken_as_its_own_duplicate() -> None:
+    harness = Harness()
+    key = uuid.uuid4()
+    first = harness.use_case.execute(_submission(key=key))
+    # Ahora el reporte recién creado está a 0 m del punto del reintento.
+    harness.nearby.default = [candidate(distance_m=0.0)]
+
+    retry = harness.use_case.execute(_submission(key=key))
+
+    assert not retry.created
+    assert retry.report.id == first.report.id
+
+
+def test_the_check_is_repeated_inside_the_transaction_with_the_lock_held() -> None:
+    harness = Harness()
+    # Libre en la primera consulta; otro ciudadano crea uno cercano antes del candado.
+    harness.nearby.responses = [[], [candidate(distance_m=4.0)]]
+
+    with pytest.raises(PossibleDuplicateError):
+        harness.use_case.execute(_submission())
+
+    assert harness.events == ["lock"]
+    assert len(harness.nearby.calls) == 2
+    assert harness.transaction.rollbacks == 1
+    assert harness.reports.saved == {}
+    assert harness.storage.files == {}
+
+
+def test_lock_is_taken_before_inserting() -> None:
+    harness = Harness()
+    inserted_before_lock: list[bool] = []
+    harness.lock.on_acquire = lambda: inserted_before_lock.append(bool(harness.reports.pending))
+
+    harness.use_case.execute(_submission())
+
+    assert inserted_before_lock == [False]
+
+
+def test_same_key_saved_by_a_concurrent_request_while_waiting_for_the_lock() -> None:
+    harness = Harness()
+    key = uuid.uuid4()
+    winner = uuid.uuid4()
+
+    def other_request_commits() -> None:
+        harness.reports.saved[winner] = NewReport.create(
+            user_id=USER_ID,
+            location=PASTO,
+            severity=Severity.HIGH,
+            description=None,
+            idempotency_key=key,
+            service_area=BoundingBox.parse("1.16,-77.33,1.25,-77.23"),
+        )
+        # Para este envío, el ganador sería un duplicado a 0 m.
+        harness.nearby.default = [candidate(distance_m=0.0)]
+
+    harness.lock.on_acquire = other_request_commits
+
+    result = harness.use_case.execute(_submission(key=key))
+
+    assert not result.created
+    assert result.report.id == winner
+    assert harness.storage.files == {}
+    assert harness.transaction.commits == 0

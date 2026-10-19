@@ -41,7 +41,7 @@ dejan un `TODO(propuesta-N)` en el código.
 | 33 | 2026-10-17 | Propuesta (seguridad) | `PRIVACY_POLICY_URL` con https obligatorio en producción | Aprobada · Aplicada (commit `09badd2`) |
 | 34 | 2026-10-17 | Propuesta (arquitectura) | Fotos en disco tras el puerto `PhotoStorage` (`PHOTO_STORAGE_DIR`), servidas por la API con control de acceso | Aprobada (2026-10-19) · almacenamiento aplicado ([ADR 0007](0007-creacion-de-reportes.md)); la ruta que sirve la foto llega con el detalle del reporte |
 | 35 | 2026-10-17 | Propuesta (seguridad) + decisión menor | Procesado de fotos con Pillow: 10 MB, JPEG/PNG/WebP por contenido, recodificar a JPEG 1600 px sin metadatos, miniatura 400 px | Aprobada (2026-10-19) · aplicada ([ADR 0007](0007-creacion-de-reportes.md)) |
-| 36 | 2026-10-17 | Propuesta (API) | `GET /reports/nearby` y 409 `REPORT_DUPLICATE_NEARBY` en `POST /reports` salvo `create_anyway` | Aprobada (2026-10-19) · pendiente |
+| 36 | 2026-10-17 | Propuesta (API) | `GET /reports/nearby` y 409 `REPORT_DUPLICATE_NEARBY` en `POST /reports` salvo `create_anyway` | Aprobada (2026-10-19) · aplicada ([ADR 0007](0007-creacion-de-reportes.md)) |
 | 37 | 2026-10-17 | Propuesta (seguridad) | 422 fuera de `REPORT_AREA_BBOX` (por defecto, el casco urbano de Pasto) | Aprobada (2026-10-19) · aplicada ([ADR 0007](0007-creacion-de-reportes.md)) |
 | 38 | 2026-10-17 | Propuesta (seguridad) | Límite de reportes: 10/h por usuario y 30/h por IP | Aprobada (2026-10-19) · aplicada ([ADR 0007](0007-creacion-de-reportes.md)) |
 | 39 | 2026-10-17 | Propuesta (Ley 1581) | Supresión: borrar las fotos de los reportes del titular | Aprobada (2026-10-19) · pendiente |

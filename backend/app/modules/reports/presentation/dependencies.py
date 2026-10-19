@@ -13,7 +13,12 @@ from app.modules.priority.infrastructure.evaluation_repository import SqlEvaluat
 from app.modules.priority.infrastructure.reports_reader import SqlReportsToEvaluate
 from app.modules.priority.infrastructure.weights_repository import SqlWeightVersionRepository
 from app.modules.reports.application.create_report import CreateReport, CreateReportPolicy
+from app.modules.reports.application.find_nearby import FindPossibleDuplicates
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
+from app.modules.reports.infrastructure.nearby import (
+    PostgisNearbyReportFinder,
+    PostgresReportCreationLock,
+)
 from app.modules.reports.infrastructure.pillow_photos import PillowPhotoProcessor
 from app.modules.reports.infrastructure.repository import SqlReportRepository
 from app.modules.reports.infrastructure.status_history import SqlStatusHistoryRecorder
@@ -44,6 +49,8 @@ def get_create_report(
     )
     return CreateReport(
         reports=SqlReportRepository(session),
+        nearby=PostgisNearbyReportFinder(session),
+        creation_lock=PostgresReportCreationLock(session),
         statuses=statuses,
         evaluator=evaluator,
         photo_processor=PillowPhotoProcessor(),
@@ -61,3 +68,10 @@ def get_create_report(
 
 
 CreateReportDep = Annotated[CreateReport, Depends(get_create_report)]
+
+
+def get_find_possible_duplicates(session: SessionDep) -> FindPossibleDuplicates:
+    return FindPossibleDuplicates(PostgisNearbyReportFinder(session))
+
+
+FindPossibleDuplicatesDep = Annotated[FindPossibleDuplicates, Depends(get_find_possible_duplicates)]

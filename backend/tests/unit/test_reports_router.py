@@ -10,17 +10,21 @@ from fastapi.testclient import TestClient
 from app.core.config import Settings
 from app.main import API_V1_PREFIX, create_app
 from app.modules.auth.presentation.dependencies import get_current_user
+from app.modules.reports.application.find_nearby import FindPossibleDuplicates
 from app.modules.reports.domain.photos import (
     MAX_PHOTO_BYTES,
     InvalidPhotoError,
     UnsupportedPhotoTypeError,
 )
 from app.modules.reports.infrastructure.pillow_photos import PillowPhotoProcessor
-from app.modules.reports.presentation.dependencies import get_create_report
+from app.modules.reports.presentation.dependencies import (
+    get_create_report,
+    get_find_possible_duplicates,
+)
 from app.modules.users.domain.entities import User
 from app.modules.users.domain.role import UserRole
 from tests.images import image_bytes
-from tests.unit.test_create_report import USER_ID, FakeProcessor, Harness
+from tests.unit.test_create_report import USER_ID, FakeNearby, FakeProcessor, Harness, candidate
 
 REPORTS = f"{API_V1_PREFIX}/reports"
 CITIZEN = User(
@@ -190,5 +194,88 @@ def test_hourly_limit_per_ip(settings: Settings) -> None:
 def test_requires_a_session(settings: Settings) -> None:
     with TestClient(create_app(settings)) as client:
         response = client.post(REPORTS, data=FORM, files=_photo())
+
+    assert response.status_code == 401
+
+
+# --- Posible duplicado (propuesta 36) ---------------------------------------------
+
+
+def test_nearby_active_report_answers_409_with_the_candidates(
+    api: TestClient, harness: Harness
+) -> None:
+    existing = candidate(distance_m=12.345)
+    harness.nearby.default = [existing]
+
+    response = api.post(REPORTS, data=FORM, files=_photo())
+
+    assert response.status_code == 409
+    body = response.json()
+    assert body["code"] == "REPORT_DUPLICATE_NEARBY"
+    assert body["details"]["radius_m"] == 25.0
+    assert body["details"]["items"] == [
+        {
+            "id": str(existing.id),
+            "distance_m": 12.3,
+            "status": "evaluado",
+            "severity": "media",
+            "confirmations": 3,
+            "address": "Carrera 27",
+            "created_at": "2026-10-19T12:00:00Z",
+        }
+    ]
+    assert harness.reports.saved == {}
+
+
+def test_create_anyway_in_the_form(api: TestClient, harness: Harness) -> None:
+    harness.nearby.default = [candidate()]
+
+    response = api.post(REPORTS, data=FORM | {"create_anyway": "true"}, files=_photo())
+
+    assert response.status_code == 201
+
+
+def _nearby_client(settings: Settings, nearby: FakeNearby) -> TestClient:
+    app = create_app(settings)
+    app.dependency_overrides[get_current_user] = lambda: CITIZEN
+    app.dependency_overrides[get_find_possible_duplicates] = lambda: FindPossibleDuplicates(nearby)
+    return TestClient(app)
+
+
+def test_nearby_lists_active_reports_within_25_m(settings: Settings) -> None:
+    nearby = FakeNearby()
+    nearby.default = [candidate(distance_m=3.0), candidate(distance_m=20.0)]
+
+    with _nearby_client(settings, nearby) as client:
+        response = client.get(
+            f"{REPORTS}/nearby", params={"longitude": -77.2811, "latitude": 1.2136}
+        )
+
+    assert response.status_code == 200
+    assert [item["distance_m"] for item in response.json()["items"]] == [3.0, 20.0]
+    point, radius_m = nearby.calls[0]
+    assert (point.longitude, point.latitude, radius_m) == (-77.2811, 1.2136, 25.0)
+    # Nada del autor ni la ubicación exacta del reporte ajeno.
+    assert not {"user_id", "location", "description"} & set(response.json()["items"][0])
+
+
+def test_nearby_without_results(settings: Settings) -> None:
+    with _nearby_client(settings, FakeNearby()) as client:
+        response = client.get(f"{REPORTS}/nearby", params={"longitude": -77.28, "latitude": 1.21})
+
+    assert response.json() == {"radius_m": 25.0, "items": []}
+
+
+@pytest.mark.parametrize("params", [{"longitude": -77.28}, {"longitude": -77.28, "latitude": 91}])
+def test_nearby_validates_the_point(settings: Settings, params: dict[str, float]) -> None:
+    with _nearby_client(settings, FakeNearby()) as client:
+        response = client.get(f"{REPORTS}/nearby", params=params)
+
+    assert response.status_code == 422
+
+
+def test_nearby_requires_a_session(settings: Settings) -> None:
+    with TestClient(create_app(settings)) as client:
+        response = client.get(f"{REPORTS}/nearby", params={"longitude": -77.28, "latitude": 1.21})
 
     assert response.status_code == 401
