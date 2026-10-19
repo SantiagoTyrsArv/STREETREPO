@@ -5,6 +5,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- `GET /api/v1/reports/{id}/photo` y `/photo/thumbnail`: la foto y su miniatura en JPEG, solo para el
+  autor y los administradores; 404 para los demás y `Cache-Control: private, no-store` (propuesta 34).
 - Supresión de datos (Ley 1581): borra también las fotos y miniaturas de los reportes del titular;
   los archivos se borran tras confirmar, con reintentos, y el comando
   `python -m app.cli purge-orphan-photos` recoge los que queden sin referencia (propuesta 39).
@@ -23,6 +25,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   datos del autor, y `POST /api/v1/reports` responde 409 `REPORT_DUPLICATE_NEARBY` con ellos salvo
   `create_anyway=true`. Un candado de transacción evita que dos envíos simultáneos esquiven la
   verificación; un reintento con la misma `Idempotency-Key` sigue respondiendo 200 (propuesta 36).
+
+### Corregido
+- Las migraciones de Alembic ya no desactivan los loggers de la aplicación creados antes de migrar.
 
 ## [0.4.0] - 2026-10-17
 
