@@ -144,6 +144,15 @@ del funcionario). Quien solo lo confirmó recibe la vista limitada de 4.2 (`rela
 "confirmed"`) más `history`, sin observaciones (`note` en null: pueden mencionar datos del
 autor). El detalle público para terceros queda fuera.
 
+`relation` en el detalle: `"own"` para el autor, `"staff"` para un administrador que no es el
+autor (misma vista completa; corrección de la revisión final, para que la app no muestre como
+«Tu reporte» uno ajeno) y `"confirmed"` para quien lo confirmó.
+
+Comportamiento de `POST /reports` que la app debe manejar (decisiones 46a y 46d): 422
+`IDEMPOTENCY_KEY_REUSED` si se reintenta con la misma clave y otros datos (la app genera una clave
+nueva cuando el ciudadano cambia el borrador) y 413 `PHOTO_TOO_LARGE` por `Content-Length` antes
+de subir la foto.
+
 *Decisión del asistente:* el historial incluye **todas** las filas de `historial_estado`,
 también el «Registrado» inicial y el paso automático a «Evaluado» (las que tienen `id_usuario`
 NULL); la app no distingue autores, solo muestra estado, fecha y observación.

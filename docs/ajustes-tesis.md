@@ -11,4 +11,6 @@ Lista única de cambios del documento que se derivan de decisiones del desarroll
 | 5 | Límites de uso de Nominatim, Overpass y *tiles* de OSM | Marco teórico / Delimitación | Pendiente |
 | 30b, 30c | Registro que revela si un correo existe (riesgo aceptado) y límite global de solicitudes (fase 8) | 1.8 Delimitación | Opcional |
 | 44 | Nuevo orden de fases y cronograma | Cronograma | Pendiente (con el asesor) |
+| 48 | El autor no puede confirmar su propio reporte (la confirmación es evidencia de un tercero) | Criterios de HU-16 / reglas del modelo | Pendiente |
+| 49 | «Mis reportes» incluye los reportes que el ciudadano confirmó, con vista pública | Criterios de HU-07 / HU-16 | Pendiente |
 | — | Capítulo 4 | 4 | En pausa hasta tener el MVP |

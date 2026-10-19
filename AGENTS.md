@@ -600,7 +600,7 @@ Cada fase termina con algo **ejecutable y probado**. Ajusta el orden con el resp
 
 Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si algo se desvió del documento, avisar para ajustar la tesis.
 
-**Estado (2026-10-19):** fases 1 a 5 cerradas e integradas en `main` (etiquetas `v0.1.0` a `v0.5.0`), con la CI en verde (551 pruebas, cobertura del backend 98 %). Por la decisión 44, lo siguiente es la app Flutter con el flujo crítico (antes, confirmar la decisión 1: Riverpod o Bloc) y después el panel mínimo. Pendientes de la fase 3 que se completan en el panel: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez.
+**Estado (2026-10-19):** fases 1 a 5 cerradas e integradas en `main` (etiquetas `v0.1.0` a `v0.5.0`). Después de `v0.5.0`, sin publicar: el backend que pide la app (decisión 49: confirmaciones HU-16, `GET /me/reports`, `GET /reports/{id}`, `is_mine` por la propuesta 48) y las deudas 46a, 46b y 46d; CI en verde con 598 pruebas y cobertura del backend 98 %. Lo siguiente es la app Flutter con el flujo crítico (decisión 1: Riverpod; diseño en `docs/superpowers/specs/2026-10-19-app-flutter-flujo-critico-design.md`) y después el panel mínimo. Pendientes de la fase 3 que se completan en el panel: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez.
 
 **Fase 4 (cerrada el 2026-10-17, `v0.4.0`):**
 - Hecho e integrado en `main` (CI en verde, 401 pruebas, cobertura del backend 98 %):
