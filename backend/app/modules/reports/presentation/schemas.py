@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.modules.reports.domain.duplicates import DuplicateCandidate
 from app.modules.reports.domain.entities import ReportDetails
+from app.modules.reports.domain.public_location import PUBLIC_COORDINATE_DECIMALS
 from app.modules.reports.domain.severity import Severity
 from app.modules.reports.domain.status import ReportStatus
 from app.shared.domain.geo_parameters import DEDUPLICATION_RADIUS_M
@@ -82,7 +83,9 @@ class DuplicateCandidateResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     id: uuid.UUID
-    # Metros al punto enviado, con un decimal.
+    # Ubicación pública: redondeada a 4 decimales (unos 11 m), nunca la exacta.
+    location: LocationResponse
+    # Metros del punto enviado a la ubicación pública, con un decimal (propuesta 43).
     distance_m: float
     status: ReportStatus
     severity: SeverityLevel
@@ -94,6 +97,10 @@ class DuplicateCandidateResponse(BaseModel):
     def from_candidate(cls, candidate: DuplicateCandidate) -> "DuplicateCandidateResponse":
         return cls(
             id=candidate.id,
+            location=LocationResponse(
+                longitude=round(candidate.location.longitude, PUBLIC_COORDINATE_DECIMALS),
+                latitude=round(candidate.location.latitude, PUBLIC_COORDINATE_DECIMALS),
+            ),
             distance_m=round(candidate.distance_m, 1),
             status=candidate.status,
             severity=SeverityLevel.from_domain(candidate.severity),

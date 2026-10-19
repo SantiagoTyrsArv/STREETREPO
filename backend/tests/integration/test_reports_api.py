@@ -263,7 +263,10 @@ def test_nearby_lists_only_active_reports_within_25_m(api: TestClient, conn: Con
     items = response.json()["items"]
     assert [item["id"] for item in items] == [str(near)]
     assert items[0]["confirmations"] == 2
-    assert items[0]["distance_m"] == pytest.approx(20.0, abs=0.2)
+    # La ubicación pública es la exacta ajustada a la cuadrícula de 0,0001°, y la
+    # distancia se mide desde ella: 20 m al norte quedan en 0,0002° (≈ 22,1 m).
+    assert items[0]["location"] == {"longitude": LON, "latitude": 0.0002}
+    assert items[0]["distance_m"] == pytest.approx(0.0002 * METERS_PER_DEGREE_LAT, abs=0.2)
     assert items[0]["severity"] == "alta"
 
 
@@ -393,3 +396,30 @@ def test_after_the_titular_deletes_their_data_the_photo_is_gone_for_the_admin(
     )
 
     assert api.get(f"{REPORTS}/{report_id}/photo", headers=bearer(admin)).status_code == 404
+
+
+def test_distances_cannot_recover_the_exact_location(api: TestClient, conn: Connection) -> None:
+    # Trilateración: desde tres puntos distintos, las distancias deben ser coherentes con
+    # la ubicación pública, no con la exacta (propuesta 43).
+    _insert_report_north(conn, 13.0)  # exacta ≈ 0,0001176°; pública 0,0001°
+    token = _token(api)
+    public_lat = 0.0001
+
+    for probe_lat in (0.0, 0.00005, 0.00015):
+        item = api.get(
+            f"{REPORTS}/nearby",
+            params={"longitude": LON, "latitude": probe_lat},
+            headers=bearer(token),
+        ).json()["items"][0]
+        expected = abs(public_lat - probe_lat) * METERS_PER_DEGREE_LAT
+        assert item["distance_m"] == pytest.approx(expected, abs=0.2)
+
+
+def test_nearby_outside_the_service_area_over_http(api: TestClient) -> None:
+    response = api.get(
+        f"{REPORTS}/nearby",
+        params={"longitude": -77.2811, "latitude": 1.2136},  # Pasto real, fuera del área de prueba
+        headers=bearer(_token(api)),
+    )
+
+    assert response.status_code == 422

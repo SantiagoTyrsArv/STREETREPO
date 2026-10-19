@@ -14,6 +14,7 @@ from typing import Final
 from app.modules.reports.domain.address import display_address
 from app.modules.reports.domain.severity import Severity
 from app.modules.reports.domain.status import ReportStatus
+from app.shared.domain.geo import GeoPoint
 
 # Suficiente para la pantalla «Posible duplicado»; a 25 m no debería haber más.
 MAX_DUPLICATE_CANDIDATES: Final = 10
@@ -21,9 +22,14 @@ MAX_DUPLICATE_CANDIDATES: Final = 10
 
 @dataclass(frozen=True, slots=True)
 class DuplicateCandidate:
-    """Reporte activo cercano, sin datos del autor ni su ubicación exacta (guía 7.2)."""
+    """Reporte activo cercano, sin datos del autor ni su ubicación exacta (guía 7.2).
+
+    ``location`` es la ubicación pública (redondeada, ``public_location``) y
+    ``distance_m`` se mide desde ella, para que no revele la exacta (propuesta 43).
+    """
 
     id: uuid.UUID
+    location: GeoPoint
     distance_m: float
     status: ReportStatus
     severity: Severity

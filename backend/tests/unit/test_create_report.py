@@ -154,6 +154,7 @@ class FakeStorage:
 def candidate(distance_m: float = 12.5) -> DuplicateCandidate:
     return DuplicateCandidate(
         id=uuid.uuid4(),
+        location=GeoPoint(longitude=-77.28111, latitude=1.21366),
         distance_m=distance_m,
         status=ReportStatus.EVALUATED,
         severity=Severity.MEDIUM,

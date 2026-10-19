@@ -2,7 +2,7 @@
 
 import uuid
 from collections.abc import Iterator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from app.core.config import Settings
 from app.main import API_V1_PREFIX, create_app
 from app.modules.auth.presentation.dependencies import get_current_user
-from app.modules.reports.application.find_nearby import FindPossibleDuplicates
+from app.modules.reports.application.find_nearby import FindPossibleDuplicates, NearbyPolicy
 from app.modules.reports.domain.photos import (
     MAX_PHOTO_BYTES,
     InvalidPhotoError,
@@ -23,6 +23,10 @@ from app.modules.reports.presentation.dependencies import (
 )
 from app.modules.users.domain.entities import User
 from app.modules.users.domain.role import UserRole
+from app.shared.application.clock import SystemClock
+from app.shared.application.rate_limit import RateLimit
+from app.shared.domain.geo import BoundingBox
+from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
 from tests.images import image_bytes
 from tests.unit.test_create_report import USER_ID, FakeNearby, FakeProcessor, Harness, candidate
 
@@ -38,6 +42,7 @@ CITIZEN = User(
     registered_at=datetime(2026, 10, 19, tzinfo=UTC),
 )
 FORM = {"longitude": "-77.2811", "latitude": "1.2136", "severity": "alta"}
+PASTO_AREA = "1.16,-77.33,1.25,-77.23"
 
 
 def _client(settings: Settings, harness: Harness) -> TestClient:
@@ -216,6 +221,7 @@ def test_nearby_active_report_answers_409_with_the_candidates(
     assert body["details"]["items"] == [
         {
             "id": str(existing.id),
+            "location": {"longitude": -77.2811, "latitude": 1.2137},
             "distance_m": 12.3,
             "status": "evaluado",
             "severity": "media",
@@ -235,10 +241,21 @@ def test_create_anyway_in_the_form(api: TestClient, harness: Harness) -> None:
     assert response.status_code == 201
 
 
-def _nearby_client(settings: Settings, nearby: FakeNearby) -> TestClient:
+def _nearby_client(
+    settings: Settings, nearby: FakeNearby, limit: int = 10, area: str = PASTO_AREA
+) -> TestClient:
+    use_case = FindPossibleDuplicates(
+        nearby,
+        InMemoryRateLimiter(),
+        NearbyPolicy(
+            service_area=BoundingBox.parse(area),
+            limit_per_user=RateLimit(max_requests=limit, window=timedelta(hours=1)),
+        ),
+        SystemClock(),
+    )
     app = create_app(settings)
     app.dependency_overrides[get_current_user] = lambda: CITIZEN
-    app.dependency_overrides[get_find_possible_duplicates] = lambda: FindPossibleDuplicates(nearby)
+    app.dependency_overrides[get_find_possible_duplicates] = lambda: use_case
     return TestClient(app)
 
 
@@ -255,8 +272,8 @@ def test_nearby_lists_active_reports_within_25_m(settings: Settings) -> None:
     assert [item["distance_m"] for item in response.json()["items"]] == [3.0, 20.0]
     point, radius_m = nearby.calls[0]
     assert (point.longitude, point.latitude, radius_m) == (-77.2811, 1.2136, 25.0)
-    # Nada del autor ni la ubicación exacta del reporte ajeno.
-    assert not {"user_id", "location", "description"} & set(response.json()["items"][0])
+    # Nada del autor ni su descripción; la ubicación es la pública (otra prueba la revisa).
+    assert not {"user_id", "author", "description"} & set(response.json()["items"][0])
 
 
 def test_nearby_without_results(settings: Settings) -> None:
@@ -279,3 +296,40 @@ def test_nearby_requires_a_session(settings: Settings) -> None:
         response = client.get(f"{REPORTS}/nearby", params={"longitude": -77.28, "latitude": 1.21})
 
     assert response.status_code == 401
+
+
+def test_candidates_show_only_the_public_location(settings: Settings) -> None:
+    nearby = FakeNearby()
+    nearby.default = [candidate()]
+
+    with _nearby_client(settings, nearby) as client:
+        item = client.get(
+            f"{REPORTS}/nearby", params={"longitude": -77.2811, "latitude": 1.2136}
+        ).json()["items"][0]
+
+    # Cuatro decimales como máximo, aunque el doble traiga más.
+    assert item["location"] == {"longitude": -77.2811, "latitude": 1.2137}
+
+
+def test_nearby_outside_the_service_area(settings: Settings) -> None:
+    with _nearby_client(settings, FakeNearby()) as client:
+        response = client.get(
+            f"{REPORTS}/nearby", params={"longitude": -74.0721, "latitude": 4.7110}
+        )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "LOCATION_OUTSIDE_SERVICE_AREA"
+
+
+def test_nearby_has_its_own_hourly_limit_per_user(settings: Settings) -> None:
+    nearby = FakeNearby()
+    params = {"longitude": -77.2811, "latitude": 1.2136}
+    with _nearby_client(settings, nearby, limit=2) as client:
+        statuses = [client.get(f"{REPORTS}/nearby", params=params).status_code for _ in range(3)]
+        response = client.get(f"{REPORTS}/nearby", params=params)
+
+    assert statuses == [200, 200, 429]
+    assert response.json()["code"] == "NEARBY_RATE_LIMITED"
+    assert "Retry-After" in response.headers
+    # Ni el área inválida ni el rechazo por cupo llegan a consultar la base.
+    assert len(nearby.calls) == 2

@@ -19,6 +19,14 @@ class LocationOutsideServiceAreaError(ValueError):
     """La ubicación está fuera del área de servicio configurada (propuesta 37)."""
 
 
+def ensure_in_service_area(location: GeoPoint, service_area: BoundingBox) -> None:
+    """Lanza ``LocationOutsideServiceAreaError`` si el punto está fuera del área."""
+    if not service_area.contains(location):
+        raise LocationOutsideServiceAreaError(
+            "La ubicación está fuera del área de servicio del sistema"
+        )
+
+
 def clean_description(description: str | None) -> str | None:
     """Recorta la descripción; una descripción en blanco se guarda como NULL."""
     if description is None:
@@ -54,10 +62,7 @@ class NewReport:
         service_area: BoundingBox,
     ) -> "NewReport":
         """Valida la descripción y que la ubicación esté dentro del área de servicio."""
-        if not service_area.contains(location):
-            raise LocationOutsideServiceAreaError(
-                "La ubicación está fuera del área de servicio del sistema"
-            )
+        ensure_in_service_area(location, service_area)
         return cls(
             user_id=user_id,
             location=location,

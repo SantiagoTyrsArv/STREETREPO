@@ -167,18 +167,48 @@ def create_report(
     return ReportResponse.from_details(result.report)
 
 
-@router.get("/nearby", response_model=NearbyReportsResponse)
+@contextmanager
+def _nearby_errors() -> Iterator[None]:
+    try:
+        yield
+    except LocationOutsideServiceAreaError as exc:
+        raise AppError(
+            "LOCATION_OUTSIDE_SERVICE_AREA",
+            "La ubicación está fuera del área donde el sistema recibe reportes.",
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {"field": "location"},
+        ) from exc
+    except RateLimitExceededError as exc:
+        raise too_many_requests(
+            "NEARBY_RATE_LIMITED",
+            "Hiciste muchas consultas en poco tiempo. Intenta de nuevo más tarde.",
+            exc.retry_after,
+        ) from exc
+
+
+@router.get(
+    "/nearby",
+    response_model=NearbyReportsResponse,
+    responses={
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Punto inválido o fuera del área de servicio"
+        },
+        status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Demasiadas consultas; ver Retry-After"},
+    },
+)
 def find_nearby_reports(
-    _: CurrentUserDep,
+    user: CurrentUserDep,
     use_case: FindPossibleDuplicatesDep,
     longitude: Annotated[float, Query(ge=-180, le=180)],
     latitude: Annotated[float, Query(ge=-90, le=90)],
 ) -> NearbyReportsResponse:
     """Reportes activos a 25 m del punto, para la pantalla «Posible duplicado» (HU-15).
 
-    No incluye el autor ni la ubicación exacta de los reportes ajenos.
+    No incluye el autor ni la ubicación exacta de los reportes ajenos: la ubicación va
+    redondeada a 4 decimales y la distancia se mide desde ella (propuesta 43).
     """
-    candidates = use_case.execute(GeoPoint(longitude=longitude, latitude=latitude))
+    with _nearby_errors():
+        candidates = use_case.execute(user.id, GeoPoint(longitude=longitude, latitude=latitude))
     return NearbyReportsResponse.from_candidates(candidates)
 
 
