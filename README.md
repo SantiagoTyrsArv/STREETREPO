@@ -128,9 +128,36 @@ Cada cálculo se guarda en `evaluacion_prioridad` con los factores, la distancia
 Código: `backend/app/modules/priority/` y `backend/app/modules/reports/domain/status_machine.py`.
 Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
 
+## Reportes
+
+- `POST /api/v1/reports` (ciudadano con sesión): formulario `multipart/form-data` con `photo`,
+  `longitude`, `latitude`, `severity` (`baja`, `media`, `alta`) y `description` opcional (hasta
+  500 caracteres). Responde **201** con el reporte ya evaluado (U, dirección y «Revisar vía»).
+- Cabecera opcional `Idempotency-Key` (UUID): un reintento con la misma clave responde **200** con
+  el reporte que ya existe, sin duplicarlo ni consumir cupo.
+- Foto: JPEG, PNG o WebP según su contenido, hasta 10 MB; se recodifica a JPEG sin metadatos (EXIF,
+  GPS) con lado máximo de 1600 px y una miniatura de 400 px, en `PHOTO_STORAGE_DIR`.
+- Solo se reciben reportes dentro de `REPORT_AREA_BBOX` (422 `LOCATION_OUTSIDE_SERVICE_AREA`) y hasta
+  10 por hora por usuario y 30 por hora por IP (429 con `Retry-After`).
+
+Decisiones en [ADR 0007](docs/adr/0007-creacion-de-reportes.md).
+
 ## Base de datos
 
 Esquema según el diagrama ER: ver [`docs/base-de-datos.md`](docs/base-de-datos.md).
+
+## Respaldos
+
+Los datos viven en dos volúmenes de Docker y se respaldan juntos, porque `evidencia.url_foto`
+apunta a archivos del segundo:
+
+```bash
+# Base de datos
+docker compose -f infra/docker-compose.yml exec db pg_dump -U streetrepo -Fc streetrepo > streetrepo.dump
+# Fotos de evidencia (volumen street-repo_photos)
+docker run --rm -v street-repo_photos:/fotos:ro -v "$PWD":/respaldo alpine \
+  tar czf /respaldo/fotos.tar.gz -C /fotos .
+```
 
 ## Decisiones
 
