@@ -11,6 +11,7 @@ from app.core.errors import AppError
 from app.core.rate_limiting import too_many_requests
 from app.modules.auth.presentation.dependencies import CurrentUserDep
 from app.modules.reports.application.create_report import ReportSubmission
+from app.modules.reports.application.get_photo import PhotoNotAvailableError, PhotoViewer
 from app.modules.reports.domain.duplicates import PossibleDuplicateError
 from app.modules.reports.domain.new_report import (
     DESCRIPTION_MAX_LENGTH,
@@ -26,6 +27,7 @@ from app.modules.reports.domain.photos import (
 from app.modules.reports.presentation.dependencies import (
     CreateReportDep,
     FindPossibleDuplicatesDep,
+    GetReportPhotoDep,
     limit_reports_per_ip,
 )
 from app.modules.reports.presentation.schemas import (
@@ -33,6 +35,8 @@ from app.modules.reports.presentation.schemas import (
     ReportResponse,
     SeverityLevel,
 )
+from app.modules.users.domain.entities import User
+from app.modules.users.domain.role import UserRole
 from app.shared.application.rate_limit import RateLimitExceededError
 from app.shared.domain.geo import GeoPoint
 
@@ -176,3 +180,46 @@ def find_nearby_reports(
     """
     candidates = use_case.execute(GeoPoint(longitude=longitude, latitude=latitude))
     return NearbyReportsResponse.from_candidates(candidates)
+
+
+# La foto puede mostrar rostros o placas: ningún intermediario ni el navegador la guarda,
+# para que tras una supresión no queden copias (Ley 1581).
+_PHOTO_HEADERS = {"Cache-Control": "private, no-store"}
+_PHOTO_DOC: dict[int | str, dict[str, Any]] = {
+    status.HTTP_200_OK: {"content": {"image/jpeg": {}}, "description": "Foto en JPEG"},
+    status.HTTP_404_NOT_FOUND: {
+        "description": "El reporte no existe, no tiene foto o es de otro ciudadano"
+    },
+}
+
+
+def _photo_response(
+    use_case: GetReportPhotoDep, report_id: uuid.UUID, viewer: PhotoViewer, *, thumbnail: bool
+) -> Response:
+    try:
+        content = use_case.execute(report_id, viewer, thumbnail=thumbnail)
+    except PhotoNotAvailableError as exc:
+        raise AppError(
+            "PHOTO_NOT_FOUND", "No encontramos esa foto.", status.HTTP_404_NOT_FOUND
+        ) from exc
+    return Response(content=content, media_type="image/jpeg", headers=_PHOTO_HEADERS)
+
+
+@router.get("/{report_id}/photo", response_class=Response, responses=_PHOTO_DOC)
+def get_report_photo(
+    report_id: uuid.UUID, user: CurrentUserDep, use_case: GetReportPhotoDep
+) -> Response:
+    """Foto del reporte (hasta 1600 px). Solo para su autor y los administradores."""
+    return _photo_response(use_case, report_id, _viewer(user), thumbnail=False)
+
+
+@router.get("/{report_id}/photo/thumbnail", response_class=Response, responses=_PHOTO_DOC)
+def get_report_photo_thumbnail(
+    report_id: uuid.UUID, user: CurrentUserDep, use_case: GetReportPhotoDep
+) -> Response:
+    """Miniatura de la foto (hasta 400 px), para listas y mapas. Mismo acceso que la foto."""
+    return _photo_response(use_case, report_id, _viewer(user), thumbnail=True)
+
+
+def _viewer(user: User) -> PhotoViewer:
+    return PhotoViewer(user_id=user.id, is_admin=user.role is UserRole.ADMIN)

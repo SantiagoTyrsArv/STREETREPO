@@ -79,3 +79,18 @@ class StoredEvidence:
     photo_key: str
     file_format: str
     size_bytes: int
+
+
+@dataclass(frozen=True, slots=True)
+class ReportPhoto:
+    """Lo necesario para decidir quién ve la foto de un reporte y dónde está."""
+
+    owner_id: uuid.UUID
+    # None = el reporte no tiene foto (por ejemplo, tras la supresión del titular).
+    photo_key: str | None
+
+
+def can_view_photo(*, viewer_id: uuid.UUID, viewer_is_admin: bool, owner_id: uuid.UUID) -> bool:
+    """Solo el autor y los administradores ven la foto (propuesta 34): puede mostrar
+    rostros, placas o la fachada de una casa (guía 7.2)."""
+    return viewer_is_admin or viewer_id == owner_id

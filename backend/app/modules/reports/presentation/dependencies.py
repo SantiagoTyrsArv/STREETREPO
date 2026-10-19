@@ -14,6 +14,8 @@ from app.modules.priority.infrastructure.reports_reader import SqlReportsToEvalu
 from app.modules.priority.infrastructure.weights_repository import SqlWeightVersionRepository
 from app.modules.reports.application.create_report import CreateReport, CreateReportPolicy
 from app.modules.reports.application.find_nearby import FindPossibleDuplicates
+from app.modules.reports.application.get_photo import GetReportPhoto
+from app.modules.reports.infrastructure.evidence import SqlReportPhotoLookup
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
 from app.modules.reports.infrastructure.nearby import (
     PostgisNearbyReportFinder,
@@ -75,3 +77,12 @@ def get_find_possible_duplicates(session: SessionDep) -> FindPossibleDuplicates:
 
 
 FindPossibleDuplicatesDep = Annotated[FindPossibleDuplicates, Depends(get_find_possible_duplicates)]
+
+
+def get_report_photo(session: SessionDep, settings: SettingsDep) -> GetReportPhoto:
+    return GetReportPhoto(
+        SqlReportPhotoLookup(session), LocalPhotoStorage(settings.photo_storage_dir)
+    )
+
+
+GetReportPhotoDep = Annotated[GetReportPhoto, Depends(get_report_photo)]

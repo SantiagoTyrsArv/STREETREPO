@@ -4,13 +4,15 @@ from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
+from app.modules.reports.domain.ports import PhotoNotStoredError
+
 
 class InvalidPhotoKeyError(ValueError):
     """La clave saldría de la carpeta de fotos."""
 
 
 class LocalPhotoStorage:
-    """Implementa ``PhotoStorage`` y ``PhotoInventory`` en disco (propuesta 34).
+    """Implementa ``PhotoStorage``, ``PhotoReader`` y ``PhotoInventory`` en disco (propuesta 34).
 
     En Docker, la carpeta es un volumen propio.
 
@@ -40,6 +42,12 @@ class LocalPhotoStorage:
         except BaseException:
             Path(temporary).unlink(missing_ok=True)
             raise
+
+    def read(self, key: str) -> bytes:
+        try:
+            return self._path(key).read_bytes()
+        except FileNotFoundError as exc:
+            raise PhotoNotStoredError(key) from exc
 
     def delete(self, key: str) -> None:
         self._path(key).unlink(missing_ok=True)

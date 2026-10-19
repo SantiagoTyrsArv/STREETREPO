@@ -26,6 +26,7 @@ from app.modules.reports.infrastructure.repository import SqlReportRepository
 from app.shared.domain.geo import BoundingBox, GeoPoint
 from tests.images import EXIF_GPS_IFD, EXIF_MAKE, jpeg_with_metadata, open_image
 from tests.integration.conftest import (
+    PASSWORD,
     TEST_OSM_ID,
     TEST_REPORT_AREA,
     bearer,
@@ -327,3 +328,68 @@ def test_creation_lock_blocks_other_connections_until_the_transaction_ends(
         other.rollback()
 
     assert acquired is False
+
+
+# --- Servir la foto (propuesta 34) --------------------------------------------------
+
+
+def _citizen_token(api: TestClient, email: str) -> str:
+    register_user(api, email=email)
+    return str(login_user(api, email=email)["access_token"])
+
+
+def _admin_token(api: TestClient, conn: Connection) -> str:
+    email = "funcionario@example.com"
+    register_user(api, email=email)
+    conn.execute(
+        text("UPDATE usuario SET rol = 'administrador' WHERE correo = :email"), {"email": email}
+    )
+    return str(login_user(api, email=email)["access_token"])
+
+
+def test_owner_and_admin_see_the_photo_and_others_do_not(
+    api: TestClient, conn: Connection, photo_dir: Path
+) -> None:
+    owner = _citizen_token(api, "autora@example.com")
+    report_id = api.post(REPORTS, data=FORM, files=_photo(), headers=bearer(owner)).json()["id"]
+    photo_url = f"{REPORTS}/{report_id}/photo"
+    stored_key = conn.execute(
+        text("SELECT url_foto FROM evidencia WHERE id_reporte = :id"), {"id": report_id}
+    ).scalar_one()
+
+    own = api.get(photo_url, headers=bearer(owner))
+    thumbnail = api.get(f"{photo_url}/thumbnail", headers=bearer(owner))
+    by_admin = api.get(photo_url, headers=bearer(_admin_token(api, conn)))
+    by_other = api.get(photo_url, headers=bearer(_citizen_token(api, "vecino@example.com")))
+
+    assert own.status_code == 200
+    assert own.content == (photo_dir / stored_key).read_bytes()
+    assert open_image(own.content).format == "JPEG"
+    assert thumbnail.status_code == 200
+    assert len(thumbnail.content) <= len(own.content)
+    assert by_admin.content == own.content
+    assert by_other.status_code == 404
+    assert by_other.json()["code"] == "PHOTO_NOT_FOUND"
+
+
+def test_photo_of_a_report_that_does_not_exist(api: TestClient) -> None:
+    response = api.get(f"{REPORTS}/{uuid.uuid4()}/photo", headers=bearer(_token(api)))
+
+    assert response.status_code == 404
+
+
+def test_after_the_titular_deletes_their_data_the_photo_is_gone_for_the_admin(
+    api: TestClient, conn: Connection
+) -> None:
+    owner = _citizen_token(api, "autora@example.com")
+    report_id = api.post(REPORTS, data=FORM, files=_photo(), headers=bearer(owner)).json()["id"]
+    admin = _admin_token(api, conn)
+    assert api.get(f"{REPORTS}/{report_id}/photo", headers=bearer(admin)).status_code == 200
+
+    api.post(
+        f"{API_V1_PREFIX}/me/data-deletion-requests",
+        json={"current_password": PASSWORD},
+        headers=bearer(owner),
+    )
+
+    assert api.get(f"{REPORTS}/{report_id}/photo", headers=bearer(admin)).status_code == 404
