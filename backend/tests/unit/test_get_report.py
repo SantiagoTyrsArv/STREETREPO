@@ -86,7 +86,7 @@ def _citizen(user_id: uuid.UUID) -> PhotoViewer:
 def test_author_gets_the_full_view() -> None:
     view = GetReport(FakeReader(confirmed_by={CONFIRMER})).execute(REPORT, _citizen(AUTHOR))
 
-    assert view == FullReportView(details=DETAILS, confirmations=1, history=HISTORY)
+    assert view == FullReportView(details=DETAILS, confirmations=1, history=HISTORY, is_own=True)
 
 
 def test_admin_gets_the_full_view_even_if_they_confirmed() -> None:
@@ -95,6 +95,8 @@ def test_admin_gets_the_full_view_even_if_they_confirmed() -> None:
     view = GetReport(FakeReader(confirmed_by={CONFIRMER})).execute(REPORT, admin)
 
     assert isinstance(view, FullReportView)
+    # Ve todo, pero el reporte no es suyo: la app no debe mostrarlo como «Tu reporte».
+    assert view.is_own is False
 
 
 def test_confirmer_gets_the_limited_view_without_notes() -> None:

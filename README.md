@@ -148,7 +148,8 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
   (`relation: own`, completos) y los confirmados (`relation: confirmed`, vista pública sin autor,
   descripción ni ubicación exacta), del más reciente al más antiguo.
 - Detalle: `GET /api/v1/reports/{id}` con el historial de estados; completo para el autor y los
-  administradores, vista pública con observaciones ocultas para quien lo confirmó, y **404** para
+  administradores (`relation: staff` si el administrador no es el autor), vista pública con
+  observaciones ocultas para quien lo confirmó, y **404** para
   los demás.
 - Cabecera opcional `Idempotency-Key` (UUID): un reintento con la misma clave responde **200** con
   el reporte que ya existe, sin duplicarlo ni consumir cupo.

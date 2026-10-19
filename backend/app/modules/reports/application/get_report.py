@@ -28,6 +28,7 @@ class GetReport:
                 details=details,
                 confirmations=self._reader.confirmations(report_id),
                 history=tuple(self._reader.history(report_id)),
+                is_own=details.user_id == viewer.user_id,
             )
         confirmed_at = self._reader.confirmed_at(report_id, viewer.user_id)
         public = self._reader.public_view(report_id)

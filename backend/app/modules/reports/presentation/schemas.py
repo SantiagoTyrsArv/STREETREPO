@@ -219,8 +219,9 @@ class StatusHistoryEntryResponse(BaseModel):
 
 
 class OwnReportDetail(OwnReportItem):
-    """Detalle completo: para el autor y los administradores."""
+    """Detalle completo: ``own`` para el autor; ``staff`` para un administrador que no lo es."""
 
+    relation: Literal["own", "staff"] = "own"  # type: ignore[assignment]
     history: list[StatusHistoryEntryResponse]
 
     @classmethod
@@ -229,7 +230,7 @@ class OwnReportDetail(OwnReportItem):
             OwnReport(details=view.details, confirmations=view.confirmations)
         )
         return cls(
-            **item.model_dump(),
+            **(item.model_dump() | {"relation": "own" if view.is_own else "staff"}),
             history=[StatusHistoryEntryResponse.from_entry(e) for e in view.history],
         )
 

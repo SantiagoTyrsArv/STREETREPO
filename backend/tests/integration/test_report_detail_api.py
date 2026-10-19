@@ -85,6 +85,24 @@ def test_confirmer_sees_limited_view_and_notes_are_hidden(
     assert full["history"][-1]["note"] == NOTE
 
 
+def test_admin_who_confirmed_gets_the_full_view_as_staff(api: TestClient, conn: Connection) -> None:
+    report_id = _create_report(api, _token(api, "autora@example.com"))
+    _token(api, "funcionario@example.com")
+    conn.execute(
+        text("UPDATE usuario SET rol = 'administrador' WHERE correo = 'funcionario@example.com'")
+    )
+    admin = str(login_user(api, email="funcionario@example.com")["access_token"])
+    assert (
+        api.post(f"{REPORTS}/{report_id}/confirmations", headers=bearer(admin)).status_code == 201
+    )
+
+    body = _detail(api, report_id, admin).json()
+
+    assert body["relation"] == "staff"
+    assert "description" in body
+    assert [entry["status"] for entry in body["history"]] == ["registrado", "evaluado"]
+
+
 def test_stranger_gets_404_like_a_missing_report(api: TestClient) -> None:
     report_id = _create_report(api, _token(api, "autora@example.com"))
     stranger = _token(api, "extrano@example.com")

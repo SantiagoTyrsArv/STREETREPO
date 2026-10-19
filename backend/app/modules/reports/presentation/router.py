@@ -231,8 +231,8 @@ def get_report(
 ) -> OwnReportDetail | ConfirmedReportDetail:
     """Detalle del reporte con su historial de estados.
 
-    - Autor y administradores: ``relation: own``, completo (un administrador que no es el
-      autor también recibe ``own``: la vista completa).
+    - Autor: ``relation: own``, completo. Administrador que no es el autor: ``relation:
+      staff``, la misma vista completa.
     - Quien lo confirmó: ``relation: confirmed``, vista pública y observaciones en null.
     - Cualquier otro: 404, igual que si no existiera.
     """

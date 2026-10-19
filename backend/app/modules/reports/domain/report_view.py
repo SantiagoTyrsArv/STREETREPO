@@ -25,6 +25,8 @@ class FullReportView:
     details: ReportDetails
     confirmations: int
     history: Sequence[StatusHistoryEntry]
+    # False para un administrador que no es el autor: ve todo, pero no es «su» reporte.
+    is_own: bool
 
 
 @dataclass(frozen=True, slots=True)
