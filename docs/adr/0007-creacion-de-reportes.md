@@ -53,7 +53,19 @@ la ubicación exacta (propuesta 40).
 | Alcance del candado | Uno solo para toda la creación de reportes, no por zona | Dura milisegundos (la foto ya está procesada y guardada) y a la escala del MVP es más simple y seguro que bloquear por celdas, que fallan en los bordes |
 | Duplicado detectado ya con el candado | 409, se revierte la transacción y se borran los archivos; el cupo de esa solicitud ya se consumió | Solo pasa si otro reporte cercano se creó en el mismo instante |
 
+## Servir la foto (propuesta 34)
+
+`GET /api/v1/reports/{id}/photo` (hasta 1600 px) y `GET /api/v1/reports/{id}/photo/thumbnail`
+(hasta 400 px), con sesión, responden `image/jpeg`.
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Quién la ve | El autor del reporte y los administradores (`can_view_photo`) | Puede mostrar rostros, placas o fachadas (guía 7.2) |
+| Respuesta cuando no puede verla | **404** `PHOTO_NOT_FOUND`, igual si el reporte no existe, no tiene foto o es de otro ciudadano | No revela si existe un reporte ajeno (IDOR, guía 7.1) |
+| Caché | `Cache-Control: private, no-store` | Tras una supresión no deben quedar copias en el navegador ni en intermediarios (Ley 1581). El costo es volver a descargarla; las fotos pesan pocos cientos de KB |
+| Archivo que falta | Si la fila de `evidencia` existe pero el archivo no, se registra un error y se responde 404 | Es una inconsistencia que hay que revisar, no un error del cliente |
+| Varias fotos | Se sirve la más reciente del reporte | Hoy cada reporte tiene una sola; la ruta no cambia si llegan más |
+
 ## Pendiente
 
-- **Servir la foto** por una ruta que verifique el acceso (dueño y administradores, propuesta 34): con el detalle del reporte.
 - **Tamaño del cuerpo:** la API rechaza la foto de más de 10 MB después de recibirla. Con el proxy HTTPS (HU-17), limitar ahí el tamaño de la petición para no recibir cuerpos enormes.

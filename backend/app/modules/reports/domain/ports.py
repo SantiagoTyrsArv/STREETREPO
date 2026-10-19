@@ -6,7 +6,7 @@ from typing import Protocol
 from app.modules.reports.domain.duplicates import DuplicateCandidate
 from app.modules.reports.domain.entities import ReportDetails
 from app.modules.reports.domain.new_report import NewReport
-from app.modules.reports.domain.photos import ProcessedPhoto, StoredEvidence
+from app.modules.reports.domain.photos import ProcessedPhoto, ReportPhoto, StoredEvidence
 from app.modules.reports.domain.status_machine import StatusChange
 from app.shared.domain.geo import GeoPoint
 
@@ -84,4 +84,20 @@ class PhotoInventory(Protocol):
 class EvidenceKeys(Protocol):
     def referenced_photo_keys(self) -> Sequence[str]:
         """Claves de foto que alguna fila de ``evidencia`` referencia."""
+        ...
+
+
+class PhotoNotStoredError(Exception):
+    """El archivo de la foto no está en el almacenamiento."""
+
+
+class PhotoReader(Protocol):
+    def read(self, key: str) -> bytes:
+        """Contenido del archivo; lanza ``PhotoNotStoredError`` si no existe."""
+        ...
+
+
+class ReportPhotoLookup(Protocol):
+    def find_photo(self, report_id: uuid.UUID) -> ReportPhoto | None:
+        """Dueño del reporte y clave de su foto más reciente; ``None`` si el reporte no existe."""
         ...

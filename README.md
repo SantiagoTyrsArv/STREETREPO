@@ -144,6 +144,9 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
 - Solo se reciben reportes dentro de `REPORT_AREA_BBOX` (422 `LOCATION_OUTSIDE_SERVICE_AREA`) y hasta
   10 por hora por usuario y 30 por hora por IP (429 con `Retry-After`).
 
+- `GET /api/v1/reports/{id}/photo` y `.../photo/thumbnail`: la foto y su miniatura, solo para el
+  autor del reporte y los administradores (404 para los demás), sin caché.
+
 Decisiones en [ADR 0007](docs/adr/0007-creacion-de-reportes.md).
 
 ## Base de datos

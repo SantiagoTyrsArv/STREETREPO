@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.modules.reports.domain.photos import ReportPhoto
 from app.modules.reports.infrastructure.models import EvidenceModel, ReportModel
 
 
@@ -35,3 +36,24 @@ class SqlEvidenceKeys:
 
     def referenced_photo_keys(self) -> Sequence[str]:
         return list(self._session.execute(select(EvidenceModel.photo_url)).scalars())
+
+
+class SqlReportPhotoLookup:
+    """Implementa ``ReportPhotoLookup``: dueño del reporte y su foto más reciente."""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def find_photo(self, report_id: uuid.UUID) -> ReportPhoto | None:
+        owner_id = self._session.execute(
+            select(ReportModel.user_id).where(ReportModel.id == report_id)
+        ).scalar_one_or_none()
+        if owner_id is None:
+            return None
+        photo_key = self._session.execute(
+            select(EvidenceModel.photo_url)
+            .where(EvidenceModel.report_id == report_id)
+            .order_by(EvidenceModel.uploaded_at.desc(), EvidenceModel.id)
+            .limit(1)
+        ).scalar_one_or_none()
+        return ReportPhoto(owner_id=owner_id, photo_key=photo_key)
