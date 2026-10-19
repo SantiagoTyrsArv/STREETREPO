@@ -310,7 +310,7 @@ POST   /api/v1/auth/logout              GET  /api/v1/privacy-policy    (versión
 GET    /api/v1/me                       PATCH /api/v1/me               (conocer y actualizar, Ley 1581)
 GET    /api/v1/reports                  (mapa, filtros, paginación)
 POST   /api/v1/reports                  (foto, ubicación, severidad, descripción)
-GET    /api/v1/reports/{id}
+GET    /api/v1/reports/{id}             (autor, administradores y quien confirmó; decisión 49)
 GET    /api/v1/reports/nearby           (deduplicación)
 POST   /api/v1/reports/{id}/confirmations
 GET    /api/v1/reports/{id}/photo       GET /api/v1/reports/{id}/photo/thumbnail   (dueño y administradores, propuesta 34)
@@ -626,7 +626,7 @@ Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si al
   - Servir la foto (*merge* `2c3ade7`): `GET /api/v1/reports/{id}/photo` y `/thumbnail`, solo para el dueño y los administradores (propuesta 34). Incluye la corrección de Alembic, que desactivaba los loggers existentes.
   - Ubicación pública en `nearby` y en el 409 (*merge* `0335912`, propuestas 40 y 43).
   - Cierre: README, CHANGELOG, versión 0.5.0 y etiqueta `v0.5.0`.
-- Queda para cuando lo pida el cliente que lo usa: confirmaciones (`POST /api/v1/reports/{id}/confirmations`, HU-16), `GET /api/v1/me/reports`, listado y detalle (`GET /api/v1/reports`, `GET /api/v1/reports/{id}`) con paginación y *bounding box*, y la propuesta 40 en esas vistas.
+- Queda para cuando lo pida el cliente que lo usa: el listado público (`GET /api/v1/reports`) con paginación y *bounding box*. Las confirmaciones (HU-16), `GET /api/v1/me/reports` y `GET /api/v1/reports/{id}` se construyeron el 2026-10-19 para la app (decisión 49).
 - Queda para fases posteriores: decisión 46 (a–e); en HU-17, programar `purge-orphan-photos` y limitar en el proxy el tamaño de la petición; decisión 30c (límite global, fase 8); los 13 avisos antiguos de Sonar.
 ---
 

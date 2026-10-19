@@ -139,7 +139,17 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
   activos a 25 m, sin autor y con la ubicación redondeada a 4 decimales (la distancia se mide desde
   ella). El punto debe estar dentro del área de servicio y cada usuario tiene un cupo de consultas por
   hora. `POST /api/v1/reports` responde **409** `REPORT_DUPLICATE_NEARBY` con esa lista, salvo que
-  llegue `create_anyway=true`.
+  llegue `create_anyway=true`. Cada candidato lleva `is_mine` (propuesta 48).
+- Confirmar (HU-16): `POST /api/v1/reports/{id}/confirmations` responde **201** con el total de
+  confirmaciones; **409** si el reporte está reparado (`REPORT_NOT_ACTIVE`), es propio
+  (`CONFIRMATION_OWN_REPORT`) o ya se confirmó (`CONFIRMATION_ALREADY_EXISTS`); **404** si no existe.
+  No cambia U.
+- Mis reportes: `GET /api/v1/me/reports?limit=&offset=` (máximo 50) lista los reportes creados
+  (`relation: own`, completos) y los confirmados (`relation: confirmed`, vista pública sin autor,
+  descripción ni ubicación exacta), del más reciente al más antiguo.
+- Detalle: `GET /api/v1/reports/{id}` con el historial de estados; completo para el autor y los
+  administradores, vista pública con observaciones ocultas para quien lo confirmó, y **404** para
+  los demás.
 - Cabecera opcional `Idempotency-Key` (UUID): un reintento con la misma clave responde **200** con
   el reporte que ya existe, sin duplicarlo ni consumir cupo.
 - Foto: JPEG, PNG o WebP según su contenido, hasta 10 MB; se recodifica a JPEG sin metadatos (EXIF,

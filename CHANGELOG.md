@@ -4,6 +4,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Añadido
+- `POST /api/v1/reports/{id}/confirmations` (HU-16): confirmar un reporte activo de otro
+  ciudadano; 409 si está reparado, es propio (propuesta 48) o ya se confirmó. No cambia U.
+- `GET /api/v1/me/reports`: reportes creados y confirmados, paginados (decisión 49).
+- `GET /api/v1/reports/{id}`: detalle con historial para el autor, los administradores y, en
+  vista pública sin observaciones, quien lo confirmó; 404 para los demás.
+- `is_mine` en los candidatos de `GET /api/v1/reports/nearby` y del 409 `REPORT_DUPLICATE_NEARBY`
+  (propuesta 48).
+
 ## [0.5.0] - 2026-10-19
 
 Fase 5 (reducida por la decisión 44): reportes ciudadanos con foto, deduplicación a 25 m y
