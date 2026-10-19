@@ -155,7 +155,8 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
   observaciones ocultas para quien lo confirmó, y **404** para
   los demás.
 - Cabecera opcional `Idempotency-Key` (UUID): un reintento con la misma clave responde **200** con
-  el reporte que ya existe, sin duplicarlo ni consumir cupo.
+  el reporte que ya existe, sin duplicarlo ni consumir cupo. Si la clave llega con otra ubicación,
+  severidad o descripción, responde **422** `IDEMPOTENCY_KEY_REUSED`.
 - Foto: JPEG, PNG o WebP según su contenido, hasta 10 MB; se recodifica a JPEG sin metadatos (EXIF,
   GPS) con lado máximo de 1600 px y una miniatura de 400 px, en `PHOTO_STORAGE_DIR`.
 - Solo se reciben reportes dentro de `REPORT_AREA_BBOX` (422 `LOCATION_OUTSIDE_SERVICE_AREA`) y hasta

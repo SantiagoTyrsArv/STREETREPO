@@ -15,6 +15,7 @@ from app.modules.reports.application.get_photo import PhotoNotAvailableError, Ph
 from app.modules.reports.domain.duplicates import PossibleDuplicateError
 from app.modules.reports.domain.new_report import (
     DESCRIPTION_MAX_LENGTH,
+    IdempotencyKeyReusedError,
     InvalidReportError,
     LocationOutsideServiceAreaError,
 )
@@ -59,7 +60,8 @@ _CREATE_DOC: dict[int | str, dict[str, Any]] = {
     status.HTTP_413_CONTENT_TOO_LARGE: {"description": "La foto supera 10 MB"},
     status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": "La foto no es JPEG, PNG ni WebP"},
     status.HTTP_422_UNPROCESSABLE_CONTENT: {
-        "description": "Datos inválidos, foto dañada o ubicación fuera del área de servicio"
+        "description": "Datos inválidos, foto dañada, ubicación fuera del área de servicio o "
+        "Idempotency-Key ya usada con otros datos (IDEMPOTENCY_KEY_REUSED)"
     },
     status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Demasiados reportes; ver Retry-After"},
 }
@@ -84,6 +86,13 @@ def _create_report_errors() -> Iterator[None]:
             "La ubicación está fuera del área donde el sistema recibe reportes.",
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             {"field": "location"},
+        ) from exc
+    except IdempotencyKeyReusedError as exc:
+        raise AppError(
+            "IDEMPOTENCY_KEY_REUSED",
+            "Este envío ya se registró con otros datos. Envía el reporte como uno nuevo.",
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {"field": "Idempotency-Key"},
         ) from exc
     except InvalidReportError as exc:
         raise AppError("REPORT_INVALID", str(exc), status.HTTP_422_UNPROCESSABLE_CONTENT) from exc

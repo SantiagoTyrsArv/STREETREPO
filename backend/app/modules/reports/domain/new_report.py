@@ -15,6 +15,14 @@ class InvalidReportError(ValueError):
     """Los datos del reporte no cumplen las reglas del dominio."""
 
 
+class IdempotencyKeyReusedError(ValueError):
+    """La clave de idempotencia ya se usó para un reporte con otros datos (decisión 46a).
+
+    Un reintento legítimo repite exactamente el envío; si cambió la ubicación, la severidad
+    o la descripción, devolver el reporte anterior haría creer que se guardó lo nuevo.
+    """
+
+
 class LocationOutsideServiceAreaError(ValueError):
     """La ubicación está fuera del área de servicio configurada (propuesta 37)."""
 

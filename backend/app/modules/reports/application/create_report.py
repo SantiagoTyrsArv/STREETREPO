@@ -6,7 +6,11 @@ from dataclasses import dataclass
 
 from app.modules.reports.domain.duplicates import MAX_DUPLICATE_CANDIDATES, PossibleDuplicateError
 from app.modules.reports.domain.entities import ReportDetails
-from app.modules.reports.domain.new_report import NewReport
+from app.modules.reports.domain.new_report import (
+    IdempotencyKeyReusedError,
+    NewReport,
+    clean_description,
+)
 from app.modules.reports.domain.photos import (
     MAX_PHOTO_BYTES,
     STORED_PHOTO_FORMAT,
@@ -179,7 +183,15 @@ class CreateReport:
         )
         if existing is None:
             return None
-        return CreateReportResult(self._details(existing), created=False)
+        details = self._details(existing)
+        # La foto no se compara: se guarda recodificada y no se puede cotejar con la original.
+        if (
+            details.location != submission.location
+            or details.severity is not submission.severity
+            or details.description != clean_description(submission.description)
+        ):
+            raise IdempotencyKeyReusedError(str(submission.idempotency_key))
+        return CreateReportResult(details, created=False)
 
     def _details(self, report_id: uuid.UUID) -> ReportDetails:
         details = self._reports.get_details(report_id)

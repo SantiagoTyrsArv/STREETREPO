@@ -180,6 +180,18 @@ def test_retry_with_the_same_idempotency_key_does_not_duplicate(
     assert len([path for path in photo_dir.rglob("*.jpg")]) == 2  # foto y miniatura
 
 
+def test_same_idempotency_key_with_other_data_is_422(api: TestClient, conn: Connection) -> None:
+    headers = bearer(_token(api)) | {"Idempotency-Key": str(uuid.uuid4())}
+    first = api.post(REPORTS, data=FORM, files=_photo(), headers=headers)
+
+    second = api.post(REPORTS, data=FORM | {"severity": "baja"}, files=_photo(), headers=headers)
+
+    assert first.status_code == 201
+    assert second.status_code == 422
+    assert second.json()["code"] == "IDEMPOTENCY_KEY_REUSED"
+    assert conn.execute(text("SELECT count(*) FROM reporte")).scalar_one() == 1
+
+
 def test_outside_the_service_area_nothing_is_saved(
     api: TestClient, conn: Connection, photo_dir: Path
 ) -> None:

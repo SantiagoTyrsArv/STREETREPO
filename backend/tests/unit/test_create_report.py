@@ -13,7 +13,11 @@ from app.modules.reports.application.create_report import (
 )
 from app.modules.reports.domain.duplicates import DuplicateCandidate, PossibleDuplicateError
 from app.modules.reports.domain.entities import ReportDetails
-from app.modules.reports.domain.new_report import LocationOutsideServiceAreaError, NewReport
+from app.modules.reports.domain.new_report import (
+    IdempotencyKeyReusedError,
+    LocationOutsideServiceAreaError,
+    NewReport,
+)
 from app.modules.reports.domain.photos import (
     MAX_PHOTO_BYTES,
     STORED_PHOTO_FORMAT,
@@ -235,12 +239,14 @@ def _submission(
     key: uuid.UUID | None = None,
     photo: bytes = b"foto-original",
     create_anyway: bool = False,
+    severity: Severity = Severity.HIGH,
+    description: str | None = "  Hueco profundo  ",
 ) -> ReportSubmission:
     return ReportSubmission(
         user_id=USER_ID,
         location=location,
-        severity=Severity.HIGH,
-        description="  Hueco profundo  ",
+        severity=severity,
+        description=description,
         idempotency_key=key,
         photo=photo,
         create_anyway=create_anyway,
@@ -282,6 +288,36 @@ def test_retry_with_the_same_key_returns_the_existing_report() -> None:
     # El reintento no procesa otra vez la foto ni consume cupo.
     assert harness.processor.calls == 1
     harness.use_case.execute(_submission())
+
+
+@pytest.mark.parametrize(
+    "changed",
+    [
+        {"severity": Severity.LOW},
+        {"description": "Otro daño"},
+        {"description": None},
+        {"location": GeoPoint(longitude=-77.2812, latitude=1.2136)},
+    ],
+)
+def test_retry_with_the_same_key_but_other_data_is_rejected(changed: dict[str, object]) -> None:
+    harness = Harness()
+    key = uuid.uuid4()
+    harness.use_case.execute(_submission(key=key))
+
+    with pytest.raises(IdempotencyKeyReusedError):
+        harness.use_case.execute(_submission(key=key, **changed))  # type: ignore[arg-type]
+    assert len(harness.reports.saved) == 1
+    assert harness.processor.calls == 1
+
+
+def test_retry_with_only_extra_spaces_in_the_description_is_the_same_report() -> None:
+    harness = Harness()
+    key = uuid.uuid4()
+    first = harness.use_case.execute(_submission(key=key, description="Hueco profundo"))
+
+    second = harness.use_case.execute(_submission(key=key, description="  Hueco profundo "))
+
+    assert second.report.id == first.report.id
 
 
 def test_the_same_key_from_another_user_is_a_different_report() -> None:
@@ -460,7 +496,8 @@ def test_same_key_saved_by_a_concurrent_request_while_waiting_for_the_lock() -> 
             user_id=USER_ID,
             location=PASTO,
             severity=Severity.HIGH,
-            description=None,
+            # El mismo envío repetido por la app: mismos datos que _submission().
+            description="Hueco profundo",
             idempotency_key=key,
             service_area=BoundingBox.parse("1.16,-77.33,1.25,-77.23"),
         )
