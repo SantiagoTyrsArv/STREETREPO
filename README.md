@@ -133,6 +133,9 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
 - `POST /api/v1/reports` (ciudadano con sesión): formulario `multipart/form-data` con `photo`,
   `longitude`, `latitude`, `severity` (`baja`, `media`, `alta`) y `description` opcional (hasta
   500 caracteres). Responde **201** con el reporte ya evaluado (U, dirección y «Revisar vía»).
+- Posible duplicado (HU-15): `GET /api/v1/reports/nearby?longitude=…&latitude=…` lista los reportes
+  activos a 25 m (sin autor ni ubicación exacta). `POST /api/v1/reports` responde **409**
+  `REPORT_DUPLICATE_NEARBY` con esa lista, salvo que llegue `create_anyway=true`.
 - Cabecera opcional `Idempotency-Key` (UUID): un reintento con la misma clave responde **200** con
   el reporte que ya existe, sin duplicarlo ni consumir cupo.
 - Foto: JPEG, PNG o WebP según su contenido, hasta 10 MB; se recodifica a JPEG sin metadatos (EXIF,
