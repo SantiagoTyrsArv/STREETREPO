@@ -489,7 +489,7 @@ Refs: HU-03
 
 ## 10. Diseño de interfaz (basado en Figma)
 
-Fuente: https://www.figma.com/design/wjbs0QbgIJvRiduvFAimAI (14 pantallas). Mantén **fidelidad** al diseño; las mejoras se proponen con el protocolo 0.3.
+Fuente: https://www.figma.com/design/wjbs0QbgIJvRiduvFAimAI (14 pantallas originales y 20 añadidas el 2026-10-19; ver decisión 47 en `docs/bitacora.md`). Mantén **fidelidad** al diseño; las mejoras se proponen con el protocolo 0.3.
 
 ### 10.1 Tokens
 
@@ -536,7 +536,7 @@ Implementarlos como **tokens centralizados** (tema de Flutter, variables CSS / o
 | Detalle y estado | Evidencia, vía OSM, desglose del cálculo, cambio de estado con observación, historial |
 | Pesos del modelo | Sliders w₁/w₂/w₃, validación Σ = 1,00, reglas (solo lectura), versiones |
 
-> Hay historias de usuario (carga de datos OSM, HU-13; comparación con panel de expertos, HU-09) que **no tienen pantalla diseñada todavía**. El ítem "Datos OSM" del menú del panel existe sin pantalla. Antes de construirlas, propón su diseño con el protocolo 0.3.
+> Desde el 2026-10-19 existen también las pantallas de Datos OSM (HU-13), Comparación con el panel de referencia (HU-09), inicio de sesión de funcionarios, registro, permisos, errores de reporte, edición de perfil, confirmación de contraseña, supresión y constancia, y los estados de carga, vacío, error y sin conexión listados en la decisión 47 de la bitácora. Siguen sin diseño los pendientes de esa decisión.
 
 ### 10.3 Buenas prácticas de interfaz
 
