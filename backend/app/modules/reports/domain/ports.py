@@ -1,10 +1,13 @@
 import uuid
+from collections.abc import Sequence
 from typing import Protocol
 
+from app.modules.reports.domain.duplicates import DuplicateCandidate
 from app.modules.reports.domain.entities import ReportDetails
 from app.modules.reports.domain.new_report import NewReport
 from app.modules.reports.domain.photos import ProcessedPhoto, StoredEvidence
 from app.modules.reports.domain.status_machine import StatusChange
+from app.shared.domain.geo import GeoPoint
 
 
 class StatusHistoryRecorder(Protocol):
@@ -30,6 +33,22 @@ class ReportRepository(Protocol):
     def add_evidence(self, report_id: uuid.UUID, evidence: StoredEvidence) -> None: ...
 
     def get_details(self, report_id: uuid.UUID) -> ReportDetails | None: ...
+
+
+class NearbyReportFinder(Protocol):
+    def find_active_within(
+        self, point: GeoPoint, radius_m: float, limit: int
+    ) -> Sequence[DuplicateCandidate]:
+        """Reportes activos (todo estado salvo reparado) a ``radius_m``, del más cercano
+        al más lejano."""
+        ...
+
+
+class ReportCreationLock(Protocol):
+    def acquire(self) -> None:
+        """Bloquea hasta el fin de la transacción: dos reportes no se crean a la vez, así
+        la verificación de duplicados y la inserción no se cruzan entre envíos simultáneos."""
+        ...
 
 
 class PriorityEvaluator(Protocol):

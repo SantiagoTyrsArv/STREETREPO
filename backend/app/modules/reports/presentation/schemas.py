@@ -1,13 +1,16 @@
 import uuid
+from collections.abc import Sequence
 from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
 
+from app.modules.reports.domain.duplicates import DuplicateCandidate
 from app.modules.reports.domain.entities import ReportDetails
 from app.modules.reports.domain.severity import Severity
 from app.modules.reports.domain.status import ReportStatus
+from app.shared.domain.geo_parameters import DEDUPLICATION_RADIUS_M
 
 
 class SeverityLevel(StrEnum):
@@ -71,3 +74,43 @@ class ReportResponse(BaseModel):
             needs_road_review=report.needs_road_review,
             created_at=report.created_at,
         )
+
+
+class DuplicateCandidateResponse(BaseModel):
+    """Reporte ajeno cercano: sin autor ni ubicación exacta (guía 7.2, propuesta 36)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: uuid.UUID
+    # Metros al punto enviado, con un decimal.
+    distance_m: float
+    status: ReportStatus
+    severity: SeverityLevel
+    confirmations: int
+    address: str
+    created_at: datetime
+
+    @classmethod
+    def from_candidate(cls, candidate: DuplicateCandidate) -> "DuplicateCandidateResponse":
+        return cls(
+            id=candidate.id,
+            distance_m=round(candidate.distance_m, 1),
+            status=candidate.status,
+            severity=SeverityLevel.from_domain(candidate.severity),
+            confirmations=candidate.confirmations,
+            address=candidate.address,
+            created_at=candidate.created_at,
+        )
+
+
+class NearbyReportsResponse(BaseModel):
+    """Reportes activos a 25 m, del más cercano al más lejano."""
+
+    model_config = ConfigDict(frozen=True)
+
+    radius_m: float = DEDUPLICATION_RADIUS_M
+    items: list[DuplicateCandidateResponse]
+
+    @classmethod
+    def from_candidates(cls, candidates: Sequence[DuplicateCandidate]) -> "NearbyReportsResponse":
+        return cls(items=[DuplicateCandidateResponse.from_candidate(c) for c in candidates])

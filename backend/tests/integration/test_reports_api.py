@@ -12,11 +12,16 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Connection, text
 from sqlalchemy.orm import Session
 
+from app.core.database import get_engine
 from app.main import API_V1_PREFIX
 from app.modules.reports.domain.new_report import NewReport
 from app.modules.reports.domain.photos import PhotoKeys
 from app.modules.reports.domain.ports import DuplicateIdempotencyKeyError
 from app.modules.reports.domain.severity import Severity
+from app.modules.reports.infrastructure.nearby import (
+    REPORT_CREATION_LOCK_KEY,
+    PostgresReportCreationLock,
+)
 from app.modules.reports.infrastructure.repository import SqlReportRepository
 from app.shared.domain.geo import BoundingBox, GeoPoint
 from tests.images import EXIF_GPS_IFD, EXIF_MAKE, jpeg_with_metadata, open_image
@@ -207,3 +212,118 @@ def test_repository_detects_a_reused_idempotency_key(conn: Connection, session: 
     assert repository.find_by_idempotency_key(report.user_id, key) == report_id
     with pytest.raises(DuplicateIdempotencyKeyError):
         repository.add(report)
+
+
+# --- Posible duplicado a 25 m (propuesta 36) -------------------------------------
+
+# En el ecuador 1° de latitud ≈ 110 574 m.
+METERS_PER_DEGREE_LAT = 110_574.0
+
+
+def _insert_report_north(
+    conn: Connection, meters: float, status: str = "evaluado", email: str = "otro@example.test"
+) -> uuid.UUID:
+    return conn.execute(
+        text(
+            "INSERT INTO reporte (id_usuario, ubicacion, severidad, estado) "
+            "VALUES (:user_id, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326), 3, "
+            "CAST(:status AS estado_reporte)) RETURNING id_reporte"
+        ),
+        {
+            "user_id": insert_user(conn, email),
+            "lon": LON,
+            "lat": LAT + meters / METERS_PER_DEGREE_LAT,
+            "status": status,
+        },
+    ).scalar_one()
+
+
+def _confirm(conn: Connection, report_id: uuid.UUID, emails: list[str]) -> None:
+    for email in emails:
+        conn.execute(
+            text("INSERT INTO confirmacion (id_reporte, id_usuario) VALUES (:r, :u)"),
+            {"r": report_id, "u": insert_user(conn, email)},
+        )
+
+
+def test_nearby_lists_only_active_reports_within_25_m(api: TestClient, conn: Connection) -> None:
+    near = _insert_report_north(conn, 20.0, email="a@example.test")
+    _confirm(conn, near, ["c1@example.test", "c2@example.test"])
+    _insert_report_north(conn, 30.0, email="b@example.test")
+    _insert_report_north(conn, 5.0, status="reparado", email="c@example.test")
+
+    response = api.get(
+        f"{REPORTS}/nearby",
+        params={"longitude": LON, "latitude": LAT},
+        headers=bearer(_token(api)),
+    )
+
+    assert response.status_code == 200
+    items = response.json()["items"]
+    assert [item["id"] for item in items] == [str(near)]
+    assert items[0]["confirmations"] == 2
+    assert items[0]["distance_m"] == pytest.approx(20.0, abs=0.2)
+    assert items[0]["severity"] == "alta"
+
+
+def test_nearby_orders_from_the_closest(api: TestClient, conn: Connection) -> None:
+    far = _insert_report_north(conn, 24.0, email="a@example.test")
+    close = _insert_report_north(conn, 2.0, email="b@example.test")
+
+    items = api.get(
+        f"{REPORTS}/nearby",
+        params={"longitude": LON, "latitude": LAT},
+        headers=bearer(_token(api)),
+    ).json()["items"]
+
+    assert [item["id"] for item in items] == [str(close), str(far)]
+
+
+def test_report_next_to_an_active_one_answers_409_and_saves_nothing(
+    api: TestClient, conn: Connection, photo_dir: Path
+) -> None:
+    existing = _insert_report_north(conn, 10.0)
+    before = conn.execute(text("SELECT count(*) FROM reporte")).scalar_one()
+
+    response = api.post(REPORTS, data=FORM, files=_photo(), headers=bearer(_token(api)))
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "REPORT_DUPLICATE_NEARBY"
+    assert [item["id"] for item in response.json()["details"]["items"]] == [str(existing)]
+    assert conn.execute(text("SELECT count(*) FROM reporte")).scalar_one() == before
+    assert not photo_dir.exists() or not any(photo_dir.rglob("*.jpg"))
+
+
+def test_create_anyway_creates_it_next_to_the_active_one(api: TestClient, conn: Connection) -> None:
+    _insert_report_north(conn, 10.0)
+
+    response = api.post(
+        REPORTS,
+        data=FORM | {"create_anyway": "true"},
+        files=_photo(),
+        headers=bearer(_token(api)),
+    )
+
+    assert response.status_code == 201
+
+
+def test_a_repaired_report_nearby_is_not_a_duplicate(api: TestClient, conn: Connection) -> None:
+    _insert_report_north(conn, 3.0, status="reparado")
+
+    response = api.post(REPORTS, data=FORM, files=_photo(), headers=bearer(_token(api)))
+
+    assert response.status_code == 201
+
+
+def test_creation_lock_blocks_other_connections_until_the_transaction_ends(
+    session: Session,
+) -> None:
+    PostgresReportCreationLock(session).acquire()
+
+    with get_engine().connect() as other:
+        acquired = other.execute(
+            text("SELECT pg_try_advisory_xact_lock(:key)"), {"key": REPORT_CREATION_LOCK_KEY}
+        ).scalar_one()
+        other.rollback()
+
+    assert acquired is False

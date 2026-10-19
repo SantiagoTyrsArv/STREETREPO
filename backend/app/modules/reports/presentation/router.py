@@ -5,12 +5,13 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, File, Form, Header, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, Query, Response, UploadFile, status
 
 from app.core.errors import AppError
 from app.core.rate_limiting import too_many_requests
 from app.modules.auth.presentation.dependencies import CurrentUserDep
 from app.modules.reports.application.create_report import ReportSubmission
+from app.modules.reports.domain.duplicates import PossibleDuplicateError
 from app.modules.reports.domain.new_report import (
     DESCRIPTION_MAX_LENGTH,
     InvalidReportError,
@@ -22,8 +23,16 @@ from app.modules.reports.domain.photos import (
     PhotoTooLargeError,
     UnsupportedPhotoTypeError,
 )
-from app.modules.reports.presentation.dependencies import CreateReportDep, limit_reports_per_ip
-from app.modules.reports.presentation.schemas import ReportResponse, SeverityLevel
+from app.modules.reports.presentation.dependencies import (
+    CreateReportDep,
+    FindPossibleDuplicatesDep,
+    limit_reports_per_ip,
+)
+from app.modules.reports.presentation.schemas import (
+    NearbyReportsResponse,
+    ReportResponse,
+    SeverityLevel,
+)
 from app.shared.application.rate_limit import RateLimitExceededError
 from app.shared.domain.geo import GeoPoint
 
@@ -33,6 +42,10 @@ _CREATE_DOC: dict[int | str, dict[str, Any]] = {
     status.HTTP_200_OK: {
         "description": "Reintento con un Idempotency-Key ya usado: el reporte existente",
         "model": ReportResponse,
+    },
+    status.HTTP_409_CONFLICT: {
+        "description": "Hay reportes activos a 25 m (REPORT_DUPLICATE_NEARBY); "
+        "reenviar con create_anyway=true para crearlo de todos modos"
     },
     status.HTTP_413_CONTENT_TOO_LARGE: {"description": "La foto supera 10 MB"},
     status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": "La foto no es JPEG, PNG ni WebP"},
@@ -48,6 +61,14 @@ def _create_report_errors() -> Iterator[None]:
     """Traduce los errores del dominio al formato de error de la API."""
     try:
         yield
+    except PossibleDuplicateError as exc:
+        nearby = NearbyReportsResponse.from_candidates(exc.candidates)
+        raise AppError(
+            "REPORT_DUPLICATE_NEARBY",
+            "Ya hay un reporte activo muy cerca. Puedes confirmarlo en lugar de crear otro.",
+            status.HTTP_409_CONFLICT,
+            nearby.model_dump(mode="json"),
+        ) from exc
     except LocationOutsideServiceAreaError as exc:
         raise AppError(
             "LOCATION_OUTSIDE_SERVICE_AREA",
@@ -103,6 +124,10 @@ def create_report(
     latitude: Annotated[float, Form(ge=-90, le=90)],
     severity: Annotated[SeverityLevel, Form()],
     description: Annotated[str | None, Form(max_length=DESCRIPTION_MAX_LENGTH)] = None,
+    create_anyway: Annotated[
+        bool,
+        Form(description="true si el ciudadano vio los posibles duplicados y decide crearlo"),
+    ] = False,
     idempotency_key: Annotated[
         uuid.UUID | None,
         Header(
@@ -115,6 +140,9 @@ def create_report(
 
     La foto se recodifica sin metadatos (EXIF, GPS). El reporte queda «evaluado» con
     su urgencia U; si no hay vía OSM a 30 m, se marca para revisar la vía.
+
+    Si hay reportes activos a 25 m responde 409 con ellos, salvo que llegue
+    ``create_anyway=true``.
     """
     # Se lee un byte más del máximo para saber si lo supera sin cargar todo el archivo.
     raw_photo = photo.file.read(MAX_PHOTO_BYTES + 1)
@@ -127,8 +155,24 @@ def create_report(
                 description=description,
                 idempotency_key=idempotency_key,
                 photo=raw_photo,
+                create_anyway=create_anyway,
             )
         )
     if not result.created:
         response.status_code = status.HTTP_200_OK
     return ReportResponse.from_details(result.report)
+
+
+@router.get("/nearby", response_model=NearbyReportsResponse)
+def find_nearby_reports(
+    _: CurrentUserDep,
+    use_case: FindPossibleDuplicatesDep,
+    longitude: Annotated[float, Query(ge=-180, le=180)],
+    latitude: Annotated[float, Query(ge=-90, le=90)],
+) -> NearbyReportsResponse:
+    """Reportes activos a 25 m del punto, para la pantalla «Posible duplicado» (HU-15).
+
+    No incluye el autor ni la ubicación exacta de los reportes ajenos.
+    """
+    candidates = use_case.execute(GeoPoint(longitude=longitude, latitude=latitude))
+    return NearbyReportsResponse.from_candidates(candidates)
