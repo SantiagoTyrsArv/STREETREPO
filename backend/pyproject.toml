@@ -1,6 +1,6 @@
 [project]
 name = "street-repo-api"
-version = "0.4.0"
+version = "0.5.0"
 description = "API del Sistema Ciudadano de Reporte y Priorización de Daños Viales de Pasto"
 readme = "README.md"
 requires-python = ">=3.13,<3.15"

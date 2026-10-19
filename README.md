@@ -3,8 +3,9 @@
 Sistema Ciudadano de Reporte y Priorización de Daños en la Infraestructura Vial de Pasto, Nariño.
 Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colombia, Campus Pasto.
 
-> **Estado:** fases 1 a 4 del MVP cerradas (versión `v0.4.0`): API base, esquema de base de datos,
-> carga OSM, motor de priorización, autenticación y derechos del titular. Los reportes llegan en la fase 5.
+> **Estado:** fases 1 a 5 del MVP cerradas (versión `v0.5.0`): API base, esquema de base de datos,
+> carga OSM, motor de priorización, autenticación, derechos del titular y reportes con foto y
+> deduplicación a 25 m. Lo siguiente es la app Flutter y después el panel (decisión 44).
 > Historial de versiones en [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Componentes
@@ -12,8 +13,8 @@ Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colom
 | Carpeta | Contenido | Tecnología |
 |---|---|---|
 | `backend/` | API REST (`/api/v1`) | FastAPI · SQLAlchemy 2 · Alembic |
-| `admin-web/` | Panel administrativo (pendiente, fase 6) | React + Leaflet |
-| `mobile/` | App ciudadana (pendiente, fase 7) | Flutter |
+| `admin-web/` | Panel administrativo (pendiente, después de la app; decisión 44) | React + Leaflet |
+| `mobile/` | App ciudadana (pendiente, la siguiente; decisión 44) | Flutter |
 | `infra/` | Docker Compose, Dockerfiles, scripts de carga OSM | Docker · PostgreSQL + PostGIS |
 | `docs/` | Decisiones de arquitectura (ADR) | — |
 

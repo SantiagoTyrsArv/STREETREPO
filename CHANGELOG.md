@@ -4,6 +4,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+## [0.5.0] - 2026-10-19
+
+Fase 5 (reducida por la decisión 44): reportes ciudadanos con foto, deduplicación a 25 m y
+fotos en la supresión de datos.
+
 ### Añadido
 - `GET /api/v1/reports/{id}/photo` y `/photo/thumbnail`: la foto y su miniatura en JPEG, solo para el
   autor y los administradores; 404 para los demás y `Cache-Control: private, no-store` (propuesta 34).
@@ -121,7 +126,8 @@ Fase 1: cimientos.
 - Migración 0002 con las 10 entidades del diagrama ER, restricciones de integridad e índices
   GiST (`geometry` y `geography`); modelos ORM por módulo y mapeo en `docs/base-de-datos.md`.
 
-[Sin publicar]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.4.0...HEAD
+[Sin publicar]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.1.0...v0.2.0
