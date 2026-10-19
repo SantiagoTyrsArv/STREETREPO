@@ -16,6 +16,9 @@ COPY --from=build /srv/.venv /srv/.venv
 COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini ./
+# Carpeta del volumen de fotos: Docker copia su dueño al volumen nuevo, así el usuario
+# sin privilegios puede escribir en ella.
+RUN mkdir -p /srv/storage/photos && chown app:app /srv/storage/photos
 USER app
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \

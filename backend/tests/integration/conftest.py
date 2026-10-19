@@ -94,8 +94,20 @@ PASSWORD = "una frase de paso larga"
 EMAIL = "ana@example.com"
 
 
-def app_with_admin_probe() -> FastAPI:
-    app = create_app(Settings(app_env=Environment.TEST, jwt_secret_key=TEST_JWT_SECRET))
+# Área de servicio de las pruebas: alrededor del punto del Pacífico donde las pruebas de
+# PostGIS ponen sus vías y servicios, lejos de los datos reales de Pasto.
+TEST_REPORT_AREA = "-0.5,-80.5,0.5,-79.5"
+
+
+def app_with_admin_probe(photo_dir: Path) -> FastAPI:
+    app = create_app(
+        Settings(
+            app_env=Environment.TEST,
+            jwt_secret_key=TEST_JWT_SECRET,
+            photo_storage_dir=photo_dir,
+            report_area_bbox=TEST_REPORT_AREA,
+        )
+    )
     probe = APIRouter()
 
     @probe.get("/admin/probe")
@@ -107,8 +119,13 @@ def app_with_admin_probe() -> FastAPI:
 
 
 @pytest.fixture
-def api(session: Session) -> Iterator[TestClient]:
-    app = app_with_admin_probe()
+def photo_dir(tmp_path: Path) -> Path:
+    return tmp_path / "fotos"
+
+
+@pytest.fixture
+def api(session: Session, photo_dir: Path) -> Iterator[TestClient]:
+    app = app_with_admin_probe(photo_dir)
 
     def test_session() -> Iterator[Session]:
         yield session

@@ -47,6 +47,12 @@ class BoundingBox:
         if self.south >= self.north or self.west >= self.east:
             raise InvalidGeometryError("El área debe tener sur < norte y oeste < este")
 
+    def contains(self, point: GeoPoint) -> bool:
+        """El borde cuenta como dentro."""
+        return (
+            self.south <= point.latitude <= self.north and self.west <= point.longitude <= self.east
+        )
+
     @classmethod
     def parse(cls, raw: str) -> "BoundingBox":
         """Lee ``"sur,oeste,norte,este"``."""

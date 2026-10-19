@@ -2,9 +2,12 @@
 
 from enum import StrEnum
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, HttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.shared.domain.geo import BoundingBox, InvalidGeometryError
 
 
 class Environment(StrEnum):
@@ -42,6 +45,17 @@ class Settings(BaseSettings):
     )
     osm_timeout_s: float = 120.0
 
+    # Reportes (fase 5). Área de servicio: "sur,oeste,norte,este"; fuera de ella se rechaza
+    # el reporte (propuesta 37). Por defecto es la misma de OSM_BBOX, que ya deja margen
+    # alrededor del casco urbano: fuera de los datos cargados, F y P no tendrían sentido.
+    report_area_bbox: str = "1.16,-77.33,1.25,-77.23"
+    # Límite de creación de reportes (propuesta 38).
+    reports_per_user_per_hour: int = Field(default=10, ge=1)
+    reports_per_ip_per_hour: int = Field(default=30, ge=1)
+    # Carpeta de las fotos de evidencia (propuesta 34); en Docker, un volumen propio
+    # que entra en los respaldos.
+    photo_storage_dir: Path = Path("storage/photos")
+
     # Autenticación (guía 7.1). La clave firma los JWT de acceso: aleatoria, de al menos
     # 32 caracteres y solo por variable de entorno (generar con `openssl rand -hex 32`).
     jwt_secret_key: str = Field(default="", repr=False)
@@ -61,6 +75,16 @@ class Settings(BaseSettings):
         # `.env.example` y Compose la dejan vacía cuando no se define.
         if isinstance(value, str) and not value.strip():
             return None
+        return value
+
+    @field_validator("report_area_bbox")
+    @classmethod
+    def _valid_report_area(cls, value: str) -> str:
+        # Falla al arrancar, no en el primer reporte.
+        try:
+            BoundingBox.parse(value)
+        except InvalidGeometryError as exc:
+            raise ValueError(f"REPORT_AREA_BBOX no es válida: {exc}") from exc
         return value
 
     @field_validator("forwarded_allow_ips")
@@ -87,6 +111,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def report_area(self) -> BoundingBox:
+        return BoundingBox.parse(self.report_area_bbox)
 
     @property
     def is_production(self) -> bool:
