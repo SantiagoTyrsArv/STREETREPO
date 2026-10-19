@@ -18,6 +18,7 @@ from app.modules.reports.application.find_nearby import (
     NearbyPolicy,
 )
 from app.modules.reports.application.get_photo import GetReportPhoto
+from app.modules.reports.application.get_report import GetReport
 from app.modules.reports.application.list_my_reports import ListMyReports
 from app.modules.reports.infrastructure.evidence import SqlReportPhotoLookup
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
@@ -27,6 +28,7 @@ from app.modules.reports.infrastructure.nearby import (
     PostgresReportCreationLock,
 )
 from app.modules.reports.infrastructure.pillow_photos import PillowPhotoProcessor
+from app.modules.reports.infrastructure.report_view import SqlReportViewReader
 from app.modules.reports.infrastructure.repository import SqlReportRepository
 from app.modules.reports.infrastructure.status_history import SqlStatusHistoryRecorder
 from app.modules.roads.infrastructure.matcher import PostgisRoadMatcher
@@ -111,3 +113,10 @@ def get_list_my_reports(session: SessionDep) -> ListMyReports:
 
 
 ListMyReportsDep = Annotated[ListMyReports, Depends(get_list_my_reports)]
+
+
+def get_get_report(session: SessionDep) -> GetReport:
+    return GetReport(SqlReportViewReader(session))
+
+
+GetReportDep = Annotated[GetReport, Depends(get_get_report)]

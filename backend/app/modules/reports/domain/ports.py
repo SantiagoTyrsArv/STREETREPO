@@ -5,9 +5,10 @@ from typing import Protocol
 
 from app.modules.reports.domain.duplicates import DuplicateCandidate
 from app.modules.reports.domain.entities import ReportDetails
-from app.modules.reports.domain.my_reports import MyReportsPage
+from app.modules.reports.domain.my_reports import MyReportsPage, PublicReportView
 from app.modules.reports.domain.new_report import NewReport
 from app.modules.reports.domain.photos import ProcessedPhoto, ReportPhoto, StoredEvidence
+from app.modules.reports.domain.report_view import StatusHistoryEntry
 from app.modules.reports.domain.status_machine import StatusChange
 from app.shared.domain.geo import GeoPoint
 
@@ -107,4 +108,22 @@ class ReportPhotoLookup(Protocol):
 class MyReportsReader(Protocol):
     def list_for_user(self, user_id: uuid.UUID, limit: int, offset: int) -> MyReportsPage:
         """Reportes que el usuario creó o confirmó, del más reciente al más antiguo."""
+        ...
+
+
+class ReportViewReader(Protocol):
+    def get_details(self, report_id: uuid.UUID) -> ReportDetails | None: ...
+
+    def public_view(self, report_id: uuid.UUID) -> PublicReportView | None:
+        """Vista pública: ubicación redondeada, sin autor ni descripción."""
+        ...
+
+    def confirmed_at(self, report_id: uuid.UUID, user_id: uuid.UUID) -> datetime | None:
+        """Cuándo confirmó el usuario el reporte; ``None`` si no lo confirmó."""
+        ...
+
+    def confirmations(self, report_id: uuid.UUID) -> int: ...
+
+    def history(self, report_id: uuid.UUID) -> Sequence[StatusHistoryEntry]:
+        """Todos los cambios de estado, del más antiguo al más reciente."""
         ...

@@ -15,6 +15,11 @@ from app.modules.reports.domain.my_reports import (
     PublicReportView,
 )
 from app.modules.reports.domain.public_location import PUBLIC_COORDINATE_DECIMALS
+from app.modules.reports.domain.report_view import (
+    FullReportView,
+    LimitedReportView,
+    StatusHistoryEntry,
+)
 from app.modules.reports.domain.severity import Severity
 from app.modules.reports.domain.status import ReportStatus
 from app.shared.domain.geo_parameters import DEDUPLICATION_RADIUS_M
@@ -198,3 +203,51 @@ class MyReportsResponse(BaseModel):
             for item in page.items
         ]
         return cls(items=items, total=page.total, limit=page.limit, offset=page.offset)
+
+
+class StatusHistoryEntryResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    status: ReportStatus
+    changed_at: datetime
+    # null para quien solo confirmó el reporte: la observación puede mencionar al autor.
+    note: str | None
+
+    @classmethod
+    def from_entry(cls, entry: StatusHistoryEntry) -> "StatusHistoryEntryResponse":
+        return cls(status=entry.status, changed_at=entry.changed_at, note=entry.note)
+
+
+class OwnReportDetail(OwnReportItem):
+    """Detalle completo: para el autor y los administradores."""
+
+    history: list[StatusHistoryEntryResponse]
+
+    @classmethod
+    def from_full(cls, view: FullReportView) -> "OwnReportDetail":
+        item = OwnReportItem.from_own(
+            OwnReport(details=view.details, confirmations=view.confirmations)
+        )
+        return cls(
+            **item.model_dump(),
+            history=[StatusHistoryEntryResponse.from_entry(e) for e in view.history],
+        )
+
+
+class ConfirmedReportDetail(ConfirmedReportItem):
+    """Detalle limitado: para quien confirmó el reporte."""
+
+    history: list[StatusHistoryEntryResponse]
+
+    @classmethod
+    def from_limited(cls, view: LimitedReportView) -> "ConfirmedReportDetail":
+        item = ConfirmedReportItem.from_public(view.public, view.confirmed_at)
+        return cls(
+            **item.model_dump(),
+            history=[StatusHistoryEntryResponse.from_entry(e) for e in view.history],
+        )
+
+
+ReportDetailResponse = Annotated[
+    OwnReportDetail | ConfirmedReportDetail, Field(discriminator="relation")
+]

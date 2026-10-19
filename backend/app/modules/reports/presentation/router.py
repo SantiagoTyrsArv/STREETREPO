@@ -24,14 +24,19 @@ from app.modules.reports.domain.photos import (
     PhotoTooLargeError,
     UnsupportedPhotoTypeError,
 )
+from app.modules.reports.domain.report_view import FullReportView, ReportNotVisibleError
 from app.modules.reports.presentation.dependencies import (
     CreateReportDep,
     FindPossibleDuplicatesDep,
+    GetReportDep,
     GetReportPhotoDep,
     limit_reports_per_ip,
 )
 from app.modules.reports.presentation.schemas import (
+    ConfirmedReportDetail,
     NearbyReportsResponse,
+    OwnReportDetail,
+    ReportDetailResponse,
     ReportResponse,
     SeverityLevel,
 )
@@ -210,6 +215,36 @@ def find_nearby_reports(
     with _nearby_errors():
         candidates = use_case.execute(user.id, GeoPoint(longitude=longitude, latitude=latitude))
     return NearbyReportsResponse.from_candidates(candidates)
+
+
+@router.get(
+    "/{report_id}",
+    response_model=ReportDetailResponse,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "description": "El reporte no existe o el usuario no puede verlo (REPORT_NOT_FOUND)"
+        }
+    },
+)
+def get_report(
+    report_id: uuid.UUID, user: CurrentUserDep, use_case: GetReportDep
+) -> OwnReportDetail | ConfirmedReportDetail:
+    """Detalle del reporte con su historial de estados.
+
+    - Autor y administradores: ``relation: own``, completo (un administrador que no es el
+      autor también recibe ``own``: la vista completa).
+    - Quien lo confirmó: ``relation: confirmed``, vista pública y observaciones en null.
+    - Cualquier otro: 404, igual que si no existiera.
+    """
+    try:
+        view = use_case.execute(report_id, _viewer(user))
+    except ReportNotVisibleError as exc:
+        raise AppError(
+            "REPORT_NOT_FOUND", "No encontramos ese reporte.", status.HTTP_404_NOT_FOUND
+        ) from exc
+    if isinstance(view, FullReportView):
+        return OwnReportDetail.from_full(view)
+    return ConfirmedReportDetail.from_limited(view)
 
 
 # La foto puede mostrar rostros o placas: ningún intermediario ni el navegador la guarda,
