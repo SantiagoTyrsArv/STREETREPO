@@ -162,6 +162,7 @@ def candidate(distance_m: float = 12.5) -> DuplicateCandidate:
         road_id=1,
         road_name="Carrera 27",
         created_at=NOW,
+        is_mine=False,
     )
 
 
@@ -174,7 +175,7 @@ class FakeNearby:
         self.calls: list[tuple[GeoPoint, float]] = []
 
     def find_active_within(
-        self, point: GeoPoint, radius_m: float, limit: int
+        self, point: GeoPoint, radius_m: float, limit: int, viewer_id: uuid.UUID
     ) -> list[DuplicateCandidate]:
         self.calls.append((point, radius_m))
         return self.responses.pop(0) if self.responses else self.default

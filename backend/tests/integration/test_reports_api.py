@@ -30,6 +30,7 @@ from tests.integration.conftest import (
     TEST_OSM_ID,
     TEST_REPORT_AREA,
     bearer,
+    insert_report,
     insert_user,
     login_user,
     register_user,
@@ -283,6 +284,21 @@ def test_nearby_orders_from_the_closest(api: TestClient, conn: Connection) -> No
     assert [item["id"] for item in items] == [str(close), str(far)]
 
 
+def test_nearby_marks_the_viewers_own_reports(api: TestClient, conn: Connection) -> None:
+    token = _citizen_token(api, "autor@example.com")
+    author_id = conn.execute(
+        text("SELECT id_usuario FROM usuario WHERE correo = 'autor@example.com'")
+    ).scalar_one()
+    own = insert_report(conn, author_id, LON, LAT)
+    other = _insert_report_north(conn, 10.0)
+
+    items = api.get(
+        f"{REPORTS}/nearby", params={"longitude": LON, "latitude": LAT}, headers=bearer(token)
+    ).json()["items"]
+
+    assert {item["id"]: item["is_mine"] for item in items} == {str(own): True, str(other): False}
+
+
 def test_report_next_to_an_active_one_answers_409_and_saves_nothing(
     api: TestClient, conn: Connection, photo_dir: Path
 ) -> None:
@@ -294,6 +310,7 @@ def test_report_next_to_an_active_one_answers_409_and_saves_nothing(
     assert response.status_code == 409
     assert response.json()["code"] == "REPORT_DUPLICATE_NEARBY"
     assert [item["id"] for item in response.json()["details"]["items"]] == [str(existing)]
+    assert response.json()["details"]["items"][0]["is_mine"] is False
     assert conn.execute(text("SELECT count(*) FROM reporte")).scalar_one() == before
     assert not photo_dir.exists() or not any(photo_dir.rglob("*.jpg"))
 

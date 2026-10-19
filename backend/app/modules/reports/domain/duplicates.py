@@ -37,6 +37,8 @@ class DuplicateCandidate:
     road_id: int | None
     road_name: str | None
     created_at: datetime
+    # Si es del ciudadano que consulta: sus propios reportes no se confirman (propuesta 48).
+    is_mine: bool
 
     @property
     def address(self) -> str:

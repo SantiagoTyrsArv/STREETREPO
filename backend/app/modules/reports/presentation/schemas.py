@@ -78,7 +78,10 @@ class ReportResponse(BaseModel):
 
 
 class DuplicateCandidateResponse(BaseModel):
-    """Reporte ajeno cercano: sin autor ni ubicación exacta (guía 7.2, propuesta 36)."""
+    """Reporte cercano: sin autor ni ubicación exacta (guía 7.2, propuesta 36).
+
+    ``is_mine`` dice si es del propio ciudadano, que no puede confirmarlo (propuesta 48).
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -92,6 +95,7 @@ class DuplicateCandidateResponse(BaseModel):
     confirmations: int
     address: str
     created_at: datetime
+    is_mine: bool
 
     @classmethod
     def from_candidate(cls, candidate: DuplicateCandidate) -> "DuplicateCandidateResponse":
@@ -107,6 +111,7 @@ class DuplicateCandidateResponse(BaseModel):
             confirmations=candidate.confirmations,
             address=candidate.address,
             created_at=candidate.created_at,
+            is_mine=candidate.is_mine,
         )
 
 

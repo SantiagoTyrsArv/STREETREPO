@@ -43,5 +43,5 @@ class FindPossibleDuplicates:
             f"nearby:user:{user_id}", self._policy.limit_per_user, self._clock.now()
         )
         return self._nearby.find_active_within(
-            location, DEDUPLICATION_RADIUS_M, MAX_DUPLICATE_CANDIDATES
+            location, DEDUPLICATION_RADIUS_M, MAX_DUPLICATE_CANDIDATES, user_id
         )
