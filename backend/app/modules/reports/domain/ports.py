@@ -38,10 +38,10 @@ class ReportRepository(Protocol):
 
 class NearbyReportFinder(Protocol):
     def find_active_within(
-        self, point: GeoPoint, radius_m: float, limit: int
+        self, point: GeoPoint, radius_m: float, limit: int, viewer_id: uuid.UUID
     ) -> Sequence[DuplicateCandidate]:
         """Reportes activos (todo estado salvo reparado) a ``radius_m``, del más cercano
-        al más lejano."""
+        al más lejano; marca los de ``viewer_id`` con ``is_mine``."""
         ...
 
 

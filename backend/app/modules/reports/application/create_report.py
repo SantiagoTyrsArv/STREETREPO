@@ -163,7 +163,10 @@ class CreateReport:
         if submission.create_anyway:
             return
         candidates = self._nearby.find_active_within(
-            submission.location, DEDUPLICATION_RADIUS_M, MAX_DUPLICATE_CANDIDATES
+            submission.location,
+            DEDUPLICATION_RADIUS_M,
+            MAX_DUPLICATE_CANDIDATES,
+            submission.user_id,
         )
         if candidates:
             raise PossibleDuplicateError(candidates)

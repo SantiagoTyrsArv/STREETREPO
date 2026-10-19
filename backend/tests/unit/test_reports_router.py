@@ -228,6 +228,7 @@ def test_nearby_active_report_answers_409_with_the_candidates(
             "confirmations": 3,
             "address": "Carrera 27",
             "created_at": "2026-10-19T12:00:00Z",
+            "is_mine": False,
         }
     ]
     assert harness.reports.saved == {}

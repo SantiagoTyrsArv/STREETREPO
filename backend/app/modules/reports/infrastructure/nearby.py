@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Sequence
 from typing import Final
 
@@ -21,13 +22,15 @@ _ACTIVE_WITHIN = text(
     ),
     cercanos AS (
         SELECT r.id_reporte, r.estado, r.severidad, r.id_via, r.fecha_creacion,
+               r.id_usuario = :viewer AS es_mio,
                ST_SnapToGrid(r.ubicacion, :rejilla) AS publica
         FROM reporte AS r, punto
         WHERE r.estado <> CAST(:reparado AS estado_reporte)
           AND ST_DWithin(r.ubicacion::geography, punto.geog, :radio_m)
     )
     SELECT c.id_reporte, c.estado, c.severidad, c.id_via, v.nombre AS nombre_via,
-           c.fecha_creacion, ST_X(c.publica) AS lon_publica, ST_Y(c.publica) AS lat_publica,
+           c.fecha_creacion, c.es_mio,
+           ST_X(c.publica) AS lon_publica, ST_Y(c.publica) AS lat_publica,
            ST_Distance(c.publica::geography, punto.geog) AS distancia_m,
            (SELECT count(*) FROM confirmacion AS cf
             WHERE cf.id_reporte = c.id_reporte) AS confirmaciones
@@ -51,7 +54,7 @@ class PostgisNearbyReportFinder:
         self._session = session
 
     def find_active_within(
-        self, point: GeoPoint, radius_m: float, limit: int
+        self, point: GeoPoint, radius_m: float, limit: int, viewer_id: uuid.UUID
     ) -> Sequence[DuplicateCandidate]:
         rows = self._session.execute(
             _ACTIVE_WITHIN,
@@ -62,6 +65,7 @@ class PostgisNearbyReportFinder:
                 "reparado": ReportStatus.REPAIRED.value,
                 "rejilla": PUBLIC_GRID_DEGREES,
                 "limite": limit,
+                "viewer": viewer_id,
             },
         ).all()
         return [
@@ -75,6 +79,7 @@ class PostgisNearbyReportFinder:
                 road_id=row.id_via,
                 road_name=row.nombre_via,
                 created_at=row.fecha_creacion,
+                is_mine=bool(row.es_mio),
             )
             for row in rows
         ]
