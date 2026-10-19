@@ -39,8 +39,11 @@ la ubicación exacta (propuesta 40).
 
 - `GET /api/v1/reports/nearby?longitude=…&latitude=…` (con sesión) lista hasta 10 reportes activos
   (todo estado salvo reparado, decisión 13) a 25 m, del más cercano al más lejano: `id`,
-  `distance_m` (un decimal), `status`, `severity`, `confirmations`, `address` y `created_at`. No
-  incluye autor, descripción ni ubicación exacta (guía 7.2).
+  `location` (pública), `distance_m` (un decimal), `status`, `severity`, `confirmations`,
+  `address` y `created_at`. No incluye autor, descripción ni ubicación exacta (guía 7.2).
+- El punto consultado debe estar dentro de `REPORT_AREA_BBOX` (**422**
+  `LOCATION_OUTSIDE_SERVICE_AREA`) y cada usuario tiene un cupo propio de consultas por hora,
+  con el valor de `REPORTS_PER_USER_PER_HOUR` (**429** `NEARBY_RATE_LIMITED`).
 - `POST /api/v1/reports` repite la búsqueda en el servidor y responde **409**
   `REPORT_DUPLICATE_NEARBY` con la misma lista en `details.items`, salvo que llegue
   `create_anyway=true`. Así decide el ciudadano (guía 2.5), pero un cliente que se salte la pantalla
@@ -51,6 +54,9 @@ la ubicación exacta (propuesta 40).
 | Orden de las verificaciones | Primero la clave de idempotencia; después el área, el tamaño, los duplicados, el cupo y la foto | Un reintento encontraría su propio reporte a 0 m: debe devolverse con 200, no como duplicado (condición del responsable). Un 409 no consume cupo ni procesa la foto |
 | Misma transacción (condición del responsable) | Justo antes de insertar se toma un candado de transacción de PostgreSQL (`pg_advisory_xact_lock`) y se repiten la búsqueda por clave de idempotencia y la de duplicados; el candado se libera al confirmar o revertir | Sin candado, dos ciudadanos que reportan el mismo hueco a la vez pasarían ambos la verificación. Con él, el segundo ve el reporte del primero (409) o, si es un reintento con la misma clave, recibe el reporte ya creado (200) |
 | Alcance del candado | Uno solo para toda la creación de reportes, no por zona | Dura milisegundos (la foto ya está procesada y guardada) y a la escala del MVP es más simple y seguro que bloquear por celdas, que fallan en los bordes |
+| Ubicación pública (propuestas 40 y 43) | `location` es la ubicación exacta ajustada a una cuadrícula de 0,0001° (`ST_SnapToGrid`, unos 11 m) y `distance_m` se mide desde ella, en `nearby` y en el 409 | Con la distancia exacta y tres consultas desde puntos distintos se calculaba la ubicación real (trilateración). Medida desde la pública, la trilateración solo recupera lo que ya se muestra |
+| Cupo de `nearby` | Cuenta propia (`nearby:user:<id>`), con el mismo valor que el de crear reportes | Consultar antes de enviar no debe gastar el cupo del envío |
+| Riesgo residual | Quién entra en la lista se decide con la ubicación **exacta** a 25 m (la deduplicación lo exige). Sondeando muchos puntos en el borde del círculo se podría acercar a la ubicación real | Lo acotan el cupo por usuario, el área de servicio y la sesión obligatoria: con 10 consultas por hora, el sondeo toma días por reporte. Si hiciera falta más, usar la ubicación pública también para decidir la lista de `nearby` (no la del 409) |
 | Duplicado detectado ya con el candado | 409, se revierte la transacción y se borran los archivos; el cupo de esa solicitud ya se consumió | Solo pasa si otro reporte cercano se creó en el mismo instante |
 
 ## Servir la foto (propuesta 34)
