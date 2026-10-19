@@ -6,6 +6,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ### Añadido
 - Migración 0007: `reporte.clave_idempotencia`, única por par (usuario, clave) (propuesta 11).
+- `POST /api/v1/reports`: crea el reporte con foto, ubicación, severidad y descripción, y lo
+  evalúa en la misma transacción (queda «evaluado» con U, dirección y «Revisar vía»). Con
+  `Idempotency-Key`, un reintento responde 200 con el reporte existente (propuesta 11).
+- Fotos: tipo real JPEG, PNG o WebP, hasta 10 MB y 50 MP; se recodifican a JPEG sin metadatos
+  (1600 px y miniatura de 400 px) y se guardan en disco, en el volumen `photos` de Compose
+  (propuestas 34 y 35). Dependencias nuevas: `pillow` y `python-multipart`.
+- Área de servicio `REPORT_AREA_BBOX` (422 fuera de ella) y límite de 10 reportes por hora por
+  usuario y 30 por IP, configurables (propuestas 37 y 38).
+- La dirección del reporte es el nombre de la vía OSM asociada, con texto de reserva (propuesta 41).
+- README: sección de respaldos de la base y de las fotos.
 
 ## [0.4.0] - 2026-10-17
 

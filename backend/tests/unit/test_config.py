@@ -44,3 +44,24 @@ def test_forwarded_allow_ips_trusts_only_localhost_by_default() -> None:
 def test_forwarded_allow_ips_never_trusts_every_proxy(value: str) -> None:
     with pytest.raises(ValidationError, match="nunca"):
         Settings(forwarded_allow_ips=value)
+
+
+def test_report_area_defaults_to_the_osm_area_of_pasto() -> None:
+    settings = Settings()
+
+    assert settings.report_area_bbox == settings.osm_bbox
+    assert settings.report_area.south == 1.16
+
+
+@pytest.mark.parametrize(
+    "value", ["1.16,-77.33,1.25", "norte,sur,este,oeste", "1.25,-77.33,1.16,-77.23"]
+)
+def test_invalid_report_area_stops_the_api_at_startup(value: str) -> None:
+    with pytest.raises(ValidationError, match="REPORT_AREA_BBOX"):
+        Settings(report_area_bbox=value)
+
+
+@pytest.mark.parametrize("field", ["reports_per_user_per_hour", "reports_per_ip_per_hour"])
+def test_report_limits_must_allow_at_least_one(field: str) -> None:
+    with pytest.raises(ValidationError):
+        Settings(**{field: 0})  # type: ignore[arg-type]
