@@ -164,4 +164,6 @@ docker run --rm -v street-repo_photos:/fotos:ro -v "$PWD":/respaldo alpine \
 
 ## Decisiones
 
-Ver [`docs/adr/`](docs/adr/README.md).
+Bitácora de decisiones y propuestas: [`docs/bitacora.md`](docs/bitacora.md). Detalle técnico en
+[`docs/adr/`](docs/adr/README.md) y ajustes pendientes del documento de la tesis en
+[`docs/ajustes-tesis.md`](docs/ajustes-tesis.md).
