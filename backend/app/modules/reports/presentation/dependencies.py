@@ -18,8 +18,10 @@ from app.modules.reports.application.find_nearby import (
     NearbyPolicy,
 )
 from app.modules.reports.application.get_photo import GetReportPhoto
+from app.modules.reports.application.list_my_reports import ListMyReports
 from app.modules.reports.infrastructure.evidence import SqlReportPhotoLookup
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
+from app.modules.reports.infrastructure.my_reports import SqlMyReportsReader
 from app.modules.reports.infrastructure.nearby import (
     PostgisNearbyReportFinder,
     PostgresReportCreationLock,
@@ -102,3 +104,10 @@ def get_report_photo(session: SessionDep, settings: SettingsDep) -> GetReportPho
 
 
 GetReportPhotoDep = Annotated[GetReportPhoto, Depends(get_report_photo)]
+
+
+def get_list_my_reports(session: SessionDep) -> ListMyReports:
+    return ListMyReports(SqlMyReportsReader(session))
+
+
+ListMyReportsDep = Annotated[ListMyReports, Depends(get_list_my_reports)]

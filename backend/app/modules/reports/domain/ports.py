@@ -5,6 +5,7 @@ from typing import Protocol
 
 from app.modules.reports.domain.duplicates import DuplicateCandidate
 from app.modules.reports.domain.entities import ReportDetails
+from app.modules.reports.domain.my_reports import MyReportsPage
 from app.modules.reports.domain.new_report import NewReport
 from app.modules.reports.domain.photos import ProcessedPhoto, ReportPhoto, StoredEvidence
 from app.modules.reports.domain.status_machine import StatusChange
@@ -100,4 +101,10 @@ class PhotoReader(Protocol):
 class ReportPhotoLookup(Protocol):
     def find_photo(self, report_id: uuid.UUID) -> ReportPhoto | None:
         """Dueño del reporte y clave de su foto más reciente; ``None`` si el reporte no existe."""
+        ...
+
+
+class MyReportsReader(Protocol):
+    def list_for_user(self, user_id: uuid.UUID, limit: int, offset: int) -> MyReportsPage:
+        """Reportes que el usuario creó o confirmó, del más reciente al más antiguo."""
         ...

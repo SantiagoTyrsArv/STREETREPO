@@ -3,11 +3,17 @@ from collections.abc import Sequence
 from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.modules.reports.domain.duplicates import DuplicateCandidate
 from app.modules.reports.domain.entities import ReportDetails
+from app.modules.reports.domain.my_reports import (
+    MyReportsPage,
+    OwnReport,
+    PublicReportView,
+)
 from app.modules.reports.domain.public_location import PUBLIC_COORDINATE_DECIMALS
 from app.modules.reports.domain.severity import Severity
 from app.modules.reports.domain.status import ReportStatus
@@ -126,3 +132,69 @@ class NearbyReportsResponse(BaseModel):
     @classmethod
     def from_candidates(cls, candidates: Sequence[DuplicateCandidate]) -> "NearbyReportsResponse":
         return cls(items=[DuplicateCandidateResponse.from_candidate(c) for c in candidates])
+
+
+class OwnReportItem(ReportResponse):
+    """Reporte creado por el usuario, completo."""
+
+    relation: Literal["own"] = "own"
+    confirmations: int
+
+    @classmethod
+    def from_own(cls, item: OwnReport) -> "OwnReportItem":
+        base = ReportResponse.from_details(item.details)
+        return cls(**base.model_dump(), confirmations=item.confirmations)
+
+
+class ConfirmedReportItem(BaseModel):
+    """Reporte ajeno que el usuario confirmó: vista pública, sin autor ni descripción."""
+
+    model_config = ConfigDict(frozen=True)
+
+    relation: Literal["confirmed"] = "confirmed"
+    id: uuid.UUID
+    # Ubicación pública: redondeada a 4 decimales, nunca la exacta.
+    location: LocationResponse
+    status: ReportStatus
+    severity: SeverityLevel
+    address: str
+    confirmations: int
+    created_at: datetime
+    confirmed_at: datetime
+
+    @classmethod
+    def from_public(cls, view: PublicReportView, confirmed_at: datetime) -> "ConfirmedReportItem":
+        return cls(
+            id=view.id,
+            location=LocationResponse(
+                longitude=view.location.longitude, latitude=view.location.latitude
+            ),
+            status=view.status,
+            severity=SeverityLevel.from_domain(view.severity),
+            address=view.address,
+            confirmations=view.confirmations,
+            created_at=view.created_at,
+            confirmed_at=confirmed_at,
+        )
+
+
+MyReportItem = Annotated[OwnReportItem | ConfirmedReportItem, Field(discriminator="relation")]
+
+
+class MyReportsResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    items: list[MyReportItem]
+    total: int
+    limit: int
+    offset: int
+
+    @classmethod
+    def from_page(cls, page: MyReportsPage) -> "MyReportsResponse":
+        items: list[OwnReportItem | ConfirmedReportItem] = [
+            OwnReportItem.from_own(item)
+            if isinstance(item, OwnReport)
+            else ConfirmedReportItem.from_public(item.public, item.confirmed_at)
+            for item in page.items
+        ]
+        return cls(items=items, total=page.total, limit=page.limit, offset=page.offset)

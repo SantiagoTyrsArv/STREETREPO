@@ -14,6 +14,7 @@ from app.modules.auth.infrastructure.memory_login_attempts import InMemoryLoginA
 from app.modules.auth.presentation.privacy_policy import router as privacy_policy_router
 from app.modules.auth.presentation.router import router as auth_router
 from app.modules.confirmations.presentation.router import router as confirmations_router
+from app.modules.reports.presentation.me_router import router as my_reports_router
 from app.modules.reports.presentation.router import router as reports_router
 from app.modules.users.presentation.router import router as users_router
 from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
@@ -65,6 +66,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth_router, prefix=API_V1_PREFIX)
     app.include_router(privacy_policy_router, prefix=API_V1_PREFIX)
     app.include_router(users_router, prefix=API_V1_PREFIX)
+    app.include_router(my_reports_router, prefix=API_V1_PREFIX)
     app.include_router(reports_router, prefix=API_V1_PREFIX)
     app.include_router(confirmations_router, prefix=API_V1_PREFIX)
     return app
