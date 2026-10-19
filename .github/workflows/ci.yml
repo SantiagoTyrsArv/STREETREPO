@@ -84,6 +84,27 @@ jobs:
       - name: Auditoría de dependencias
         run: uv export --frozen --no-dev --no-hashes -o /tmp/req.txt && uv run pip-audit -r /tmp/req.txt
 
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.47.7 # la misma versión del equipo de desarrollo
+          cache: true
+      - name: Dependencias
+        run: flutter pub get
+      - name: Formato
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Análisis estático
+        run: flutter analyze
+      - name: Pruebas
+        run: flutter test
+
   sonar:
     # Los push de Dependabot no reciben SONAR_TOKEN y el job fallaría siempre; esas ramas se
     # rehacen en una rama propia antes de integrarlas, y ahí sí corre (propuesta 32).
