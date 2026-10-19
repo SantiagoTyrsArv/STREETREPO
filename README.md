@@ -52,10 +52,13 @@ de desarrollo y las pruebas aplican las migraciones solas. Usar `127.0.0.1` y no
 Windows `localhost` intenta primero IPv6 y Docker solo publica en IPv4.
 
 ```bash
-docker compose -f infra/docker-compose.yml --env-file .env up -d db
-cd backend
-POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 POSTGRES_DB=streetrepo_test uv run pytest
+infra/scripts/test-integration.sh          # acepta argumentos de pytest, p. ej. --cov o -k nearby
 ```
+
+El script levanta la base de Compose, espera a que esté lista y corre `pytest` contra
+`streetrepo_test` con las credenciales del `.env` de la raíz (la API solo lee `backend/.env`, así
+que exportar `POSTGRES_HOST`, `POSTGRES_PORT` y `POSTGRES_DB` sin la contraseña no basta). En
+Windows se ejecuta desde Git Bash.
 
 Si el volumen de la base se creó antes de existir `infra/db/init/`, crear la base una vez:
 `docker compose -f infra/docker-compose.yml --env-file .env exec db createdb -U streetrepo streetrepo_test`.
