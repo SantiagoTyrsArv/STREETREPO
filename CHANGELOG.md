@@ -5,6 +5,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- Supresión de datos (Ley 1581): borra también las fotos y miniaturas de los reportes del titular;
+  los archivos se borran tras confirmar, con reintentos, y el comando
+  `python -m app.cli purge-orphan-photos` recoge los que queden sin referencia (propuesta 39).
 - Migración 0007: `reporte.clave_idempotencia`, única por par (usuario, clave) (propuesta 11).
 - `POST /api/v1/reports`: crea el reporte con foto, ubicación, severidad y descripción, y lo
   evalúa en la misma transacción (queda «evaluado» con U, dirección y «Revisar vía»). Con
