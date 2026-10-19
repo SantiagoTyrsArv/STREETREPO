@@ -1,10 +1,23 @@
 """Derechos del titular por HTTP contra PostGIS real: actualizar y suprimir (Ley 1581)."""
 
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Connection, text
+from sqlalchemy.orm import Session
 
 from app.main import API_V1_PREFIX
+from app.modules.reports.application.photo_cleanup import (
+    ORPHAN_MIN_AGE,
+    PhotoFileCleanup,
+    PurgeOrphanPhotos,
+)
+from app.modules.reports.domain.photos import PhotoKeys
+from app.modules.reports.infrastructure.evidence import SqlEvidenceKeys
+from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
+from tests.images import image_bytes
 from tests.integration.conftest import (
     EMAIL,
     PASSWORD,
@@ -189,3 +202,61 @@ def test_guessing_the_password_with_a_stolen_token_locks_the_account(api: TestCl
     assert locked.json()["code"] == "TOO_MANY_LOGIN_ATTEMPTS"
     # El bloqueo es el mismo del inicio de sesión.
     assert login_user(api)["_status"] == 429
+
+
+def test_data_deletion_removes_the_photos_and_keeps_the_report(
+    api: TestClient, conn: Connection, photo_dir: Path
+) -> None:
+    token = _session(api)["access_token"]
+    created = api.post(
+        f"{API_V1_PREFIX}/reports",
+        data={"longitude": "-80.0", "latitude": "0.0", "severity": "media"},
+        files={"photo": ("foto.jpg", image_bytes(), "image/jpeg")},
+        headers=bearer(token),
+    )
+    assert created.status_code == 201
+    report_id = created.json()["id"]
+    assert len(list(photo_dir.rglob("*.jpg"))) == 2  # foto y miniatura
+
+    response = api.post(DELETION, json={"current_password": PASSWORD}, headers=bearer(token))
+
+    assert response.status_code == 201
+    evidence = conn.execute(
+        text("SELECT count(*) FROM evidencia WHERE id_reporte = :id"), {"id": report_id}
+    ).scalar_one()
+    assert evidence == 0
+    assert list(photo_dir.rglob("*.jpg")) == []
+    report = conn.execute(
+        text("SELECT severidad, estado FROM reporte WHERE id_reporte = :id"), {"id": report_id}
+    ).one()
+    assert (report.severidad, report.estado) == (2, "evaluado")
+
+
+def test_purge_keeps_photos_that_evidence_references(
+    session: Session, conn: Connection, photo_dir: Path, api: TestClient
+) -> None:
+    token = _session(api)["access_token"]
+    api.post(
+        f"{API_V1_PREFIX}/reports",
+        data={"longitude": "-80.0", "latitude": "0.0", "severity": "alta"},
+        files={"photo": ("foto.jpg", image_bytes(), "image/jpeg")},
+        headers=bearer(token),
+    )
+    storage = LocalPhotoStorage(photo_dir)
+    orphan = PhotoKeys.for_name("ff99").photo
+    storage.save(orphan, b"jpeg")
+    later = datetime.now(UTC) + ORPHAN_MIN_AGE + timedelta(minutes=1)
+
+    class Later:
+        def now(self) -> datetime:
+            return later
+
+    deleted = PurgeOrphanPhotos(
+        inventory=storage,
+        evidence=SqlEvidenceKeys(session),
+        cleanup=PhotoFileCleanup(storage),
+        clock=Later(),
+    ).execute()
+
+    assert deleted == 1
+    assert len(storage.list_keys(modified_before=later)) == 2  # las del reporte siguen

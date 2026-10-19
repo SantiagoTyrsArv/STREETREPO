@@ -75,6 +75,44 @@ class FakeReportTexts:
         self.cleared.append(user_id)
 
 
+class FakeReportPhotos:
+    def __init__(self, keys: list[str], events: list[str]) -> None:
+        self.keys = keys
+        self.detached_for: list[uuid.UUID] = []
+        self._events = events
+
+    def detach_photos(self, user_id: uuid.UUID) -> list[str]:
+        self._events.append("detach")
+        self.detached_for.append(user_id)
+        return self.keys
+
+
+class FakePhotoFiles:
+    def __init__(self, events: list[str], fail: bool = False) -> None:
+        self.removed: list[str] = []
+        self._events = events
+        self._fail = fail
+
+    def remove(self, photo_keys: list[str]) -> list[str]:
+        self._events.append("remove files")
+        if self._fail:
+            return list(photo_keys)
+        self.removed.extend(photo_keys)
+        return []
+
+
+class RecordingTransaction(Transaction):
+    """Anota el commit en la misma lista que los demás dobles, para verificar el orden."""
+
+    def __init__(self, events: list[str]) -> None:
+        super().__init__()
+        self._events = events
+
+    def commit(self) -> None:
+        super().commit()
+        self._events.append("commit")
+
+
 class FakeSessions:
     """Solo lo que usa la supresión del puerto ``RefreshTokenRepository``."""
 
@@ -98,6 +136,14 @@ class Rights:
     deletion_requests: FakeDeletionRequests = field(default_factory=FakeDeletionRequests)
     report_texts: FakeReportTexts = field(default_factory=FakeReportTexts)
     sessions: FakeSessions = field(default_factory=FakeSessions)
+    events: list[str] = field(default_factory=list)
+    photo_keys: list[str] = field(default_factory=lambda: ["ab/ab12.jpg", "cd/cd34.jpg"])
+    photo_files_fail: bool = False
+
+    def __post_init__(self) -> None:
+        self.report_photos = FakeReportPhotos(self.photo_keys, self.events)
+        self.photo_files = FakePhotoFiles(self.events, fail=self.photo_files_fail)
+        self.transaction = RecordingTransaction(self.events)
 
     @property
     def confirmation(self) -> PasswordConfirmation:
@@ -126,6 +172,8 @@ class Rights:
             users=self.users,
             deletion_requests=self.deletion_requests,
             report_texts=self.report_texts,
+            report_photos=self.report_photos,
+            photo_files=self.photo_files,
             refresh_tokens=self.sessions,  # type: ignore[arg-type]
             confirmation=self.confirmation,
             clock=self.clock,
@@ -275,3 +323,39 @@ def test_lock_expiry_lets_the_titular_confirm_again(rights: Rights) -> None:
     rights.clock.current += timedelta(minutes=1)
 
     rights.confirmation.confirm(user, PASSWORD)
+
+
+# --- Fotos en la supresión (propuesta 39) -----------------------------------------
+
+
+def test_deletion_removes_the_photos_after_committing(rights: Rights) -> None:
+    user = rights.add_user()
+
+    rights.delete(user)
+
+    assert rights.report_photos.detached_for == [user.id]
+    assert rights.photo_files.removed == ["ab/ab12.jpg", "cd/cd34.jpg"]
+    # Las filas se quitan en la transacción y los archivos solo después de confirmarla.
+    assert rights.events == ["detach", "commit", "remove files"]
+
+
+def test_no_file_is_removed_if_the_deletion_fails(rights: Rights) -> None:
+    rights.sessions = FakeSessions(fail=True)
+    user = rights.add_user()
+
+    with pytest.raises(RuntimeError):
+        rights.delete(user)
+
+    assert rights.photo_files.removed == []
+    assert "remove files" not in rights.events
+
+
+def test_files_that_could_not_be_removed_do_not_undo_the_deletion() -> None:
+    rights = Rights(photo_files_fail=True)
+    user = rights.add_user()
+
+    request = rights.delete(user)
+
+    assert request.status is DeletionRequestStatus.ATTENDED
+    assert not rights.users.by_id[user.id].is_active
+    assert rights.transaction.commits == 1

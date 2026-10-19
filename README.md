@@ -105,7 +105,8 @@ Las vías o servicios eliminados de OSM no se borran de la base en una nueva car
   (`PRIVACY_POLICY_URL`, obligatoria y con https en producción; en dev y test puede quedar vacía y responde `null`).
 - Derechos del titular (Ley 1581): `PATCH /api/v1/me` actualiza nombre y correo, y
   `POST /api/v1/me/data-deletion-requests` suprime los datos de inmediato por anonimización (conserva
-  los reportes sin descripción y revoca las sesiones). Cambiar el correo o suprimir la cuenta exige la
+  los reportes sin descripción ni fotos y revoca las sesiones). Las fotos que no se puedan borrar en
+  ese momento las recoge `python -m app.cli purge-orphan-photos` (conviene programarlo a diario). Cambiar el correo o suprimir la cuenta exige la
   contraseña actual. Decisiones en [ADR 0006](docs/adr/0006-derechos-del-titular.md).
 - Límite de intentos: bloqueo progresivo por correo tras 5 fallos seguidos (1 a 15 min) y límite por
   IP en inicio de sesión (30 cada 5 min) y registro (10 por hora); responde 429 con `Retry-After`.

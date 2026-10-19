@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Protocol
 
@@ -44,3 +45,20 @@ class ReportTextEraser(Protocol):
     personales (propuesta 10). El reporte, su ubicación y su severidad se conservan."""
 
     def clear_descriptions(self, user_id: uuid.UUID) -> None: ...
+
+
+class ReportPhotoEraser(Protocol):
+    """Quita la evidencia fotográfica de los reportes del titular: las fotos pueden mostrar
+    rostros o placas y no se distinguen de forma automática (propuestas 10 y 39)."""
+
+    def detach_photos(self, user_id: uuid.UUID) -> Sequence[str]:
+        """Borra las filas de ``evidencia`` de sus reportes y devuelve las claves de las
+        fotos, para borrar los archivos después de confirmar la transacción."""
+        ...
+
+
+class PhotoFileRemover(Protocol):
+    def remove(self, photo_keys: Sequence[str]) -> Sequence[str]:
+        """Borra cada foto y su miniatura, con reintentos. No lanza: devuelve las claves que
+        no pudo borrar, que recoge después la limpieza de fotos huérfanas."""
+        ...

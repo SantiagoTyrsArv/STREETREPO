@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, status
 
-from app.core.dependencies import SessionDep
+from app.core.dependencies import SessionDep, SettingsDep
 from app.core.errors import AppError
 from app.core.rate_limiting import too_many_requests
 from app.modules.auth.application.errors import (
@@ -16,6 +16,9 @@ from app.modules.auth.application.errors import (
 )
 from app.modules.auth.infrastructure.refresh_repository import SqlRefreshTokenRepository
 from app.modules.auth.presentation.dependencies import CurrentUserDep, PasswordConfirmationDep
+from app.modules.reports.application.photo_cleanup import PhotoFileCleanup
+from app.modules.reports.infrastructure.evidence import SqlReportPhotoEraser
+from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
 from app.modules.reports.infrastructure.text_eraser import SqlReportTextEraser
 from app.modules.users.application.data_rights import (
     ProfileChanges,
@@ -118,17 +121,20 @@ def request_data_deletion(
     body: DataDeletionRequestBody,
     user: CurrentUserDep,
     session: SessionDep,
+    settings: SettingsDep,
     confirmation: PasswordConfirmationDep,
 ) -> DataDeletionResponse:
     """Suprime de inmediato los datos personales del titular (Ley 1581). Es irreversible.
 
-    Anonimiza la cuenta, borra la descripción de sus reportes y cierra todas sus sesiones.
-    Los reportes se conservan como dato de la vía.
+    Anonimiza la cuenta, borra la descripción y las fotos de sus reportes y cierra todas
+    sus sesiones. Los reportes se conservan, sin foto, como dato de la vía.
     """
     use_case = RequestDataDeletion(
         users=SqlUserRepository(session),
         deletion_requests=SqlDeletionRequestRepository(session),
         report_texts=SqlReportTextEraser(session),
+        report_photos=SqlReportPhotoEraser(session),
+        photo_files=PhotoFileCleanup(LocalPhotoStorage(settings.photo_storage_dir)),
         refresh_tokens=SqlRefreshTokenRepository(session),
         confirmation=confirmation,
         clock=SystemClock(),

@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Protocol
 
 from app.modules.reports.domain.duplicates import DuplicateCandidate
@@ -71,4 +72,16 @@ class PhotoStorage(Protocol):
 
     def delete(self, key: str) -> None:
         """Borra el archivo; no falla si ya no existe."""
+        ...
+
+
+class PhotoInventory(Protocol):
+    def list_keys(self, *, modified_before: datetime) -> Sequence[str]:
+        """Claves de todos los archivos guardados (fotos y miniaturas) anteriores a la fecha."""
+        ...
+
+
+class EvidenceKeys(Protocol):
+    def referenced_photo_keys(self) -> Sequence[str]:
+        """Claves de foto que alguna fila de ``evidencia`` referencia."""
         ...
