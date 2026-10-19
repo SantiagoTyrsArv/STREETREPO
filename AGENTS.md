@@ -600,7 +600,7 @@ Cada fase termina con algo **ejecutable y probado**. Ajusta el orden con el resp
 
 Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si algo se desvió del documento, avisar para ajustar la tesis.
 
-**Estado (2026-10-17):** fases 1 a 4 cerradas e integradas en `main` (etiquetas `v0.1.0` a `v0.4.0`), con la CI en verde (403 pruebas, cobertura del backend 98 %). Pendientes de la fase 3 que se completan después: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez (fase 6); lanzar la evaluación al crear un reporte (fase 5).
+**Estado (2026-10-19):** fases 1 a 5 cerradas e integradas en `main` (etiquetas `v0.1.0` a `v0.5.0`), con la CI en verde (551 pruebas, cobertura del backend 98 %). Por la decisión 44, lo siguiente es la app Flutter con el flujo crítico (antes, confirmar la decisión 1: Riverpod o Bloc) y después el panel mínimo. Pendientes de la fase 3 que se completan en el panel: rutas HTTP de pesos y versiones (`GET/PUT /admin/weights`) y el error 409 si dos administradores guardan pesos a la vez.
 
 **Fase 4 (cerrada el 2026-10-17, `v0.4.0`):**
 - Hecho e integrado en `main` (CI en verde, 401 pruebas, cobertura del backend 98 %):
@@ -617,12 +617,17 @@ Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si al
   - Cierre: README, CHANGELOG, sección 6.2 de esta guía, versión 0.4.0 y etiqueta `v0.4.0`.
 - Queda para fases posteriores: la decisión 30c (límite global de solicitudes, fase 8), el trato de las fotos en la supresión (`TODO(propuesta-10)`, fase 5) y los 13 avisos de Sonar en pruebas de fases anteriores.
 
-**Avance de la fase 5 (2026-10-19, para retomar en la próxima sesión):**
-- Hecho e integrado en `main` (CI en verde, 407 pruebas): migración 0007, `reporte.clave_idempotencia` única por (usuario, clave) (propuesta 11, commit `1fea0f3`).
-- Propuestas 34 a 41 **aprobadas con condiciones** por el responsable el 2026-10-19 (sección 17): almacenamiento y procesado de fotos, flujo de duplicado, límite geográfico, límite de reportes, fotos en la supresión, coordenadas para terceros y dirección. Pendientes de aplicar en las ramas siguientes; las condiciones de cada una se cumplen en su rama.
-- Crear reporte (rama `feat/reports-crear-reporte`): `POST /api/v1/reports` con foto, ubicación, severidad, `Idempotency-Key` y evaluación del motor en la misma transacción; propuestas 34 (almacenamiento), 35, 37, 38 y 41 aplicadas (`docs/adr/0007-creacion-de-reportes.md`).
-- Posible duplicado (rama `feat/reports-duplicado-25m`): `GET /api/v1/reports/nearby` y 409 `REPORT_DUPLICATE_NEARBY` en `POST /api/v1/reports` salvo `create_anyway` (propuesta 36).
-- Siguiente, según la decisión 44 (fase 5 reducida a lo imprescindible), en este orden y cada uno en su rama: ~~borrado de fotos en la supresión (propuesta 39)~~ hecho en la rama `feat/users-fotos-en-supresion`; ~~ruta que sirve las fotos solo al dueño y a administradores (propuesta 34)~~ hecho en la rama `feat/reports-servir-fotos`; ~~corrección de `GET /reports/nearby` y del 409 para que no revelen la ubicación exacta (propuesta 43)~~ hecho en la rama `fix/reports-nearby-sin-ubicacion-exacta`; cierre (`v0.5.0`). Después, la app Flutter con el flujo crítico y luego el panel mínimo. Las rutas de confirmaciones, `GET /me/reports`, listado y detalle se hacen cuando las pida el cliente que las usa.
+**Fase 5 (cerrada el 2026-10-19, `v0.5.0`; alcance reducido por la decisión 44):**
+- Hecho e integrado en `main` (CI en verde, 551 pruebas, cobertura del backend 98 %):
+  - Migración 0007: `reporte.clave_idempotencia`, única por (usuario, clave) (propuesta 11, commit `1fea0f3`).
+  - Crear reporte (*merge* `4bf3999`): `POST /api/v1/reports` con foto, ubicación, severidad, `Idempotency-Key` y evaluación del motor en la misma transacción; fotos procesadas con Pillow y guardadas en disco; área de servicio; 10 reportes por hora por usuario y 30 por IP; dirección = nombre de la vía (propuestas 34, 35, 37, 38 y 41, `docs/adr/0007-creacion-de-reportes.md`).
+  - Posible duplicado (*merge* `915e967`): `GET /api/v1/reports/nearby` y 409 `REPORT_DUPLICATE_NEARBY` salvo `create_anyway`, con candado de transacción (propuesta 36).
+  - Fotos en la supresión (*merge* `0831c4b`): filas en la transacción, archivos tras el commit con reintentos y `purge-orphan-photos` (propuesta 39, `docs/adr/0006-derechos-del-titular.md`).
+  - Servir la foto (*merge* `2c3ade7`): `GET /api/v1/reports/{id}/photo` y `/thumbnail`, solo para el dueño y los administradores (propuesta 34). Incluye la corrección de Alembic, que desactivaba los loggers existentes.
+  - Ubicación pública en `nearby` y en el 409 (*merge* `0335912`, propuestas 40 y 43).
+  - Cierre: README, CHANGELOG, versión 0.5.0 y etiqueta `v0.5.0`.
+- Queda para cuando lo pida el cliente que lo usa: confirmaciones (`POST /api/v1/reports/{id}/confirmations`, HU-16), `GET /api/v1/me/reports`, listado y detalle (`GET /api/v1/reports`, `GET /api/v1/reports/{id}`) con paginación y *bounding box*, y la propuesta 40 en esas vistas.
+- Queda para fases posteriores: decisión 46 (a–e); en HU-17, programar `purge-orphan-photos` y limitar en el proxy el tamaño de la petición; decisión 30c (límite global, fase 8); los 13 avisos antiguos de Sonar.
 ---
 
 ## 14. Definición de terminado (DoD)
