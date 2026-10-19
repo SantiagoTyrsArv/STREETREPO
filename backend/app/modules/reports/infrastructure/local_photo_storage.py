@@ -1,5 +1,7 @@
 import os
 import tempfile
+from collections.abc import Sequence
+from datetime import datetime
 from pathlib import Path
 
 
@@ -8,7 +10,9 @@ class InvalidPhotoKeyError(ValueError):
 
 
 class LocalPhotoStorage:
-    """Implementa ``PhotoStorage`` en disco (propuesta 34): en Docker, un volumen propio.
+    """Implementa ``PhotoStorage`` y ``PhotoInventory`` en disco (propuesta 34).
+
+    En Docker, la carpeta es un volumen propio.
 
     Las claves son relativas a ``root``; pasar a almacenamiento de objetos solo exige
     otro adaptador con el mismo puerto.
@@ -42,3 +46,13 @@ class LocalPhotoStorage:
 
     def exists(self, key: str) -> bool:
         return self._path(key).is_file()
+
+    def list_keys(self, *, modified_before: datetime) -> Sequence[str]:
+        if not self._root.is_dir():
+            return []
+        cutoff = modified_before.timestamp()
+        return sorted(
+            path.relative_to(self._root).as_posix()
+            for path in self._root.rglob("*.jpg")
+            if path.is_file() and path.stat().st_mtime < cutoff
+        )

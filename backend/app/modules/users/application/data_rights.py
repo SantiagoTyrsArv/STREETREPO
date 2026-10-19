@@ -8,6 +8,8 @@ from app.modules.users.domain.deletion_request import DeletionRequest
 from app.modules.users.domain.entities import User, normalize_email
 from app.modules.users.domain.ports import (
     DeletionRequestRepository,
+    PhotoFileRemover,
+    ReportPhotoEraser,
     ReportTextEraser,
     UserRepository,
 )
@@ -60,8 +62,12 @@ class UpdateMyData:
 class RequestDataDeletion:
     """Derecho a la supresión, atendido de inmediato y en una sola transacción (decisión 23a).
 
-    Anonimiza la cuenta, borra la descripción libre de sus reportes, revoca todas sus
-    sesiones y deja la constancia ``atendida``. Si algo falla, no se aplica nada.
+    Anonimiza la cuenta, borra la descripción libre y las fotos de sus reportes, revoca
+    todas sus sesiones y deja la constancia ``atendida``. Si algo falla, no se aplica nada.
+
+    Los archivos de las fotos se borran después de confirmar (propuesta 39): un archivo
+    no se puede «revertir», y si se borrara antes y la transacción fallara, el reporte
+    quedaría apuntando a una foto que ya no existe.
     """
 
     def __init__(
@@ -70,6 +76,8 @@ class RequestDataDeletion:
         users: UserRepository,
         deletion_requests: DeletionRequestRepository,
         report_texts: ReportTextEraser,
+        report_photos: ReportPhotoEraser,
+        photo_files: PhotoFileRemover,
         refresh_tokens: RefreshTokenRepository,
         confirmation: PasswordConfirmation,
         clock: Clock,
@@ -78,6 +86,8 @@ class RequestDataDeletion:
         self._users = users
         self._deletion_requests = deletion_requests
         self._report_texts = report_texts
+        self._report_photos = report_photos
+        self._photo_files = photo_files
         self._refresh_tokens = refresh_tokens
         self._confirmation = confirmation
         self._clock = clock
@@ -88,12 +98,12 @@ class RequestDataDeletion:
         try:
             request = self._deletion_requests.add_attended(user.id, self._clock.now())
             self._report_texts.clear_descriptions(user.id)
-            # TODO(propuesta-10): definir en la fase 5, cuando exista su almacenamiento, el
-            # trato de las fotos del titular con rostros o placas (decisión del 2026-10-16).
+            photo_keys = self._report_photos.detach_photos(user.id)
             self._users.anonymize(user.id)
             self._refresh_tokens.revoke_all_for_user(user.id)
             self._transaction.commit()
         except Exception:
             self._transaction.rollback()
             raise
+        self._photo_files.remove(photo_keys)
         return request

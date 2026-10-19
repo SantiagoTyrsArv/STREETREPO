@@ -2,6 +2,7 @@
 
 osm-import [--bbox sur,oeste,norte,este]   Carga vías y servicios críticos de OSM.
 create-admin --name NOMBRE --email CORREO  Crea un administrador (pide la contraseña sin eco).
+purge-orphan-photos                       Borra las fotos que ninguna evidencia referencia.
 """
 
 import argparse
@@ -19,9 +20,13 @@ from app.modules.auth.application.create_admin import CreateAdmin
 from app.modules.auth.domain.passwords import WeakPasswordError
 from app.modules.auth.infrastructure.passwords import Argon2PasswordHasher
 from app.modules.critical_services.infrastructure.repository import SqlCriticalServiceRepository
+from app.modules.reports.application.photo_cleanup import PhotoFileCleanup, PurgeOrphanPhotos
+from app.modules.reports.infrastructure.evidence import SqlEvidenceKeys
+from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
 from app.modules.roads.infrastructure.repository import SqlRoadRepository
 from app.modules.users.domain.ports import EmailAlreadyRegisteredError
 from app.modules.users.infrastructure.repository import SqlUserRepository
+from app.shared.application.clock import SystemClock
 from app.shared.domain.geo import BoundingBox, InvalidGeometryError
 
 
@@ -73,6 +78,19 @@ def _create_admin(name: str, email: str) -> int:
     return 0
 
 
+def _purge_orphan_photos() -> int:
+    storage = LocalPhotoStorage(get_settings().photo_storage_dir)
+    with create_session() as session:
+        deleted = PurgeOrphanPhotos(
+            inventory=storage,
+            evidence=SqlEvidenceKeys(session),
+            cleanup=PhotoFileCleanup(storage),
+            clock=SystemClock(),
+        ).execute()
+    print(json.dumps({"fotos_borradas": deleted}))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -81,6 +99,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     admin = commands.add_parser("create-admin", help="Crear una cuenta de administrador")
     admin.add_argument("--name", required=True, help="Nombre del administrador")
     admin.add_argument("--email", required=True, help="Correo con el que iniciará sesión")
+    commands.add_parser("purge-orphan-photos", help="Borrar las fotos huérfanas de más de una hora")
 
     args = parser.parse_args(argv)
     configure_logging(get_settings().log_level)
@@ -88,6 +107,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _osm_import(args.bbox)
     if args.command == "create-admin":
         return _create_admin(args.name, args.email)
+    if args.command == "purge-orphan-photos":
+        return _purge_orphan_photos()
     return 2  # pragma: no cover - argparse ya valida el comando
 
 
