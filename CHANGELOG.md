@@ -27,6 +27,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   verificación; un reintento con la misma `Idempotency-Key` sigue respondiendo 200 (propuesta 36).
 
 ### Corregido
+- `GET /api/v1/reports/nearby` y el 409 de duplicado ya no permiten calcular la ubicación exacta de
+  reportes ajenos: devuelven la ubicación redondeada a 4 decimales y la distancia medida desde ella.
+  `nearby` exige un punto dentro del área de servicio y tiene un cupo por usuario (propuesta 43).
 - Las migraciones de Alembic ya no desactivan los loggers de la aplicación creados antes de migrar.
 
 ## [0.4.0] - 2026-10-17

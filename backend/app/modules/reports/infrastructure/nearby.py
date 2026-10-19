@@ -5,28 +5,36 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.modules.reports.domain.duplicates import DuplicateCandidate
+from app.modules.reports.domain.public_location import PUBLIC_GRID_DEGREES
 from app.modules.reports.domain.severity import Severity
 from app.modules.reports.domain.status import ReportStatus
 from app.shared.domain.geo import GeoPoint
 
-# ST_DWithin filtra con el índice ix_reporte_ubicacion_geog (ADR 0003); ST_Distance solo
-# da el valor y ordena. id_reporte desempata para que el resultado sea determinista.
+# ST_DWithin filtra con la ubicación exacta y el índice ix_reporte_ubicacion_geog
+# (ADR 0003). Lo que se devuelve es público (propuesta 43): la ubicación ajustada a la
+# cuadrícula y la distancia medida desde ella. id_reporte desempata para que el
+# resultado sea determinista.
 _ACTIVE_WITHIN = text(
     """
     WITH punto AS (
         SELECT ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography AS geog
+    ),
+    cercanos AS (
+        SELECT r.id_reporte, r.estado, r.severidad, r.id_via, r.fecha_creacion,
+               ST_SnapToGrid(r.ubicacion, :rejilla) AS publica
+        FROM reporte AS r, punto
+        WHERE r.estado <> CAST(:reparado AS estado_reporte)
+          AND ST_DWithin(r.ubicacion::geography, punto.geog, :radio_m)
     )
-    SELECT r.id_reporte, r.estado, r.severidad, r.id_via, v.nombre AS nombre_via,
-           r.fecha_creacion,
-           ST_Distance(r.ubicacion::geography, punto.geog) AS distancia_m,
-           (SELECT count(*) FROM confirmacion AS c
-            WHERE c.id_reporte = r.id_reporte) AS confirmaciones
-    FROM reporte AS r
+    SELECT c.id_reporte, c.estado, c.severidad, c.id_via, v.nombre AS nombre_via,
+           c.fecha_creacion, ST_X(c.publica) AS lon_publica, ST_Y(c.publica) AS lat_publica,
+           ST_Distance(c.publica::geography, punto.geog) AS distancia_m,
+           (SELECT count(*) FROM confirmacion AS cf
+            WHERE cf.id_reporte = c.id_reporte) AS confirmaciones
+    FROM cercanos AS c
     CROSS JOIN punto
-    LEFT JOIN via AS v ON v.id_via = r.id_via
-    WHERE r.estado <> CAST(:reparado AS estado_reporte)
-      AND ST_DWithin(r.ubicacion::geography, punto.geog, :radio_m)
-    ORDER BY distancia_m, r.id_reporte
+    LEFT JOIN via AS v ON v.id_via = c.id_via
+    ORDER BY distancia_m, c.id_reporte
     LIMIT :limite
     """
 )
@@ -52,12 +60,14 @@ class PostgisNearbyReportFinder:
                 "lat": point.latitude,
                 "radio_m": radius_m,
                 "reparado": ReportStatus.REPAIRED.value,
+                "rejilla": PUBLIC_GRID_DEGREES,
                 "limite": limit,
             },
         ).all()
         return [
             DuplicateCandidate(
                 id=row.id_reporte,
+                location=GeoPoint(longitude=row.lon_publica, latitude=row.lat_publica),
                 distance_m=float(row.distancia_m),
                 status=ReportStatus(row.estado),
                 severity=Severity(row.severidad),

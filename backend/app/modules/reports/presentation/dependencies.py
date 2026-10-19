@@ -13,7 +13,10 @@ from app.modules.priority.infrastructure.evaluation_repository import SqlEvaluat
 from app.modules.priority.infrastructure.reports_reader import SqlReportsToEvaluate
 from app.modules.priority.infrastructure.weights_repository import SqlWeightVersionRepository
 from app.modules.reports.application.create_report import CreateReport, CreateReportPolicy
-from app.modules.reports.application.find_nearby import FindPossibleDuplicates
+from app.modules.reports.application.find_nearby import (
+    FindPossibleDuplicates,
+    NearbyPolicy,
+)
 from app.modules.reports.application.get_photo import GetReportPhoto
 from app.modules.reports.infrastructure.evidence import SqlReportPhotoLookup
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
@@ -72,8 +75,21 @@ def get_create_report(
 CreateReportDep = Annotated[CreateReport, Depends(get_create_report)]
 
 
-def get_find_possible_duplicates(session: SessionDep) -> FindPossibleDuplicates:
-    return FindPossibleDuplicates(PostgisNearbyReportFinder(session))
+def get_find_possible_duplicates(
+    session: SessionDep, settings: SettingsDep, limiter: RateLimiterDep
+) -> FindPossibleDuplicates:
+    return FindPossibleDuplicates(
+        PostgisNearbyReportFinder(session),
+        limiter,
+        NearbyPolicy(
+            service_area=settings.report_area,
+            # Mismo valor que el de crear reportes (propuesta 43), con cuenta aparte.
+            limit_per_user=RateLimit(
+                max_requests=settings.reports_per_user_per_hour, window=_ONE_HOUR
+            ),
+        ),
+        SystemClock(),
+    )
 
 
 FindPossibleDuplicatesDep = Annotated[FindPossibleDuplicates, Depends(get_find_possible_duplicates)]
