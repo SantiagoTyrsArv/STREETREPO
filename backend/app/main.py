@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
+from app.core.body_size_limit import BodySizeLimitMiddleware
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.health import router as health_router
@@ -47,7 +48,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.rate_limiter = InMemoryRateLimiter()
     app.state.login_attempts = InMemoryLoginAttemptStore()
 
-    # Starlette ejecuta primero el último middleware añadido.
+    # Starlette ejecuta primero el último middleware añadido. El límite de tamaño va por
+    # dentro de los demás para que su 413 lleve CORS, cabeceras de seguridad y log.
+    app.add_middleware(BodySizeLimitMiddleware, create_report_path=f"{API_V1_PREFIX}/reports")
     app.add_middleware(SecurityHeadersMiddleware, enable_hsts=settings.is_production)
     app.add_middleware(RequestLoggingMiddleware)
     # CORS va por fuera de todos: responde el preflight antes que nada y añade sus

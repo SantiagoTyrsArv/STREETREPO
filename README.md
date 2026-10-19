@@ -157,6 +157,8 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
 - Cabecera opcional `Idempotency-Key` (UUID): un reintento con la misma clave responde **200** con
   el reporte que ya existe, sin duplicarlo ni consumir cupo. Si la clave llega con otra ubicación,
   severidad o descripción, responde **422** `IDEMPOTENCY_KEY_REUSED`.
+- Una petición con `Content-Length` mayor que 10 MB más 64 KB de formulario se rechaza con **413**
+  `PHOTO_TOO_LARGE` antes de recibir la foto; sin esa cabecera, el límite lo pone el proxy (HU-17).
 - Foto: JPEG, PNG o WebP según su contenido, hasta 10 MB; se recodifica a JPEG sin metadatos (EXIF,
   GPS) con lado máximo de 1600 px y una miniatura de 400 px, en `PHOTO_STORAGE_DIR`.
 - Solo se reciben reportes dentro de `REPORT_AREA_BBOX` (422 `LOCATION_OUTSIDE_SERVICE_AREA`) y hasta

@@ -10,6 +10,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - `GET /api/v1/me/reports`: reportes creados y confirmados, paginados (decisión 49).
 - `GET /api/v1/reports/{id}`: detalle con historial para el autor, los administradores y, en
   vista pública sin observaciones, quien lo confirmó; 404 para los demás.
+- `POST /api/v1/reports` responde 422 `IDEMPOTENCY_KEY_REUSED` si la clave llega con otros datos
+  (decisión 46a) y 413 `PHOTO_TOO_LARGE` por `Content-Length` antes de recibir la foto (46d).
+- `infra/scripts/test-integration.sh`: pruebas de integración con PostGIS en un comando (46b).
 - `is_mine` en los candidatos de `GET /api/v1/reports/nearby` y del 409 `REPORT_DUPLICATE_NEARBY`
   (propuesta 48).
 
