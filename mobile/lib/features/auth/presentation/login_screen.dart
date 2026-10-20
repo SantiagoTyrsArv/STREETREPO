@@ -55,7 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const AuthHeader(
                 mode: AuthMode.login,
-                title: 'Bienvenida de nuevo',
+                title: 'Hola de nuevo',
                 subtitle: 'Ingresa para reportar y seguir tus reportes.',
               ),
               const SizedBox(height: 16),

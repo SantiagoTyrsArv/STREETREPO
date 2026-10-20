@@ -92,7 +92,7 @@ void main() {
       expect(find.text('Street Repo'), findsOneWidget);
       await tester.tap(find.text('Ya tengo cuenta'));
       await tester.pumpAndSettle();
-      expect(find.text('Bienvenida de nuevo'), findsOneWidget);
+      expect(find.text('Hola de nuevo'), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel('Volver'));
       await tester.pumpAndSettle();
@@ -170,7 +170,7 @@ void main() {
       await tester.tap(find.text('Crear cuenta'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Bienvenida de nuevo'), findsOneWidget);
+      expect(find.text('Hola de nuevo'), findsOneWidget);
       expect(find.textContaining('Tu cuenta quedó creada'), findsOneWidget);
       expect(
         tester.widget<TextField>(field('Correo electrónico')).controller!.text,
