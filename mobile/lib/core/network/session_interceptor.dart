@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 
 import '../../features/auth/data/token_store.dart';
+import 'api_error.dart';
 
 typedef RefreshTokens = Future<AuthTokens> Function(String refreshToken);
 
@@ -10,7 +11,8 @@ typedef RetryRequest = Future<Response<dynamic>> Function(RequestOptions options
 
 /// Añade el token de acceso y, ante un 401, refresca la sesión **una sola vez** aunque
 /// fallen varias peticiones a la vez; las demás esperan ese refresco y se reintentan.
-/// Si el refresco falla, borra la sesión y avisa una vez. Nunca reintenta en bucle.
+/// Solo si el servidor rechaza el refresco (401) borra la sesión y avisa una vez; un fallo de
+/// red o del servidor conserva los tokens (propuesta 52). Nunca reintenta en bucle.
 class SessionInterceptor extends Interceptor {
   SessionInterceptor({
     required this._store,
@@ -52,8 +54,18 @@ class SessionInterceptor extends Interceptor {
       handler.next(err);
       return;
     }
-    // Si otra petición ya refrescó, basta con reintentar con el token nuevo.
-    final tokens = sent == 'Bearer ${current.access}' ? await _refreshOnce(current) : current;
+    final AuthTokens? tokens;
+    try {
+      // Si otra petición ya refrescó, basta con reintentar con el token nuevo.
+      tokens = sent == 'Bearer ${current.access}' ? await _refreshOnce(current) : current;
+    } on ApiFailure catch (failure) {
+      // El refresco no llegó a decidirse (sin red, servidor caído): la petición falla con ese
+      // motivo, no con el 401 original, para que la pantalla ofrezca «Reintentar».
+      handler.reject(
+        DioException(requestOptions: options, type: DioExceptionType.unknown, error: failure),
+      );
+      return;
+    }
     if (tokens == null) {
       handler.next(err);
       return;
@@ -80,15 +92,24 @@ class SessionInterceptor extends Interceptor {
     return _refreshing ??= _doRefresh(current).whenComplete(() => _refreshing = null);
   }
 
+  /// Tokens nuevos, o null si el servidor rechazó el refresco (sesión terminada). Lanza
+  /// [ApiFailure] si no se pudo saber (sin red, tiempo agotado, error del servidor).
   Future<AuthTokens?> _doRefresh(AuthTokens current) async {
+    final AuthTokens tokens;
     try {
-      final tokens = await _refresh(current.refresh);
-      await _store.write(tokens);
-      return tokens;
-    } on Object {
+      tokens = await _refresh(current.refresh);
+    } on Object catch (error) {
+      final failure = switch (error) {
+        ApiFailure() => error,
+        DioException() => ApiFailure.fromDioException(error),
+        _ => const UnexpectedFailure(),
+      };
+      if (failure is! ApiError || failure.status != 401) throw failure;
       await _store.clear();
       _onSessionExpired();
       return null;
     }
+    await _store.write(tokens);
+    return tokens;
   }
 }

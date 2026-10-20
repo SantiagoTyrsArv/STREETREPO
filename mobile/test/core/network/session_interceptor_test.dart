@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:street_repo/core/config/app_config.dart';
 import 'package:street_repo/core/network/api_client.dart';
+import 'package:street_repo/core/network/api_error.dart';
 import 'package:street_repo/features/auth/data/token_store.dart';
 
 import '../../support/fake_http_adapter.dart';
@@ -92,11 +93,15 @@ void main() {
     expect(adapter.count('POST', '/reports'), 2);
   });
 
-  test('si el refresco falla, borra la sesión y avisa una sola vez', () async {
+  test('si el servidor rechaza el refresco, borra la sesión y avisa una sola vez', () async {
     dio = build(
       refresh: (_) async {
         refreshCalls++;
-        throw DioException(requestOptions: RequestOptions(path: '/auth/refresh'));
+        throw const ApiError(
+          status: 401,
+          code: 'INVALID_REFRESH_TOKEN',
+          message: 'Sesión no válida',
+        );
       },
     );
 
@@ -111,6 +116,48 @@ void main() {
     expect(await store.read(), isNull);
     // Sin bucles: cada petición se intentó una sola vez.
     expect(adapter.count('GET', '/me/reports'), 2);
+  });
+
+  test('si el refresco falla por red, conserva la sesión y devuelve el error de red', () async {
+    dio = build(
+      refresh: (_) async {
+        refreshCalls++;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        throw DioException(
+          requestOptions: RequestOptions(path: '/auth/refresh'),
+          type: DioExceptionType.connectionError,
+        );
+      },
+    );
+
+    final results = await Future.wait([
+      dio.get<Object?>('/me/reports').then<Object?>((r) => r, onError: (Object e) => e),
+      dio.get<Object?>('/me/reports').then<Object?>((r) => r, onError: (Object e) => e),
+    ]);
+
+    expect(refreshCalls, 1);
+    expect(expirations, 0);
+    expect(await store.read(), const AuthTokens(access: 'viejo', refresh: 'refresco-1'));
+    for (final result in results) {
+      expect(ApiFailure.fromDioException(result! as DioException), isA<NetworkFailure>());
+    }
+  });
+
+  test('un error del servidor al refrescar tampoco cierra la sesión', () async {
+    dio = build(
+      refresh: (_) async {
+        refreshCalls++;
+        throw const UnexpectedFailure();
+      },
+    );
+
+    final error = await dio
+        .get<Object?>('/me/reports')
+        .then<Object?>((r) => r, onError: (Object e) => e);
+
+    expect(ApiFailure.fromDioException(error! as DioException), isA<UnexpectedFailure>());
+    expect(expirations, 0);
+    expect(await store.read(), isNotNull);
   });
 
   test('sin sesión guardada un 401 no intenta refrescar', () async {

@@ -1,6 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:street_repo/core/config/app_config.dart';
+import 'package:street_repo/core/network/api_error.dart';
 import 'package:street_repo/features/auth/application/auth_providers.dart';
 import 'package:street_repo/features/auth/application/session_controller.dart';
 import 'package:street_repo/features/auth/data/token_store.dart';
@@ -68,5 +70,18 @@ void main() {
     expect(c.read(sessionControllerProvider).value, isA<SignedOut>());
     expect(await store.read(), isNull);
     expect(adapter.count('POST', '/auth/refresh'), 1);
+  });
+
+  test('si el refresco falla por red al abrir, ofrece reintentar sin cerrar la sesión', () async {
+    adapter.on(
+      'POST',
+      '/auth/refresh',
+      (options) =>
+          throw DioException(requestOptions: options, type: DioExceptionType.connectionError),
+    );
+    final c = container();
+
+    await expectLater(c.read(sessionControllerProvider.future), throwsA(isA<NetworkFailure>()));
+    expect(await store.read(), const AuthTokens(access: 'vencido', refresh: 'r1'));
   });
 }
