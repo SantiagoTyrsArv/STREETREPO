@@ -1,4 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- La API; sin él, la variante release no se conecta (debug lo declara aparte). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Punto del daño (HU-07): se pide en contexto, tras la pantalla de permisos. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Sin CAMERA a propósito: image_picker abre la app de cámara del sistema, y declararlo
+         obligaría a pedirlo en tiempo de ejecución o Android rechazaría la captura. -->
     <application
         android:label="street_repo"
         android:name="${applicationName}"

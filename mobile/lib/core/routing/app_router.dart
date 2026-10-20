@@ -9,6 +9,9 @@ import '../../features/auth/presentation/privacy_policy_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/startup_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
+import '../../features/report_new/presentation/permission_denied_screen.dart';
+import '../../features/report_new/presentation/permissions_screen.dart';
+import '../../features/report_new/presentation/photo_location_screen.dart';
 
 /// Rutas de la app. Las de reportes y perfil se completan en las tareas siguientes del plan.
 abstract final class AppRoutes {
@@ -19,6 +22,9 @@ abstract final class AppRoutes {
   static const login = '/ingresar';
   static const myReports = '/mis-reportes';
   static const newReport = '/reportar';
+  static const newReportPermissions = '/reportar/permisos';
+  static const newReportLocationDenied = '/reportar/sin-ubicacion';
+  static const newReportSeverity = '/reportar/severidad';
   static const profile = '/perfil';
   static const reportDetail = '/reportes/:id';
 
@@ -74,9 +80,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             LoginScreen(createdAccountEmail: state.extra is String ? state.extra! as String : null),
       ),
+      GoRoute(path: AppRoutes.newReport, builder: (context, state) => const PhotoLocationScreen()),
+      GoRoute(
+        path: AppRoutes.newReportPermissions,
+        builder: (context, state) => const PermissionsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.newReportLocationDenied,
+        builder: (context, state) => const PermissionDeniedScreen(),
+      ),
       for (final path in [
         AppRoutes.myReports,
-        AppRoutes.newReport,
+        AppRoutes.newReportSeverity,
         AppRoutes.profile,
         AppRoutes.reportDetail,
       ])

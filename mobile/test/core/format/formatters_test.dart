@@ -57,4 +57,17 @@ void main() {
       expect(formatWait(const Duration(seconds: 45)), '45 s');
     });
   });
+
+  group('archivos y coordenadas', () {
+    test('formatFileSize usa MB con coma y KB para lo pequeño', () {
+      expect(formatFileSize(1887437), '1,8 MB');
+      expect(formatFileSize(629146), '0,6 MB');
+      expect(formatFileSize(51200), '50 KB');
+    });
+
+    test('formatCoordinates usa coma decimal y hemisferio', () {
+      expect(formatCoordinates(1.2136, -77.2811), '1,21360° N · 77,28110° O');
+      expect(formatCoordinates(-0.5, 10.25), '0,50000° S · 10,25000° E');
+    });
+  });
 }

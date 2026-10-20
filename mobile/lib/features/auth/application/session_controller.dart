@@ -60,3 +60,12 @@ class SessionController extends AsyncNotifier<SessionState> {
     }
   }
 }
+
+/// Id del ciudadano en sesión, o null. Los proveedores con datos del ciudadano lo vigilan
+/// para reiniciarse al cerrar o vencer la sesión, o al entrar otra persona (propuesta 56).
+final currentUserIdProvider = Provider<String?>(
+  (ref) => switch (ref.watch(sessionControllerProvider)) {
+    AsyncData(value: SignedIn(:final user)) => user.id,
+    _ => null,
+  },
+);
