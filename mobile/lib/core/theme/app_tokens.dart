@@ -31,6 +31,11 @@ abstract final class AppTokens {
   static const Color progressTrack = Color(0xFFD8D4CA);
   static const Color photoPlaceholder = Color(0xFF3A4452);
 
+  // Del Figma del paso 2 y de los errores: opción sin elegir, su texto y el suelo del mapa.
+  static const Color optionSurface = Color(0xFFF0EDE5);
+  static const Color optionText = Color(0xFF4A5565);
+  static const Color mapGround = Color(0xFFECEFE9);
+
   // Estados del reporte: color principal y chip (fondo / texto).
   static const Color registeredFg = Color(0xFF5B6573);
   static const Color registeredChip = Color(0xFFE8EAEE);

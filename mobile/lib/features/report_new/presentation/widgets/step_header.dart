@@ -3,13 +3,23 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/theme/app_tokens.dart';
 
-/// Cabecera del nuevo reporte (Figma `4:78`/`4:84`): cerrar, «Paso N de M» y la barra.
+/// Cabecera del nuevo reporte (Figma `4:78`/`4:84` y `5:3`): cerrar en el paso 1 o volver
+/// en los siguientes, «Paso N de M» y la barra.
 class StepHeader extends StatelessWidget {
-  const StepHeader({required this.step, required this.onClose, this.total = 2, super.key});
+  const StepHeader({
+    required this.step,
+    required this.onClose,
+    this.total = 2,
+    this.back = false,
+    super.key,
+  });
 
   final int step;
   final int total;
   final VoidCallback onClose;
+
+  /// Flecha «Volver» en lugar de la X de cerrar.
+  final bool back;
 
   @override
   Widget build(BuildContext context) {
@@ -19,14 +29,16 @@ class StepHeader extends StatelessWidget {
           children: [
             Semantics(
               button: true,
-              label: 'Cerrar el reporte',
+              label: back ? 'Volver' : 'Cerrar el reporte',
               excludeSemantics: true,
               child: InkResponse(
                 onTap: onClose,
                 radius: AppTokens.minTouchTarget / 2,
                 child: SizedBox.square(
                   dimension: AppTokens.minTouchTarget,
-                  child: Center(child: SvgPicture.asset('assets/icons/close.svg')),
+                  child: Center(
+                    child: SvgPicture.asset('assets/icons/${back ? 'back' : 'close'}.svg'),
+                  ),
                 ),
               ),
             ),

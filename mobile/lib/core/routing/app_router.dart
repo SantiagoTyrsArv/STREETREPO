@@ -9,9 +9,13 @@ import '../../features/auth/presentation/privacy_policy_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/startup_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
+import '../../features/report_new/presentation/duplicate_screen.dart';
 import '../../features/report_new/presentation/permission_denied_screen.dart';
 import '../../features/report_new/presentation/permissions_screen.dart';
 import '../../features/report_new/presentation/photo_location_screen.dart';
+import '../../features/report_new/presentation/report_error_screens.dart';
+import '../../features/report_new/presentation/report_sent_screen.dart';
+import '../../features/report_new/presentation/severity_screen.dart';
 
 /// Rutas de la app. Las de reportes y perfil se completan en las tareas siguientes del plan.
 abstract final class AppRoutes {
@@ -25,6 +29,11 @@ abstract final class AppRoutes {
   static const newReportPermissions = '/reportar/permisos';
   static const newReportLocationDenied = '/reportar/sin-ubicacion';
   static const newReportSeverity = '/reportar/severidad';
+  static const newReportDuplicates = '/reportar/duplicado';
+  static const newReportSent = '/reportar/enviado';
+  static const newReportOutsideArea = '/reportar/fuera-del-area';
+  static const newReportRateLimited = '/reportar/limite';
+  static const newReportPhotoRejected = '/reportar/foto-rechazada';
   static const profile = '/perfil';
   static const reportDetail = '/reportes/:id';
 
@@ -89,12 +98,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.newReportLocationDenied,
         builder: (context, state) => const PermissionDeniedScreen(),
       ),
-      for (final path in [
-        AppRoutes.myReports,
-        AppRoutes.newReportSeverity,
-        AppRoutes.profile,
-        AppRoutes.reportDetail,
-      ])
+      GoRoute(
+        path: AppRoutes.newReportSeverity,
+        builder: (context, state) => const SeverityScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.newReportDuplicates,
+        builder: (context, state) => const DuplicateScreen(),
+      ),
+      GoRoute(path: AppRoutes.newReportSent, builder: (context, state) => const ReportSentScreen()),
+      GoRoute(
+        path: AppRoutes.newReportOutsideArea,
+        builder: (context, state) => const OutsideAreaScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.newReportRateLimited,
+        builder: (context, state) => const RateLimitedScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.newReportPhotoRejected,
+        builder: (context, state) => const PhotoRejectedScreen(),
+      ),
+      for (final path in [AppRoutes.myReports, AppRoutes.profile, AppRoutes.reportDetail])
         GoRoute(
           path: path,
           builder: (context, state) => const Scaffold(body: Placeholder()),

@@ -101,5 +101,12 @@ class ReportDraftController extends Notifier<ReportDraft> {
   /// Guarda la clave del envío antes de mandarlo, para que los reintentos la reutilicen.
   void setIdempotencyKey(String key) => state = state.withIdempotencyKey(key);
 
+  /// Olvida la clave del envío: el siguiente se trata como un reporte nuevo.
+  void clearIdempotencyKey() => state = state.withoutIdempotencyKey();
+
+  void discardLocation() => state = state.withoutFix();
+
+  void discardPhoto() => state = state.withoutPhoto();
+
   void reset() => state = ReportDraft.empty;
 }
