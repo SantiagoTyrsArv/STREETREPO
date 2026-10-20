@@ -14,6 +14,9 @@ const int photoTargetShortSidePx = 1200;
 /// Calidad JPEG en el teléfono, la misma del servidor: la foto viaja liviana por 4G.
 const int photoJpegQuality = 85;
 
+/// Largo máximo de la descripción; el mismo que valida la API.
+const int descriptionMaxLength = 500;
+
 /// Posición del GPS del teléfono.
 class GeoFix {
   const GeoFix({required this.latitude, required this.longitude, required this.accuracyMeters});
@@ -78,6 +81,13 @@ class ReportDraft {
 
   ReportDraft withFix(GeoFix fix) => _changed(fix: fix);
 
+  /// Sin ubicación, para volver a tomarla (p. ej. fuera del área de servicio).
+  ReportDraft withoutFix() =>
+      ReportDraft(photo: photo, severity: severity, description: description);
+
+  /// Sin foto, porque el servidor la rechazó; la ubicación se toma con la foto nueva.
+  ReportDraft withoutPhoto() => ReportDraft(severity: severity, description: description);
+
   ReportDraft withSeverity(Severity severity) =>
       severity == this.severity ? this : _changed(severity: severity);
 
@@ -91,6 +101,8 @@ class ReportDraft {
     description: description,
     idempotencyKey: key,
   );
+
+  ReportDraft withoutIdempotencyKey() => _changed();
 
   ReportDraft _changed({
     CapturedPhoto? photo,
