@@ -27,6 +27,10 @@ abstract final class AppTokens {
   static const Color errorSurface = Color(0xFFFDECEA);
   static const Color errorAccent = Color(0xFFB3261E);
 
+  // Del Figma del nuevo reporte: pista de la barra de pasos y fondo de la foto sin tomar.
+  static const Color progressTrack = Color(0xFFD8D4CA);
+  static const Color photoPlaceholder = Color(0xFF3A4452);
+
   // Estados del reporte: color principal y chip (fondo / texto).
   static const Color registeredFg = Color(0xFF5B6573);
   static const Color registeredChip = Color(0xFFE8EAEE);

@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icono ubicacion">
+<rect width="48" height="48" rx="24" fill="#FDF0C4"/>
+<path id="Ellipse" d="M32 21C32 25.4183 28.4183 29 24 29C19.5817 29 16 25.4183 16 21C16 16.5817 19.5817 13 24 13C28.4183 13 32 16.5817 32 21Z" stroke-width="2" stroke="#1B2430"/>
+<circle id="Ellipse_2" cx="24" cy="21" r="3" fill="#1B2430"/>
+<rect id="Rectangle" x="23" y="30" width="2" height="8" fill="#1B2430"/>
+</g>
+</svg>

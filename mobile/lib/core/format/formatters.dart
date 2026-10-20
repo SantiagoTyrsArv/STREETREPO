@@ -42,3 +42,20 @@ String formatWait(Duration remaining) {
   if (minutes == 0) return '$rest s';
   return rest == 0 ? '$minutes min' : '$minutes min $rest s';
 }
+
+/// Peso de un archivo con coma decimal: `0,6 MB`, `1,8 MB`; por debajo de 0,1 MB, en KB.
+String formatFileSize(int bytes) {
+  const kb = 1024;
+  const mb = 1024 * 1024;
+  if (bytes < mb ~/ 10) return '${(bytes / kb).ceil()} KB';
+  return '${NumberFormat('0.0', _locale).format(bytes / mb)} MB';
+}
+
+/// Coordenadas con coma decimal y hemisferio, para que la coma no se confunda con el
+/// separador: `1,21360° N · 77,28110° O`.
+String formatCoordinates(double latitude, double longitude) {
+  final format = NumberFormat('0.00000', _locale);
+  final ns = latitude >= 0 ? 'N' : 'S';
+  final eo = longitude >= 0 ? 'E' : 'O';
+  return '${format.format(latitude.abs())}° $ns · ${format.format(longitude.abs())}° $eo';
+}
