@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-10-16
 - **Estado:** Aceptada (decisión menor, guía 3 y 7.1)
-- **Refs:** HU-10, HU-11, propuestas 8 y 9, decisión 30b
+- **Refs:** HU-10, HU-11, propuestas 8, 9 y 42, decisión 30b
 
 ## Decisiones
 
@@ -18,7 +18,24 @@
 | Correo | Se valida con `email-validator` (rechaza dominios reservados como `.test`) y se guarda en minúsculas | `usuario.correo` es UNIQUE |
 | Administradores | Solo por CLI: `python -m app.cli create-admin --name … --email …` (contraseña sin eco, nunca en argumentos) | Decisión del responsable (2026-10-16); el registro público solo crea ciudadanos |
 | Versión de la política | `PRIVACY_POLICY_VERSION` (por defecto `1.0`); el registro exige aceptar exactamente la vigente. `GET /api/v1/privacy-policy` (pública) la publica con `PRIVACY_POLICY_URL`, la dirección del texto; en producción la API no arranca sin ella ni si no usa https | Decisión del responsable (2026-10-16); propuestas 8, 27 y 33 |
-| Transporte de tokens | En el cuerpo JSON (app móvil). Para el panel web se evaluará cookie `HttpOnly` + `SameSite` + CSRF en la fase 6 (guía 7.3) | Pendiente de la fase 6 |
+| Transporte de tokens | App móvil: ambos en el cuerpo JSON, guardados en `flutter_secure_storage`. Panel web: ver [Panel administrativo en sitio propio](#panel-administrativo-en-sitio-propio-propuesta-42) | Guía 7.3; propuesta 42 |
+
+## Panel administrativo en sitio propio (propuesta 42)
+
+El panel es un front React independiente, publicado en **su propio sitio y dominio** (p. ej.
+`admin.<dominio>`), contra la **misma API**. Solo se entra con el inicio de sesión de funcionario.
+Aprobada el 2026-10-19; se implementa en la fase 6.
+
+| Tema | Decisión | Motivo |
+|---|---|---|
+| Cuentas | Solo administradores creados por CLI (decisión 23b); el panel no tiene registro público | Nadie puede darse de alta como funcionario |
+| Token de acceso | En la memoria de la página, nunca en `localStorage` ni `sessionStorage`; se pierde al recargar y se recupera con el refresco | Un script inyectado no lo encuentra guardado (guía 7.3) |
+| Token de refresco | Cookie `HttpOnly`, `Secure`, `SameSite=Strict`, con `Path` limitado a las rutas de `/auth`; mismas reglas de vida, rotación y reutilización que la app | JavaScript no puede leerla; el navegador no la envía desde otros sitios |
+| CSRF | Las rutas que leen la cookie (refresco y cierre de sesión) exigen además una cabecera propia que un formulario de otro sitio no puede enviar, y comprueban `Origin` contra el origen del panel | `SameSite=Strict` no basta solo (OWASP CSRF Prevention Cheat Sheet) |
+| CORS | Solo el origen exacto del panel, con credenciales; nunca `*` | Un comodín con credenciales expondría la sesión a cualquier sitio |
+| Cabeceras | HSTS, CSP restrictiva y `noindex` para buscadores | El panel no es público ni debe aparecer en buscadores |
+| Límites | Los límites de intentos de la decisión 25 aplican igual al inicio de sesión del panel | Mismo riesgo de adivinar contraseñas |
+| Transporte | HTTPS con el proxy de HU-17; dominio y certificado a cargo del responsable | Las cookies `Secure` solo viajan por HTTPS |
 
 ## Riesgo aceptado: el registro revela si un correo ya tiene cuenta
 

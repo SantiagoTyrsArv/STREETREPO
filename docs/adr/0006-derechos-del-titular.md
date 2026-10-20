@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-10-16
 - **Estado:** Aceptada
-- **Refs:** HU-11, propuestas 10 y 26, decisión 23a
+- **Refs:** HU-11, propuestas 10, 26 y 39, decisión 23a
 
 ## Rutas
 
