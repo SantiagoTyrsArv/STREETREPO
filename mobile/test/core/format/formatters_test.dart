@@ -42,4 +42,19 @@ void main() {
       expect(formatRelative(DateTime.utc(2026, 8, 1, 15), now), '1 ago');
     });
   });
+
+  group('cuenta regresiva', () {
+    test('formatCountdown usa m:ss como el botón del Figma', () {
+      expect(formatCountdown(const Duration(minutes: 4, seconds: 32)), '4:32');
+      expect(formatCountdown(const Duration(seconds: 90)), '1:30');
+      expect(formatCountdown(const Duration(seconds: 5)), '0:05');
+      expect(formatCountdown(const Duration(seconds: -3)), '0:00');
+    });
+
+    test('formatWait la dice en palabras', () {
+      expect(formatWait(const Duration(minutes: 4, seconds: 32)), '4 min 32 s');
+      expect(formatWait(const Duration(minutes: 2)), '2 min');
+      expect(formatWait(const Duration(seconds: 45)), '45 s');
+    });
+  });
 }

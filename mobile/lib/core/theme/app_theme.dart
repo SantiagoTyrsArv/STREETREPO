@@ -40,22 +40,23 @@ ThemeData buildAppTheme() {
       labelLarge: text.labelLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 16),
       labelSmall: text.labelSmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 12),
     ),
+    // Campos del Figma: 52 px de alto, radio 12 y borde de 1,5 px.
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppTokens.surface,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTokens.buttonRadius),
-        borderSide: const BorderSide(color: AppTokens.line),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTokens.buttonRadius),
-        borderSide: const BorderSide(color: AppTokens.line),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTokens.buttonRadius),
-        borderSide: const BorderSide(color: AppTokens.ink, width: 1.5),
-      ),
+      // El borde outline añade 4 px a cada lado: 12 + 4 = los 16 px del Figma.
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+      border: _fieldBorder(AppTokens.inputBorder),
+      enabledBorder: _fieldBorder(AppTokens.inputBorder),
+      focusedBorder: _fieldBorder(AppTokens.ink),
+      errorBorder: _fieldBorder(AppTokens.errorAccent),
+      focusedErrorBorder: _fieldBorder(AppTokens.errorAccent),
     ),
     materialTapTargetSize: MaterialTapTargetSize.padded,
   );
 }
+
+OutlineInputBorder _fieldBorder(Color color) => OutlineInputBorder(
+  borderRadius: BorderRadius.circular(AppTokens.fieldRadius),
+  borderSide: BorderSide(color: color, width: 1.5),
+);

@@ -27,3 +27,18 @@ String formatRelative(DateTime utc, DateTime nowUtc) {
   }
   return formatShortDate(utc);
 }
+
+/// Cuenta regresiva del botón: `4:32`.
+String formatCountdown(Duration remaining) {
+  final seconds = remaining.inSeconds < 0 ? 0 : remaining.inSeconds;
+  return '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
+}
+
+/// Espera en palabras para el aviso: `4 min 32 s`, `2 min`, `45 s`.
+String formatWait(Duration remaining) {
+  final seconds = remaining.inSeconds < 0 ? 0 : remaining.inSeconds;
+  final minutes = seconds ~/ 60;
+  final rest = seconds % 60;
+  if (minutes == 0) return '$rest s';
+  return rest == 0 ? '$minutes min' : '$minutes min $rest s';
+}

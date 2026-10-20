@@ -18,6 +18,15 @@ abstract final class AppTokens {
   static const Color onDarkMuted = Color(0xFFC9CED6);
   static const Color onDarkSoft = Color(0xFFE4E7EC);
 
+  // Del Figma de acceso: borde de los campos, texto de tarjetas, enlaces, fondo del escudo
+  // y el aviso de error.
+  static const Color inputBorder = Color(0xFFC9C4B8);
+  static const Color cardText = Color(0xFF3D4756);
+  static const Color link = Color(0xFF2B6CB0);
+  static const Color amberSoft = Color(0xFFFDF0C4);
+  static const Color errorSurface = Color(0xFFFDECEA);
+  static const Color errorAccent = Color(0xFFB3261E);
+
   // Estados del reporte: color principal y chip (fondo / texto).
   static const Color registeredFg = Color(0xFF5B6573);
   static const Color registeredChip = Color(0xFFE8EAEE);
@@ -42,6 +51,8 @@ abstract final class AppTokens {
   static const double buttonHeight = 54;
   static const double buttonRadius = 14;
   static const double cardRadius = 16;
+  static const double fieldHeight = 52;
+  static const double fieldRadius = 12;
   static const double chipRadius = 10;
   static const double pillHeight = 40;
   static const double screenPadding = 20;

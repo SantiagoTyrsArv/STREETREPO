@@ -11,6 +11,9 @@ enum ButtonVariant {
 
   /// Borde sobre papel: acciones secundarias.
   outline,
+
+  /// Tinta con texto blanco: «Entrar», «Crear cuenta», «Aceptar y continuar».
+  dark,
 }
 
 /// Botón del Figma: 54 px de alto y radio 14. Mientras [loading] está activo no responde,
@@ -35,7 +38,14 @@ class PrimaryButton extends StatelessWidget {
       ButtonVariant.primary => (AppTokens.amber, AppTokens.ink, null),
       ButtonVariant.outlineOnDark => (AppTokens.ink, AppTokens.onDark, AppTokens.darkBorder),
       ButtonVariant.outline => (AppTokens.surface, AppTokens.ink, AppTokens.line),
+      ButtonVariant.dark => (AppTokens.ink, AppTokens.surface, null),
     };
+    // El botón oscuro deshabilitado es arena con texto gris («Reintentar en 4:32» del Figma).
+    final (disabledBackground, disabledForeground) = loading
+        ? (background, foreground)
+        : variant == ButtonVariant.dark
+        ? (AppTokens.sand, AppTokens.textSecondary)
+        : (background.withValues(alpha: 0.45), foreground.withValues(alpha: 0.6));
     final enabled = onPressed != null && !loading;
     return SizedBox(
       width: double.infinity,
@@ -46,8 +56,8 @@ class PrimaryButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: background,
             foregroundColor: foreground,
-            disabledBackgroundColor: background.withValues(alpha: loading ? 1 : 0.45),
-            disabledForegroundColor: foreground.withValues(alpha: loading ? 1 : 0.6),
+            disabledBackgroundColor: disabledBackground,
+            disabledForegroundColor: disabledForeground,
             minimumSize: const Size.fromHeight(AppTokens.buttonHeight),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             shape: RoundedRectangleBorder(

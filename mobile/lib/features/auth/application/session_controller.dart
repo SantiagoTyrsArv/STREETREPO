@@ -11,7 +11,7 @@ final sessionControllerProvider = AsyncNotifierProvider<SessionController, Sessi
   retry: (_, _) => null,
 );
 
-/// Sesión del ciudadano. Los errores de [signIn] y [register] llegan a quien los llama
+/// Sesión del ciudadano. Los errores de [signIn] llegan a quien lo llama
 /// (la pantalla los muestra) y no cambian el estado.
 class SessionController extends AsyncNotifier<SessionState> {
   AuthRepository get _auth => ref.read(authRepositoryProvider);
@@ -32,21 +32,6 @@ class SessionController extends AsyncNotifier<SessionState> {
   Future<void> signIn({required String email, required String password}) async {
     await _auth.login(email: email, password: password);
     state = AsyncData(SignedIn(await _auth.me()));
-  }
-
-  Future<void> register({
-    required String name,
-    required String email,
-    required String password,
-    required String policyVersion,
-  }) async {
-    await _auth.register(
-      name: name,
-      email: email,
-      password: password,
-      policyVersion: policyVersion,
-    );
-    await signIn(email: email, password: password);
   }
 
   /// Cierra la sesión aunque no haya red: los tokens locales se borran siempre.
