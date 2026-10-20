@@ -4,6 +4,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Cambiado
+- Límites por IP más holgados por el CGNAT de los operadores móviles (decisión 58): registro 30 por
+  hora (antes 10; ahora configurable con `REGISTER_PER_IP_PER_HOUR`) y reportes 100 por hora (antes
+  30). Los límites por usuario y por correo no cambian.
+
 ### Añadido
 - `POST /api/v1/reports/{id}/confirmations` (HU-16): confirmar un reporte activo de otro
   ciudadano; 409 si está reparado, es propio (propuesta 48) o ya se confirmó. No cambia U.

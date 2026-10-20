@@ -15,10 +15,10 @@ from app.core.errors import AppError
 from app.shared.application.clock import SystemClock
 from app.shared.application.rate_limit import RateLimit, RateLimiter, RateLimitExceededError
 
-# Holgados a propósito: en la universidad o en redes móviles muchos ciudadanos salen a
+# Holgado a propósito: en la universidad o en redes móviles muchos ciudadanos salen a
 # internet con la misma IP (NAT). El bloqueo por cuenta es el que frena la fuerza bruta.
+# El cupo de registro es configurable (`REGISTER_PER_IP_PER_HOUR`, decisión 58).
 LOGIN_LIMIT_PER_IP = RateLimit(max_requests=30, window=timedelta(minutes=5))
-REGISTER_LIMIT_PER_IP = RateLimit(max_requests=10, window=timedelta(hours=1))
 
 _UNKNOWN_CLIENT = "desconocido"
 

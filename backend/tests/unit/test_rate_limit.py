@@ -5,11 +5,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.rate_limiting import (
-    LOGIN_LIMIT_PER_IP,
-    REGISTER_LIMIT_PER_IP,
-    retry_after_seconds,
-)
+from app.core.config import Settings
+from app.core.rate_limiting import LOGIN_LIMIT_PER_IP, retry_after_seconds
 from app.main import API_V1_PREFIX
 from app.shared.application.rate_limit import RateLimit, RateLimitExceededError
 from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
@@ -84,11 +81,13 @@ def test_retry_after_rounds_up_to_whole_seconds(delta: timedelta, seconds: int) 
 
 # Cuerpos inválidos: la dependencia del límite corre antes que la validación del cuerpo,
 # así que se prueba sin tocar la base de datos (cada intento responde 422 hasta el límite).
-@pytest.mark.parametrize(
-    ("path", "limit"),
-    [("/auth/login", LOGIN_LIMIT_PER_IP), ("/auth/register", REGISTER_LIMIT_PER_IP)],
-)
-def test_auth_routes_are_limited_per_ip(client: TestClient, path: str, limit: RateLimit) -> None:
+@pytest.mark.parametrize("path", ["/auth/login", "/auth/register"])
+def test_auth_routes_are_limited_per_ip(client: TestClient, settings: Settings, path: str) -> None:
+    limit = (
+        LOGIN_LIMIT_PER_IP
+        if path == "/auth/login"
+        else RateLimit(max_requests=settings.register_per_ip_per_hour, window=timedelta(hours=1))
+    )
     url = f"{API_V1_PREFIX}{path}"
     statuses = {client.post(url, json={}).status_code for _ in range(limit.max_requests)}
 

@@ -8,6 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.dependencies import SessionDep, SettingsDep
 from app.core.errors import AppError
+from app.core.rate_limiting import RateLimiterDep, limit_per_client_ip
 from app.modules.auth.application.reauthentication import PasswordConfirmation
 from app.modules.auth.application.sessions import SessionIssuer
 from app.modules.auth.domain.lockout import DEFAULT_LOCKOUT_POLICY
@@ -19,11 +20,20 @@ from app.modules.users.domain.entities import User
 from app.modules.users.domain.role import UserRole
 from app.modules.users.infrastructure.repository import SqlUserRepository
 from app.shared.application.clock import SystemClock
+from app.shared.application.rate_limit import RateLimit
 
 _bearer = HTTPBearer(auto_error=False, description="Token de acceso (JWT) de /auth/login")
 _password_hasher = Argon2PasswordHasher()
 
 _WWW_AUTHENTICATE = {"WWW-Authenticate": "Bearer"}
+
+
+def limit_registrations_per_ip(
+    request: Request, limiter: RateLimiterDep, settings: SettingsDep
+) -> None:
+    """Cupo de registros por IP (decisión 25), configurable por el CGNAT (decisión 58)."""
+    limit = RateLimit(max_requests=settings.register_per_ip_per_hour, window=timedelta(hours=1))
+    limit_per_client_ip("register", limit)(request, limiter)
 
 
 def get_password_hasher() -> Argon2PasswordHasher:

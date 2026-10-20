@@ -61,7 +61,23 @@ def test_invalid_report_area_stops_the_api_at_startup(value: str) -> None:
         Settings(report_area_bbox=value)
 
 
-@pytest.mark.parametrize("field", ["reports_per_user_per_hour", "reports_per_ip_per_hour"])
-def test_report_limits_must_allow_at_least_one(field: str) -> None:
+@pytest.mark.parametrize(
+    "field", ["reports_per_user_per_hour", "reports_per_ip_per_hour", "register_per_ip_per_hour"]
+)
+def test_request_limits_must_allow_at_least_one(field: str) -> None:
     with pytest.raises(ValidationError):
         Settings(**{field: 0})  # type: ignore[arg-type]
+
+
+def test_ip_limits_default_to_values_that_tolerate_cgnat(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Decisión 58: muchos usuarios móviles comparten una IP pública.
+    for name in (
+        "REGISTER_PER_IP_PER_HOUR",
+        "REPORTS_PER_IP_PER_HOUR",
+        "REPORTS_PER_USER_PER_HOUR",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    settings = Settings(_env_file=None)  # type: ignore[call-arg]
+    assert settings.register_per_ip_per_hour == 30
+    assert settings.reports_per_ip_per_hour == 100
+    assert settings.reports_per_user_per_hour == 10

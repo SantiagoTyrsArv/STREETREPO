@@ -49,9 +49,10 @@ class Settings(BaseSettings):
     # el reporte (propuesta 37). Por defecto es la misma de OSM_BBOX, que ya deja margen
     # alrededor del casco urbano: fuera de los datos cargados, F y P no tendrían sentido.
     report_area_bbox: str = "1.16,-77.33,1.25,-77.23"
-    # Límite de creación de reportes (propuesta 38).
+    # Límite de creación de reportes (propuesta 38). El cupo por IP es holgado porque los
+    # operadores móviles comparten una IP pública entre muchos usuarios (CGNAT; decisión 58).
     reports_per_user_per_hour: int = Field(default=10, ge=1)
-    reports_per_ip_per_hour: int = Field(default=30, ge=1)
+    reports_per_ip_per_hour: int = Field(default=100, ge=1)
     # Carpeta de las fotos de evidencia (propuesta 34); en Docker, un volumen propio
     # que entra en los respaldos.
     photo_storage_dir: Path = Path("storage/photos")
@@ -61,6 +62,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(default="", repr=False)
     access_token_ttl_minutes: int = Field(default=15, ge=1, le=60)
     refresh_token_ttl_days: int = Field(default=7, ge=1, le=30)
+    # Registros por hora desde una misma IP (decisión 25; holgado por el CGNAT, decisión 58).
+    # El límite por correo del inicio de sesión no depende de esto.
+    register_per_ip_per_hour: int = Field(default=30, ge=1)
 
     # Versión vigente de la política de tratamiento de datos (Ley 1581). El registro
     # exige que el ciudadano haya aceptado exactamente esta versión.

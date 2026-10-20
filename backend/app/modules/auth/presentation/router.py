@@ -8,7 +8,6 @@ from app.core.dependencies import SessionDep, SettingsDep
 from app.core.errors import AppError
 from app.core.rate_limiting import (
     LOGIN_LIMIT_PER_IP,
-    REGISTER_LIMIT_PER_IP,
     limit_per_client_ip,
     too_many_requests,
 )
@@ -30,6 +29,7 @@ from app.modules.auth.presentation.dependencies import (
     LoginAttemptsDep,
     PasswordHasherDep,
     get_session_issuer,
+    limit_registrations_per_ip,
 )
 from app.modules.auth.presentation.schemas import (
     LoginRequest,
@@ -69,7 +69,7 @@ def _token_response(tokens: TokenPair) -> TokenResponse:
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(limit_per_client_ip("register", REGISTER_LIMIT_PER_IP))],
+    dependencies=[Depends(limit_registrations_per_ip)],
     responses={
         status.HTTP_409_CONFLICT: {"description": "Correo ya registrado o política desactualizada"},
         status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "Datos inválidos"},

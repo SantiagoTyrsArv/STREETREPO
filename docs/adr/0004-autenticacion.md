@@ -38,8 +38,9 @@ igual y tarda lo mismo exista o no el correo.
 
 **Qué lo acota:**
 
-- Límite de **10 registros por hora por IP** (decisión 25, [ADR 0005](0005-limite-de-intentos.md)):
-  frena la enumeración masiva desde una misma dirección.
+- Límite de **30 registros por hora por IP**, configurable con `REGISTER_PER_IP_PER_HOUR` (decisión 25,
+  [ADR 0005](0005-limite-de-intentos.md); subido de 10 por la decisión 58): frena la enumeración
+  masiva desde una misma dirección sin bloquear a quienes comparten IP en redes móviles (CGNAT).
 - `PATCH /api/v1/me` también responde 409 ante un correo repetido, pero exige sesión y la contraseña
   actual, y los fallos cuentan para el bloqueo progresivo (propuesta 26,
   [ADR 0006](0006-derechos-del-titular.md)).

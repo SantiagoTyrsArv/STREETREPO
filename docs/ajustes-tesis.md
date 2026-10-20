@@ -13,4 +13,5 @@ Lista única de cambios del documento que se derivan de decisiones del desarroll
 | 44 | Nuevo orden de fases y cronograma | Cronograma | Pendiente (con el asesor) |
 | 48 | El autor no puede confirmar su propio reporte (la confirmación es evidencia de un tercero) | Criterios de HU-16 / reglas del modelo | Pendiente |
 | 49 | «Mis reportes» incluye los reportes que el ciudadano confirmó, con vista pública | Criterios de HU-07 / HU-16 | Pendiente |
+| 58 | Si el documento cita los límites por IP, actualizarlos: registro 30/h (antes 10) y reportes 100/h (antes 30), por el CGNAT de los operadores móviles | 1.8 Delimitación / requisitos de seguridad | Pendiente (revisar) |
 | — | Capítulo 4 | 4 | En pausa hasta tener el MVP |

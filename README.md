@@ -113,7 +113,9 @@ Las vías o servicios eliminados de OSM no se borran de la base en una nueva car
   ese momento las recoge `python -m app.cli purge-orphan-photos` (conviene programarlo a diario). Cambiar el correo o suprimir la cuenta exige la
   contraseña actual. Decisiones en [ADR 0006](docs/adr/0006-derechos-del-titular.md).
 - Límite de intentos: bloqueo progresivo por correo tras 5 fallos seguidos (1 a 15 min) y límite por
-  IP en inicio de sesión (30 cada 5 min) y registro (10 por hora); responde 429 con `Retry-After`.
+  IP en inicio de sesión (30 cada 5 min) y registro (30 por hora, `REGISTER_PER_IP_PER_HOUR`); responde
+  429 con `Retry-After`. Los cupos por IP son holgados porque los operadores móviles comparten una IP
+  entre muchos usuarios (decisión 58); para una prueba con varias personas en la misma red, súbelos en `.env`.
   Contadores en memoria de un solo proceso ([ADR 0005](docs/adr/0005-limite-de-intentos.md)).
 - Requiere `JWT_SECRET_KEY` (al menos 32 caracteres: `openssl rand -hex 32`) en `.env`.
 - Administradores: `python -m app.cli create-admin --name "Nombre" --email correo@dominio.co`
@@ -162,7 +164,7 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
 - Foto: JPEG, PNG o WebP según su contenido, hasta 10 MB; se recodifica a JPEG sin metadatos (EXIF,
   GPS) con lado máximo de 1600 px y una miniatura de 400 px, en `PHOTO_STORAGE_DIR`.
 - Solo se reciben reportes dentro de `REPORT_AREA_BBOX` (422 `LOCATION_OUTSIDE_SERVICE_AREA`) y hasta
-  10 por hora por usuario y 30 por hora por IP (429 con `Retry-After`).
+  10 por hora por usuario y 100 por hora por IP (429 con `Retry-After`).
 
 - `GET /api/v1/reports/{id}/photo` y `.../photo/thumbnail`: la foto y su miniatura, solo para el
   autor del reporte y los administradores (404 para los demás), sin caché.
