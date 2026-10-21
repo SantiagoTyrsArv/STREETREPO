@@ -4,6 +4,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Corregido
+- `POST /api/v1/reports` respondía 500 en la API desplegada: el proceso no registraba el modelo de
+  `servicio_critico` y SQLAlchemy no resolvía la clave foránea de `evaluacion_prioridad`. Las
+  pruebas no lo veían porque otras ya importaban todos los modelos; hallado en la prueba en el
+  celular.
+
 ### Cambiado
 - Límites por IP más holgados por el CGNAT de los operadores móviles (decisión 58): registro 30 por
   hora (antes 10; ahora configurable con `REGISTER_PER_IP_PER_HOUR`) y reportes 100 por hora (antes

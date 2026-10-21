@@ -1,4 +1,8 @@
-"""Registro de todos los modelos ORM para que Alembic vea el esquema completo."""
+"""Registro de todos los modelos ORM.
+
+Alembic lo usa para ver el esquema completo y la API (`app.main`) para que SQLAlchemy resuelva
+las claves foráneas hacia tablas que ningún módulo cargado importa por sí mismo.
+"""
 
 from app.modules.auth.infrastructure.models import RefreshTokenModel
 from app.modules.confirmations.infrastructure.models import ConfirmationModel

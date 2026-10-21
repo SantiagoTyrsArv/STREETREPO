@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
+from app import models as _orm_models  # noqa: F401  - registra todas las tablas (claves foráneas)
 from app.core.body_size_limit import BodySizeLimitMiddleware
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
