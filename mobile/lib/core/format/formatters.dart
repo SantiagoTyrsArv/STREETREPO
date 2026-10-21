@@ -15,6 +15,10 @@ String formatScore(num value) => NumberFormat('0.00', _locale).format(value);
 String formatShortDate(DateTime utc) =>
     DateFormat('d MMM', _locale).format(_inBogota(utc)).replaceAll('.', '');
 
+/// Fecha con año en hora de Bogotá: `10 oct 2026`.
+String formatLongDate(DateTime utc) =>
+    DateFormat('d MMM y', _locale).format(_inBogota(utc)).replaceAll('.', '');
+
 /// Antigüedad como en el diseño de «Mis reportes»: `hoy`, `hace 3 días`, `hace 1 semana`.
 String formatRelative(DateTime utc, DateTime nowUtc) {
   final days = _day(_inBogota(nowUtc)).difference(_day(_inBogota(utc))).inDays;

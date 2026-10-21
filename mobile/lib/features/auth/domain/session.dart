@@ -14,12 +14,18 @@ class UserProfile {
     required this.name,
     required this.email,
     required this.role,
+    this.policyVersion,
+    this.policyAcceptedAt,
   });
 
   final String id;
   final String name;
   final String email;
   final String role;
+
+  /// Versión de la política de datos que aceptó y cuándo (Ley 1581).
+  final String? policyVersion;
+  final DateTime? policyAcceptedAt;
 }
 
 /// Estado de la sesión. Mientras se recupera la sesión guardada, el proveedor está en

@@ -9,11 +9,13 @@ import 'package:street_repo/core/routing/app_router.dart';
 import 'package:street_repo/core/platform/url_opener.dart';
 import 'package:street_repo/features/auth/application/auth_providers.dart';
 import 'package:street_repo/features/auth/data/token_store.dart';
+import 'package:street_repo/features/my_reports/application/my_reports_controller.dart';
 import 'package:street_repo/features/report_new/application/report_draft_controller.dart';
 import 'package:street_repo/features/report_new/domain/device_services.dart';
 
 import '../../../support/fake_auth_repository.dart';
 import '../../../support/fake_device_services.dart';
+import '../../../support/fake_my_reports_repository.dart';
 import '../../../support/load_fonts.dart';
 import '../../../support/memory_token_store.dart';
 
@@ -43,6 +45,7 @@ void main() {
           tokenStoreProvider.overrideWithValue(store),
           authRepositoryProvider.overrideWithValue(FakeAuthRepository(store)),
           urlOpenerProvider.overrideWithValue((_) async => true),
+          myReportsRepositoryProvider.overrideWithValue(FakeMyReportsRepository()),
           locationServiceProvider.overrideWithValue(location),
           photoServiceProvider.overrideWithValue(photos),
         ],
