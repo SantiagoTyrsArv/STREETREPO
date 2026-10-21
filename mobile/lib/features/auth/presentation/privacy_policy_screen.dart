@@ -12,9 +12,11 @@ import '../../../core/widgets/fill_scroll_view.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/state_views.dart';
 import '../application/privacy_policy_providers.dart';
+import '../application/session_controller.dart';
 import '../domain/session.dart';
 
 /// Política de datos, Ley 1581 (Figma `2:66`). Acepta la versión vigente y vuelve al registro.
+/// Con sesión (desde el perfil) es de solo lectura: el consentimiento ya quedó registrado.
 class PrivacyPolicyScreen extends ConsumerWidget {
   const PrivacyPolicyScreen({super.key});
 
@@ -47,7 +49,11 @@ class _PolicyBody extends ConsumerStatefulWidget {
 class _PolicyBodyState extends ConsumerState<_PolicyBody> {
   late bool _checked = ref.read(policyConsentProvider) == widget.policy.version;
 
-  void _back() => context.canPop() ? context.pop() : context.go(AppRoutes.register);
+  bool get _readOnly => ref.read(sessionControllerProvider).value is SignedIn;
+
+  void _back() => context.canPop()
+      ? context.pop()
+      : context.go(_readOnly ? AppRoutes.profile : AppRoutes.register);
 
   void _accept() {
     ref.read(policyConsentProvider.notifier).accept(widget.policy.version);
@@ -130,21 +136,24 @@ class _PolicyBodyState extends ConsumerState<_PolicyBody> {
             style: TextStyle(fontSize: 13, color: AppTokens.textSecondary),
           ),
         const Spacer(),
-        const SizedBox(height: 24),
-        ConsentCheckbox(
-          value: _checked,
-          onChanged: (checked) => setState(() => _checked = checked),
-          size: 26,
-          radius: 7,
-          check: SvgPicture.asset('assets/icons/check_small.svg'),
-          label: 'He leído y acepto la política de tratamiento de datos personales de Street Repo.',
-        ),
-        const SizedBox(height: 18),
-        PrimaryButton(
-          label: 'Aceptar y continuar',
-          variant: ButtonVariant.dark,
-          onPressed: _checked ? _accept : null,
-        ),
+        if (!ref.watch(sessionControllerProvider.select((s) => s.value is SignedIn))) ...[
+          const SizedBox(height: 24),
+          ConsentCheckbox(
+            value: _checked,
+            onChanged: (checked) => setState(() => _checked = checked),
+            size: 26,
+            radius: 7,
+            check: SvgPicture.asset('assets/icons/check_small.svg'),
+            label:
+                'He leído y acepto la política de tratamiento de datos personales de Street Repo.',
+          ),
+          const SizedBox(height: 18),
+          PrimaryButton(
+            label: 'Aceptar y continuar',
+            variant: ButtonVariant.dark,
+            onPressed: _checked ? _accept : null,
+          ),
+        ],
       ],
     );
   }

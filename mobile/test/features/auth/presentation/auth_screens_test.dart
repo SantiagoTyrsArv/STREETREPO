@@ -7,8 +7,11 @@ import 'package:street_repo/core/platform/url_opener.dart';
 import 'package:street_repo/features/auth/application/auth_providers.dart';
 import 'package:street_repo/features/auth/data/token_store.dart';
 import 'package:street_repo/features/auth/domain/session.dart';
+import 'package:street_repo/features/my_reports/application/my_reports_controller.dart';
+import 'package:street_repo/features/my_reports/presentation/my_reports_screen.dart';
 
 import '../../../support/fake_auth_repository.dart';
+import '../../../support/fake_my_reports_repository.dart';
 import '../../../support/load_fonts.dart';
 import '../../../support/memory_token_store.dart';
 
@@ -40,6 +43,7 @@ void main() {
         overrides: [
           tokenStoreProvider.overrideWithValue(store),
           authRepositoryProvider.overrideWithValue(auth),
+          myReportsRepositoryProvider.overrideWithValue(FakeMyReportsRepository()),
           urlOpenerProvider.overrideWithValue((url) async {
             openedUrls.add(url);
             return true;
@@ -108,7 +112,7 @@ void main() {
       await pumpApp(tester);
 
       expect(find.text('Street Repo'), findsNothing);
-      expect(find.byType(Placeholder), findsOneWidget);
+      expect(find.byType(MyReportsScreen), findsOneWidget);
     });
   });
 
@@ -135,7 +139,7 @@ void main() {
 
       expect(auth.registeredPolicyVersion, '1.0');
       expect(auth.loggedInEmail, 'ana@correo.co');
-      expect(find.byType(Placeholder), findsOneWidget);
+      expect(find.byType(MyReportsScreen), findsOneWidget);
     });
 
     testWidgets('un correo repetido se muestra bajo el campo y conserva lo escrito', (
@@ -282,7 +286,7 @@ void main() {
       await tester.tap(find.text('Entrar'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(Placeholder), findsOneWidget);
+      expect(find.byType(MyReportsScreen), findsOneWidget);
     });
   });
 

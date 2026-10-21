@@ -61,6 +61,14 @@ class AuthApi {
       name: _field<String>(json, 'name'),
       email: _field<String>(json, 'email'),
       role: _field<String>(json, 'role'),
+      policyVersion: switch (json['policy_version']) {
+        final String value => value,
+        _ => null,
+      },
+      policyAcceptedAt: switch (json['policy_accepted_at']) {
+        final String value => DateTime.parse(value),
+        _ => null,
+      },
     );
   });
 

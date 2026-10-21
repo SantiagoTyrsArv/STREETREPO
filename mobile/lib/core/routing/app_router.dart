@@ -9,6 +9,9 @@ import '../../features/auth/presentation/privacy_policy_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/startup_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
+import '../../features/my_reports/presentation/my_reports_screen.dart';
+import '../../features/my_reports/presentation/report_detail_screen.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/report_new/presentation/duplicate_screen.dart';
 import '../../features/report_new/presentation/permission_denied_screen.dart';
 import '../../features/report_new/presentation/permissions_screen.dart';
@@ -16,8 +19,9 @@ import '../../features/report_new/presentation/photo_location_screen.dart';
 import '../../features/report_new/presentation/report_error_screens.dart';
 import '../../features/report_new/presentation/report_sent_screen.dart';
 import '../../features/report_new/presentation/severity_screen.dart';
+import '../widgets/app_shell.dart';
 
-/// Rutas de la app. Las de reportes y perfil se completan en las tareas siguientes del plan.
+/// Rutas de la app.
 abstract final class AppRoutes {
   static const startup = '/inicio';
   static const welcome = '/bienvenida';
@@ -119,11 +123,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.newReportPhotoRejected,
         builder: (context, state) => const PhotoRejectedScreen(),
       ),
-      for (final path in [AppRoutes.myReports, AppRoutes.profile, AppRoutes.reportDetail])
-        GoRoute(
-          path: path,
-          builder: (context, state) => const Scaffold(body: Placeholder()),
-        ),
+      // Mis reportes y Perfil comparten la barra inferior; el detalle y el nuevo reporte se
+      // abren a pantalla completa.
+      ShellRoute(
+        builder: (context, state, child) => AppShell(location: state.matchedLocation, child: child),
+        routes: [
+          GoRoute(
+            path: AppRoutes.myReports,
+            pageBuilder: (context, state) => const NoTransitionPage(child: MyReportsScreen()),
+          ),
+          GoRoute(
+            path: AppRoutes.profile,
+            pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.reportDetail,
+        builder: (context, state) => ReportDetailScreen(reportId: state.pathParameters['id']!),
+      ),
     ],
   );
   ref.onDispose(() {
