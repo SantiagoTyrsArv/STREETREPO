@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solo en debug: la API de desarrollo corre por HTTP en la red local. La variante release
+     no incluye este archivo y Android rechaza el tráfico sin cifrar (HTTPS obligatorio, HU-17). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
