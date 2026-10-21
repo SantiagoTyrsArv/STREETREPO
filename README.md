@@ -14,7 +14,7 @@ Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colom
 |---|---|---|
 | `backend/` | API REST (`/api/v1`) | FastAPI · SQLAlchemy 2 · Alembic |
 | `admin-web/` | Panel administrativo (pendiente, después de la app; decisión 44) | React + Leaflet |
-| `mobile/` | App ciudadana (pendiente, la siguiente; decisión 44) | Flutter |
+| `mobile/` | App ciudadana: flujo crítico de reporte (decisión 49; ver [`mobile/README.md`](mobile/README.md)) | Flutter |
 | `infra/` | Docker Compose, Dockerfiles, scripts de carga OSM | Docker · PostgreSQL + PostGIS |
 | `docs/` | Decisiones de arquitectura (ADR) | — |
 

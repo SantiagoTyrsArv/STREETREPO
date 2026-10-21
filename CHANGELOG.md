@@ -16,6 +16,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   30). Los límites por usuario y por correo no cambian.
 
 ### Añadido
+- App ciudadana Flutter para Android con el flujo crítico (decisión 49): registro con la política de
+  datos, inicio de sesión, reporte con foto, GPS y severidad, posible duplicado (confirmar o crear),
+  Mis reportes, detalle y perfil mínimo. Cómo ejecutarla en un celular, en `mobile/README.md`.
+- `API_BIND_ADDRESS` en Docker Compose para publicar la API en la red local durante la prueba en
+  el celular (por defecto `127.0.0.1`).
 - `POST /api/v1/reports/{id}/confirmations` (HU-16): confirmar un reporte activo de otro
   ciudadano; 409 si está reparado, es propio (propuesta 48) o ya se confirmó. No cambia U.
 - `GET /api/v1/me/reports`: reportes creados y confirmados, paginados (decisión 49).

@@ -59,7 +59,8 @@ services:
       dockerfile: ../infra/docker/api.Dockerfile
     environment: *api-env
     ports:
-      - "127.0.0.1:${API_PORT:-8000}:8000"
+      # API_BIND_ADDRESS=<ip-lan> la publica en la red local para probar la app en el celular.
+      - "${API_BIND_ADDRESS:-127.0.0.1}:${API_PORT:-8000}:8000"
     volumes:
       # Fotos de evidencia fuera de la base (propuesta 34); entra en los respaldos (README).
       - photos:/srv/storage/photos
