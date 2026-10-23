@@ -1,5 +1,5 @@
 # Imagen de la API: multi-etapa, sin herramientas de compilación ni secretos, usuario no root.
-FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.5 AS uv
 
 FROM python:3.13-slim AS build
 COPY --from=uv /uv /usr/local/bin/uv
