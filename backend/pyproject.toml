@@ -33,7 +33,7 @@ dev = [
 [tool.uv]
 package = false
 # Misma versión que la imagen (infra/docker/api.Dockerfile); la CI la toma de aquí.
-required-version = "==0.13.1"
+required-version = "==0.13.5"
 
 [tool.ruff]
 line-length = 100

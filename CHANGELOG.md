@@ -11,6 +11,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   celular.
 
 ### Cambiado
+- uv 0.13.5 (antes 0.13.1) en la imagen de la API, en la CI y en desarrollo: Dependabot dejó de
+  aceptar 0.13.1 y no abría actualizaciones del backend (decisión 73).
 - Límites por IP más holgados por el CGNAT de los operadores móviles (decisión 58): registro 30 por
   hora (antes 10; ahora configurable con `REGISTER_PER_IP_PER_HOUR`) y reportes 100 por hora (antes
   30). Los límites por usuario y por correo no cambian.
