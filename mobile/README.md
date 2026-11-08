@@ -78,7 +78,7 @@ Al terminar, volver a `API_BIND_ADDRESS=127.0.0.1` para no dejar la API expuesta
 ### Lista de verificación manual
 
 Recorrido del flujo crítico en el celular, con la ubicación real en Pasto. Marcado con el resultado
-de la prueba del 2026-10-21 (decisión 65 de la bitácora):
+de las pruebas del 2026-10-21 y del 2026-11-08 (decisiones 65 y 74 de la bitácora):
 
 - [x] Crear cuenta aceptando la política de datos e ingresar.
 - [x] Conceder cámara y ubicación desde la pantalla de permisos.
@@ -86,9 +86,10 @@ de la prueba del 2026-10-21 (decisión 65 de la bitácora):
 - [x] Elegir la severidad y enviar; ver «Reporte enviado».
 - [x] El reporte aparece en Mis reportes como «Evaluado», con la dirección de la vía.
 - [x] Reportar otra vez en el mismo lugar: «Posible duplicado» lo marca como «Tu reporte».
-- [ ] Con una segunda cuenta, confirmar ese reporte; la segunda cuenta lo ve en Mis reportes con
-  «Lo confirmaste». Para que aparezca el aviso, la ubicación debe quedar a menos de 25 m.
-- [ ] Cortar la red durante un envío y luego «Reintentar»: se crea un solo reporte. Con el cable
+- [x] Con una segunda cuenta, confirmar ese reporte; la segunda cuenta lo ve en Mis reportes con
+  «Lo confirmaste». Para que aparezca el aviso, la ubicación debe quedar a menos de 25 m: hacerlo
+  al aire libre y esperar a que el GPS tenga buena precisión (en la prueba quedó a 34–49 m bajo techo).
+- [x] Cortar la red durante un envío y luego «Reintentar»: se crea un solo reporte. Con el cable
   conectado el modo avión no corta la API; usar `adb reverse --remove tcp:8000` y volver a
   reenviar el puerto antes de «Reintentar».
 - [x] Cerrar sesión: vuelve a la Bienvenida.
