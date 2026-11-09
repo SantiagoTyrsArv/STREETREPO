@@ -4,25 +4,38 @@ Todo el router exige el rol de administrador en el servidor (guía 7.1), aunque 
 oculte lo que un ciudadano no puede usar.
 """
 
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 
 from app.core.errors import AppError
+from app.modules.admin.domain.errors import ReportNotFoundError
 from app.modules.admin.domain.ranking_view import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
-from app.modules.admin.presentation.dependencies import ReadDashboardDep
+from app.modules.admin.presentation.dependencies import (
+    ChangeReportStatusDep,
+    GetAdminReportDep,
+    ReadDashboardDep,
+)
 from app.modules.admin.presentation.schemas import (
+    AdminReportResponse,
     HeatmapResponse,
     RankingResponse,
+    StatusChangeRequest,
     SummaryResponse,
 )
-from app.modules.auth.presentation.dependencies import require_admin
+from app.modules.auth.presentation.dependencies import AdminUserDep, require_admin
 from app.modules.reports.domain.status import ReportStatus
+from app.modules.reports.domain.status_machine import InvalidStatusTransitionError
 from app.shared.domain.geo import BoundingBox, InvalidGeometryError
 
 router = APIRouter(prefix="/admin", tags=["administración"], dependencies=[Depends(require_admin)])
 
 _BBOX_PARTS = 4
+
+
+def _report_not_found() -> AppError:
+    return AppError("REPORT_NOT_FOUND", "No encontramos ese reporte.", status.HTTP_404_NOT_FOUND)
 
 
 def parse_bbox(raw: str) -> BoundingBox:
@@ -84,3 +97,56 @@ def get_heatmap(
                 {"bbox": "min_lon,min_lat,max_lon,max_lat"},
             ) from exc
     return HeatmapResponse.from_points(use_case.heat_points(area))
+
+
+@router.get(
+    "/reports/{report_id}",
+    response_model=AdminReportResponse,
+    responses={404: {"description": "El reporte no existe (REPORT_NOT_FOUND)"}},
+)
+def get_admin_report(report_id: uuid.UUID, use_case: GetAdminReportDep) -> AdminReportResponse:
+    """Detalle para la pantalla «Detalle y estado»: vía OSM, servicio crítico más cercano,
+    desglose del cálculo con los pesos de su versión, reportante e historial con su autor.
+    La foto se pide a ``/reports/{id}/photo``.
+    """
+    try:
+        detail = use_case.execute(report_id)
+    except ReportNotFoundError as exc:
+        raise _report_not_found() from exc
+    return AdminReportResponse.from_detail(detail)
+
+
+@router.patch(
+    "/reports/{report_id}/status",
+    response_model=AdminReportResponse,
+    responses={
+        404: {"description": "El reporte no existe (REPORT_NOT_FOUND)"},
+        409: {
+            "description": "La máquina de estados no permite el cambio desde el estado actual "
+            "(INVALID_STATUS_TRANSITION); details.current_status trae el estado vigente"
+        },
+    },
+)
+def change_report_status(
+    report_id: uuid.UUID,
+    body: StatusChangeRequest,
+    admin: AdminUserDep,
+    change: ChangeReportStatusDep,
+    detail: GetAdminReportDep,
+) -> AdminReportResponse:
+    """Avanza el estado (sin retrocesos; Registrado → Evaluado solo lo hace el motor) y deja
+    el cambio en el historial con el administrador y la observación. No modifica U.
+    Responde el detalle actualizado.
+    """
+    try:
+        change.execute(report_id, body.status, admin.id, body.note)
+    except ReportNotFoundError as exc:
+        raise _report_not_found() from exc
+    except InvalidStatusTransitionError as exc:
+        raise AppError(
+            "INVALID_STATUS_TRANSITION",
+            str(exc),
+            status.HTTP_409_CONFLICT,
+            {"current_status": exc.current.value},
+        ) from exc
+    return AdminReportResponse.from_detail(detail.execute(report_id))
