@@ -11,6 +11,7 @@ from app.core.errors import register_error_handlers
 from app.core.health import router as health_router
 from app.core.logging import CORRELATION_HEADER, RequestLoggingMiddleware, configure_logging
 from app.core.security_headers import SecurityHeadersMiddleware
+from app.modules.admin.presentation.router import router as admin_router
 from app.modules.auth.infrastructure.jwt_tokens import JwtAccessTokenService
 from app.modules.auth.infrastructure.memory_login_attempts import InMemoryLoginAttemptStore
 from app.modules.auth.presentation.privacy_policy import router as privacy_policy_router
@@ -73,6 +74,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(my_reports_router, prefix=API_V1_PREFIX)
     app.include_router(reports_router, prefix=API_V1_PREFIX)
     app.include_router(confirmations_router, prefix=API_V1_PREFIX)
+    app.include_router(admin_router, prefix=API_V1_PREFIX)
     return app
 
 
