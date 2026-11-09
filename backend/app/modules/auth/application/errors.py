@@ -9,6 +9,11 @@ class InvalidRefreshTokenError(Exception):
     """Token de refresco desconocido, vencido, revocado o reutilizado."""
 
 
+class InsufficientRoleError(Exception):
+    """Credenciales correctas, pero la cuenta no tiene el rol que exige el canal
+    (el panel web solo admite administradores, decisión 42)."""
+
+
 class PolicyNotAcceptedError(Exception):
     """El registro exige aceptar la política de tratamiento de datos (Ley 1581)."""
 

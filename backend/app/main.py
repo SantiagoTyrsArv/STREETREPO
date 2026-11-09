@@ -16,6 +16,8 @@ from app.modules.auth.infrastructure.jwt_tokens import JwtAccessTokenService
 from app.modules.auth.infrastructure.memory_login_attempts import InMemoryLoginAttemptStore
 from app.modules.auth.presentation.privacy_policy import router as privacy_policy_router
 from app.modules.auth.presentation.router import router as auth_router
+from app.modules.auth.presentation.web_router import router as web_auth_router
+from app.modules.auth.presentation.web_session import CSRF_HEADER
 from app.modules.confirmations.presentation.router import router as confirmations_router
 from app.modules.reports.presentation.me_router import router as my_reports_router
 from app.modules.reports.presentation.router import router as reports_router
@@ -62,13 +64,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=settings.cors_origin_list,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-        allow_headers=["Authorization", "Content-Type", "Idempotency-Key", CORRELATION_HEADER],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "Idempotency-Key",
+            CORRELATION_HEADER,
+            CSRF_HEADER,
+        ],
         expose_headers=[CORRELATION_HEADER],
     )
 
     register_error_handlers(app)
     app.include_router(health_router)
     app.include_router(auth_router, prefix=API_V1_PREFIX)
+    app.include_router(web_auth_router, prefix=API_V1_PREFIX)
     app.include_router(privacy_policy_router, prefix=API_V1_PREFIX)
     app.include_router(users_router, prefix=API_V1_PREFIX)
     app.include_router(my_reports_router, prefix=API_V1_PREFIX)

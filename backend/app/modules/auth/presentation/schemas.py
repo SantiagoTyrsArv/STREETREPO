@@ -56,3 +56,13 @@ class TokenResponse(BaseModel):
     token_type: Literal["bearer"] = "bearer"  # noqa: S105
     expires_in: int
     refresh_token: str
+
+
+class WebTokenResponse(BaseModel):
+    """Sesión del panel: el refresco no viaja en el cuerpo, sino en la cookie ``sr_refresh``."""
+
+    model_config = ConfigDict(frozen=True)
+
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"  # noqa: S105 - esquema OAuth 2, no un secreto
+    expires_in: int

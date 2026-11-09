@@ -37,6 +37,29 @@ Aprobada el 2026-10-19; se implementa en la fase 6.
 | Límites | Los límites de intentos de la decisión 25 aplican igual al inicio de sesión del panel | Mismo riesgo de adivinar contraseñas |
 | Transporte | HTTPS con el proxy de HU-17; dominio y certificado a cargo del responsable | Las cookies `Secure` solo viajan por HTTPS |
 
+### Flujo web implementado (fase 6, tarea 5)
+
+Rutas en `app/modules/auth/presentation/web_router.py`; la cookie y la defensa CSRF en
+`web_session.py`. La variante de la app (`/auth/login`, `/auth/refresh`, `/auth/logout`, con los
+tokens en el cuerpo) no cambia.
+
+| Ruta | Comportamiento |
+|---|---|
+| `POST /api/v1/auth/web/login` | Mismo cuerpo y mismos límites (IP y bloqueo por correo) que el login de la app. Responde `{access_token, token_type, expires_in}` y fija la cookie `sr_refresh`. Una cuenta que no es de administrador recibe **403 `ADMIN_ROLE_REQUIRED`** («Esta cuenta no tiene acceso al panel.») sin emitir sesión; como la contraseña era correcta, no cuenta como intento fallido |
+| `POST /api/v1/auth/web/refresh` | Lee la cookie, la rota (misma detección de reutilización que la app) y entrega un acceso nuevo; así el panel recupera la sesión al recargar. Sin cookie o con una inválida: **401 `INVALID_SESSION`** y la cookie se borra. Si la cuenta dejó de ser administradora: 403 `ADMIN_ROLE_REQUIRED`, se revoca la sesión y se borra la cookie |
+| `POST /api/v1/auth/web/logout` | Revoca la sesión de la cookie y la borra (204). Repetirlo no da error |
+
+- **Cookie:** `sr_refresh`, `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/v1/auth/web`,
+  `Max-Age` = `REFRESH_TOKEN_TTL_DAYS` en segundos. El `Path` evita que viaje a las demás rutas.
+- **CSRF:** las tres rutas exigen `X-CSRF-Protection: 1` y un `Origin` presente en `CORS_ORIGINS`;
+  si falta cualquiera de los dos, **403 `CSRF_CHECK_FAILED`**. Un formulario de otro sitio no puede
+  poner esa cabecera sin pasar por el *preflight* de CORS, que solo admite el origen del panel.
+- **CORS:** `allow_credentials=True` y `X-CSRF-Protection` entre las cabeceras permitidas; los
+  orígenes siguen siendo la lista exacta de `CORS_ORIGINS` (nunca `*`).
+- **Local:** los navegadores tratan `http://localhost` como contexto seguro, así que la cookie
+  `Secure` funciona sin HTTPS en el equipo del responsable; en internet sigue haciendo falta el
+  proxy HTTPS de HU-17.
+
 ## Riesgo aceptado: el registro revela si un correo ya tiene cuenta
 
 `POST /api/v1/auth/register` responde **409** `EMAIL_ALREADY_REGISTERED` si el correo ya existe.
