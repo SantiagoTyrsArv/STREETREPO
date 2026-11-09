@@ -8,6 +8,7 @@ import pytest
 
 from app.modules.auth.application.errors import (
     AccountLockedError,
+    InsufficientRoleError,
     InvalidCredentialsError,
     InvalidRefreshTokenError,
     PolicyNotAcceptedError,
@@ -173,7 +174,12 @@ class Auth:
     def sessions(self) -> SessionIssuer:
         return SessionIssuer(FakeAccessTokens(), self.refresh_tokens, timedelta(days=7))
 
-    def login(self, email: str = "ana@example.test", password: str = PASSWORD) -> str:
+    def login(
+        self,
+        email: str = "ana@example.test",
+        password: str = PASSWORD,
+        required_role: UserRole | None = None,
+    ) -> str:
         use_case = Login(
             self.users,
             self.hasher,
@@ -183,13 +189,16 @@ class Auth:
             attempts=self.attempts,
             lockout=DEFAULT_LOCKOUT_POLICY,
         )
-        return use_case.execute(email, password).refresh_token
+        return use_case.execute(email, password, required_role).refresh_token
 
-    def refresh(self, token: str) -> str:
+    def refresh(self, token: str, required_role: UserRole | None = None) -> str:
         use_case = RefreshSession(
             self.users, self.refresh_tokens, self.sessions, self.clock, self.transaction
         )
-        return use_case.execute(token).refresh_token
+        return use_case.execute(token, required_role).refresh_token
+
+    def make_admin(self, user: User) -> None:
+        self.users.by_id[user.id] = replace(user, role=UserRole.ADMIN)
 
 
 @pytest.fixture
@@ -460,3 +469,60 @@ def test_logout_is_idempotent(auth: Auth) -> None:
     logout.execute("desconocido")
 
     assert auth.transaction.commits == 0
+
+
+# --- Variante web: solo administradores (decisión 42) -------------------------
+
+
+def test_login_with_required_role_rejects_citizen_without_session(auth: Auth) -> None:
+    auth.register()
+    commits = auth.transaction.commits
+
+    with pytest.raises(InsufficientRoleError):
+        auth.login(required_role=UserRole.ADMIN)
+
+    assert auth.refresh_tokens.active() == []
+    assert auth.transaction.commits == commits
+
+
+def test_login_with_required_role_admits_the_role(auth: Auth) -> None:
+    auth.make_admin(auth.register())
+
+    token = auth.login(required_role=UserRole.ADMIN)
+
+    assert auth.refresh_tokens.get_by_hash(hash_refresh_token(token)) is not None
+
+
+def test_login_role_mismatch_is_not_a_failed_attempt(auth: Auth) -> None:
+    auth.register()
+    for _ in range(10):
+        with pytest.raises(InsufficientRoleError):
+            auth.login(required_role=UserRole.ADMIN)
+
+    assert auth.attempts.get(login_attempt_key("ana@example.test")) is None
+    assert auth.login()
+
+
+def test_login_with_required_role_and_wrong_password_is_invalid(auth: Auth) -> None:
+    auth.register()
+
+    with pytest.raises(InvalidCredentialsError):
+        auth.login(password=WRONG, required_role=UserRole.ADMIN)
+
+
+def test_refresh_with_required_role_rejects_citizen(auth: Auth) -> None:
+    auth.register()
+    token = auth.login()
+
+    with pytest.raises(InsufficientRoleError):
+        auth.refresh(token, required_role=UserRole.ADMIN)
+
+    # La sesión del token se revoca: no se emite otra ni sigue viva la anterior.
+    assert auth.refresh_tokens.active() == []
+
+
+def test_refresh_with_required_role_admits_the_role(auth: Auth) -> None:
+    auth.make_admin(auth.register())
+    token = auth.login(required_role=UserRole.ADMIN)
+
+    assert auth.refresh(token, required_role=UserRole.ADMIN) != token
