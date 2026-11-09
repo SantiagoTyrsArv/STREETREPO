@@ -16,6 +16,11 @@ from app.modules.admin.domain.ranking_view import (
     RankingPage,
     StatusSummary,
 )
+from app.modules.admin.domain.report_detail import (
+    AdminHistoryEntry,
+    AdminReportDetail,
+    EvaluationBreakdown,
+)
 from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.presentation.schemas import SeverityLevel
 
@@ -112,4 +117,141 @@ class HeatmapResponse(BaseModel):
                 HeatPointResponse(lat=point.lat, lon=point.lon, u=float(point.urgency_score))
                 for point in points
             ]
+        )
+
+
+class AdminLocationResponse(BaseModel):
+    """Ubicación exacta: el detalle es solo para administradores."""
+
+    model_config = ConfigDict(frozen=True)
+
+    lat: float
+    lon: float
+
+
+class RoadResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    name: str | None
+    # Etiqueta ``highway`` de OSM (primary, secondary…), que define F.
+    highway: str
+
+
+class NearestServiceResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    name: str | None
+    service_type: str
+    distance_m: float
+
+
+class EvaluationResponse(BaseModel):
+    """Desglose del cálculo con los pesos de la versión usada (guía 4.5)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    s: float
+    f: float
+    p: float
+    u: float
+    w_severity: float
+    w_flow: float
+    w_proximity: float
+    config_id: int
+    # null = ningún servicio crítico a menos de 500 m (P = 0).
+    service: NearestServiceResponse | None
+    calculated_at: datetime
+
+    @classmethod
+    def from_breakdown(cls, evaluation: EvaluationBreakdown) -> "EvaluationResponse":
+        service = evaluation.service
+        return cls(
+            s=float(evaluation.severity_score),
+            f=float(evaluation.flow_score),
+            p=float(evaluation.proximity_score),
+            u=float(evaluation.urgency_score),
+            w_severity=float(evaluation.w_severity),
+            w_flow=float(evaluation.w_flow),
+            w_proximity=float(evaluation.w_proximity),
+            config_id=evaluation.config_id,
+            service=(
+                NearestServiceResponse(
+                    name=service.name,
+                    service_type=service.service_type,
+                    distance_m=float(service.distance_m),
+                )
+                if service
+                else None
+            ),
+            calculated_at=evaluation.calculated_at,
+        )
+
+
+class AdminHistoryEntryResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    previous_status: ReportStatus | None
+    status: ReportStatus
+    changed_at: datetime
+    note: str | None
+    # null = cambio automático del sistema (o cuenta suprimida).
+    changed_by_name: str | None
+
+    @classmethod
+    def from_entry(cls, entry: AdminHistoryEntry) -> "AdminHistoryEntryResponse":
+        return cls(
+            previous_status=entry.previous_status,
+            status=entry.status,
+            changed_at=entry.changed_at,
+            note=entry.note,
+            changed_by_name=entry.changed_by_name,
+        )
+
+
+class AdminReportResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    id: uuid.UUID
+    status: ReportStatus
+    # Estados a los que el administrador puede llevar el reporte (máquina de estados).
+    allowed_next_statuses: list[ReportStatus]
+    severity: SeverityLevel
+    description: str | None
+    location: AdminLocationResponse
+    address: str
+    needs_road_review: bool
+    road: RoadResponse | None
+    # Solo en el panel (guía 7.2 y 10.3).
+    reporter_name: str
+    created_at: datetime
+    confirmations: int
+    # null = el motor aún no lo evaluó.
+    evaluation: EvaluationResponse | None
+    history: list[AdminHistoryEntryResponse]
+
+    @classmethod
+    def from_detail(cls, detail: AdminReportDetail) -> "AdminReportResponse":
+        return cls(
+            id=detail.id,
+            status=detail.status,
+            allowed_next_statuses=list(detail.allowed_next_statuses),
+            severity=SeverityLevel.from_domain(detail.severity),
+            description=detail.description,
+            location=AdminLocationResponse(
+                lat=detail.location.latitude, lon=detail.location.longitude
+            ),
+            address=detail.address,
+            needs_road_review=detail.needs_road_review,
+            road=(
+                RoadResponse(name=detail.road.name, highway=detail.road.highway)
+                if detail.road
+                else None
+            ),
+            reporter_name=detail.reporter_name,
+            created_at=detail.created_at,
+            confirmations=detail.confirmations,
+            evaluation=(
+                EvaluationResponse.from_breakdown(detail.evaluation) if detail.evaluation else None
+            ),
+            history=[AdminHistoryEntryResponse.from_entry(entry) for entry in detail.history],
         )

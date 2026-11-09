@@ -1,9 +1,11 @@
 """Puertos de lectura del panel administrativo."""
 
+import uuid
 from collections.abc import Sequence
 from typing import Protocol
 
 from app.modules.admin.domain.ranking_view import HeatPoint, RankingPage, StatusSummary
+from app.modules.admin.domain.report_detail import AdminReportDetail
 from app.modules.reports.domain.status import ReportStatus
 from app.shared.domain.geo import BoundingBox
 
@@ -18,3 +20,7 @@ class DashboardReader(Protocol):
     def heat_points(self, bbox: BoundingBox | None, limit: int) -> Sequence[HeatPoint]:
         """Reportes activos evaluados, opcionalmente dentro del rectángulo."""
         ...
+
+
+class AdminReportReader(Protocol):
+    def get(self, report_id: uuid.UUID) -> AdminReportDetail | None: ...
