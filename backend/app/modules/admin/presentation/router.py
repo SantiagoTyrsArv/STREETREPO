@@ -12,15 +12,21 @@ from fastapi import APIRouter, Depends, Query, status
 from app.core.errors import AppError
 from app.modules.admin.domain.errors import ReportNotFoundError
 from app.modules.admin.domain.ranking_view import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
-from app.modules.admin.presentation.dependencies import GetAdminReportDep, ReadDashboardDep
+from app.modules.admin.presentation.dependencies import (
+    ChangeReportStatusDep,
+    GetAdminReportDep,
+    ReadDashboardDep,
+)
 from app.modules.admin.presentation.schemas import (
     AdminReportResponse,
     HeatmapResponse,
     RankingResponse,
+    StatusChangeRequest,
     SummaryResponse,
 )
-from app.modules.auth.presentation.dependencies import require_admin
+from app.modules.auth.presentation.dependencies import AdminUserDep, require_admin
 from app.modules.reports.domain.status import ReportStatus
+from app.modules.reports.domain.status_machine import InvalidStatusTransitionError
 from app.shared.domain.geo import BoundingBox, InvalidGeometryError
 
 router = APIRouter(prefix="/admin", tags=["administración"], dependencies=[Depends(require_admin)])
@@ -108,3 +114,39 @@ def get_admin_report(report_id: uuid.UUID, use_case: GetAdminReportDep) -> Admin
     except ReportNotFoundError as exc:
         raise _report_not_found() from exc
     return AdminReportResponse.from_detail(detail)
+
+
+@router.patch(
+    "/reports/{report_id}/status",
+    response_model=AdminReportResponse,
+    responses={
+        404: {"description": "El reporte no existe (REPORT_NOT_FOUND)"},
+        409: {
+            "description": "La máquina de estados no permite el cambio desde el estado actual "
+            "(INVALID_STATUS_TRANSITION); details.current_status trae el estado vigente"
+        },
+    },
+)
+def change_report_status(
+    report_id: uuid.UUID,
+    body: StatusChangeRequest,
+    admin: AdminUserDep,
+    change: ChangeReportStatusDep,
+    detail: GetAdminReportDep,
+) -> AdminReportResponse:
+    """Avanza el estado (sin retrocesos; Registrado → Evaluado solo lo hace el motor) y deja
+    el cambio en el historial con el administrador y la observación. No modifica U.
+    Responde el detalle actualizado.
+    """
+    try:
+        change.execute(report_id, body.status, admin.id, body.note)
+    except ReportNotFoundError as exc:
+        raise _report_not_found() from exc
+    except InvalidStatusTransitionError as exc:
+        raise AppError(
+            "INVALID_STATUS_TRANSITION",
+            str(exc),
+            status.HTTP_409_CONFLICT,
+            {"current_status": exc.current.value},
+        ) from exc
+    return AdminReportResponse.from_detail(detail.execute(report_id))

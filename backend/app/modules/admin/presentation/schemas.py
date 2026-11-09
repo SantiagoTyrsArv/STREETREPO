@@ -7,8 +7,9 @@ decimal. En la base y el dominio son ``Decimal`` con dos cifras.
 import uuid
 from collections.abc import Sequence
 from datetime import datetime
+from typing import Final
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.modules.admin.domain.ranking_view import (
     HeatPoint,
@@ -23,6 +24,17 @@ from app.modules.admin.domain.report_detail import (
 )
 from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.presentation.schemas import SeverityLevel
+
+NOTE_MAX_LENGTH: Final = 1000
+
+
+class StatusChangeRequest(BaseModel):
+    """Cambio de estado: la observación queda en el historial (HU-12)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: ReportStatus
+    note: str | None = Field(default=None, max_length=NOTE_MAX_LENGTH)
 
 
 class RankingItemResponse(BaseModel):

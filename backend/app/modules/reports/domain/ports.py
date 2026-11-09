@@ -9,6 +9,7 @@ from app.modules.reports.domain.my_reports import MyReportsPage, PublicReportVie
 from app.modules.reports.domain.new_report import NewReport
 from app.modules.reports.domain.photos import ProcessedPhoto, ReportPhoto, StoredEvidence
 from app.modules.reports.domain.report_view import StatusHistoryEntry
+from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.domain.status_machine import StatusChange
 from app.shared.domain.geo import GeoPoint
 
@@ -16,6 +17,12 @@ from app.shared.domain.geo import GeoPoint
 class StatusHistoryRecorder(Protocol):
     def apply(self, report_id: uuid.UUID, change: StatusChange) -> None:
         """Cambia el estado del reporte y deja el registro en el historial."""
+        ...
+
+
+class ReportStatusLock(Protocol):
+    def lock_status(self, report_id: uuid.UUID) -> ReportStatus | None:
+        """Estado actual con la fila bloqueada hasta el fin de la transacción; None si no existe."""
         ...
 
 

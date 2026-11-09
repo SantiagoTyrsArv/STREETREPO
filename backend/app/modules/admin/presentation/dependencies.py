@@ -5,10 +5,15 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.core.dependencies import SessionDep
+from app.modules.admin.application.change_report_status import ChangeReportStatus
 from app.modules.admin.application.get_admin_report import GetAdminReport
 from app.modules.admin.application.read_dashboard import ReadDashboard
 from app.modules.admin.infrastructure.dashboard_reader import SqlDashboardReader
 from app.modules.admin.infrastructure.report_detail_reader import SqlAdminReportReader
+from app.modules.reports.infrastructure.status_history import (
+    SqlReportStatusLock,
+    SqlStatusHistoryRecorder,
+)
 
 
 def get_read_dashboard(session: SessionDep) -> ReadDashboard:
@@ -23,3 +28,12 @@ def get_admin_report(session: SessionDep) -> GetAdminReport:
 
 
 GetAdminReportDep = Annotated[GetAdminReport, Depends(get_admin_report)]
+
+
+def get_change_report_status(session: SessionDep) -> ChangeReportStatus:
+    return ChangeReportStatus(
+        SqlReportStatusLock(session), SqlStatusHistoryRecorder(session), transaction=session
+    )
+
+
+ChangeReportStatusDep = Annotated[ChangeReportStatus, Depends(get_change_report_status)]
