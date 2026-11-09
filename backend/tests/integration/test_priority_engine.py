@@ -197,7 +197,10 @@ def test_update_weights_recalculates_only_active_reports(
         transaction=session,
     )
 
-    result = use_case.execute(NEW_WEIGHTS, admin_id)
+    current = SqlWeightVersionRepository(session).get_current()
+    assert current is not None
+
+    result = use_case.execute(NEW_WEIGHTS, admin_id, current.id)
 
     assert result.recalculated_reports == len(reports.list_active())
     # 0,4·10 + 0,4·7 + 0,2·8 = 8,40; el estado no cambia en un recálculo.

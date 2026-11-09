@@ -6,6 +6,7 @@ from typing import Protocol
 
 from app.modules.admin.domain.ranking_view import HeatPoint, RankingPage, StatusSummary
 from app.modules.admin.domain.report_detail import AdminReportDetail
+from app.modules.admin.domain.weights_view import WeightVersionView
 from app.modules.reports.domain.status import ReportStatus
 from app.shared.domain.geo import BoundingBox
 
@@ -24,3 +25,11 @@ class DashboardReader(Protocol):
 
 class AdminReportReader(Protocol):
     def get(self, report_id: uuid.UUID) -> AdminReportDetail | None: ...
+
+
+class WeightVersionsReader(Protocol):
+    def current(self) -> WeightVersionView | None: ...
+
+    def list_versions(self, limit: int, offset: int) -> Sequence[WeightVersionView]:
+        """De la más reciente a la más antigua."""
+        ...

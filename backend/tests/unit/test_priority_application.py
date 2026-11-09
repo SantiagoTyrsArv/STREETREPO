@@ -15,7 +15,10 @@ from app.modules.priority.application.evaluate_report import (
     ReportNotFoundError,
     WeightsNotConfiguredError,
 )
-from app.modules.priority.application.update_weights import UpdateWeights
+from app.modules.priority.application.update_weights import (
+    StaleWeightsVersionError,
+    UpdateWeights,
+)
 from app.modules.priority.domain.entities import ReportToEvaluate, WeightVersion
 from app.modules.priority.domain.urgency import UrgencyEvaluation
 from app.modules.priority.domain.weights import DEFAULT_WEIGHTS, Weights
@@ -47,6 +50,9 @@ class FakeWeights:
 
     def get_current(self) -> WeightVersion | None:
         return next((v for v in self.versions if v.is_current), None)
+
+    def lock_current(self) -> WeightVersion | None:
+        return self.get_current()
 
     def list_versions(self, limit: int, offset: int) -> Sequence[WeightVersion]:
         return list(reversed(self.versions))[offset : offset + limit]
@@ -252,13 +258,60 @@ def _update_weights(engine: Engine, transaction: FakeTransaction) -> UpdateWeigh
     )
 
 
+def _current_id(engine: Engine) -> int:
+    current = engine.weights.get_current()
+    assert current is not None
+    return current.id
+
+
+def test_update_weights_with_current_base_creates_version() -> None:
+    engine = _engine()
+    base = _current_id(engine)
+
+    result = _update_weights(engine, FakeTransaction()).execute(NEW_WEIGHTS, ADMIN_ID, base)
+
+    assert result.version.id != base
+    assert engine.weights.get_current() == result.version
+
+
+def test_update_weights_with_stale_base_raises_and_rolls_back() -> None:
+    engine = _engine(_report())
+    stale = _current_id(engine)
+    _update_weights(engine, FakeTransaction()).execute(NEW_WEIGHTS, ADMIN_ID, stale)
+    current = engine.weights.get_current()
+    transaction = FakeTransaction()
+
+    with pytest.raises(StaleWeightsVersionError) as error:
+        _update_weights(engine, transaction).execute(DEFAULT_WEIGHTS, ADMIN_ID, stale)
+
+    assert current is not None
+    assert error.value.current_id == current.id
+    assert engine.weights.get_current() == current
+    assert len(engine.weights.versions) == 2
+    assert transaction == FakeTransaction(commits=0, rollbacks=1)
+
+
+def test_update_weights_without_any_version_is_stale() -> None:
+    engine = _engine(weights=FakeWeights(current=None))
+    transaction = FakeTransaction()
+
+    with pytest.raises(StaleWeightsVersionError) as error:
+        _update_weights(engine, transaction).execute(NEW_WEIGHTS, ADMIN_ID, 1)
+
+    assert error.value.current_id is None
+    assert engine.weights.versions == []
+    assert transaction.rollbacks == 1
+
+
 def test_update_weights_creates_a_version_and_recalculates_active_reports() -> None:
     active = [_report(ReportStatus.EVALUATED), _report(ReportStatus.PRIORITIZED)]
     repaired = _report(ReportStatus.REPAIRED)
     engine = _engine(*active, repaired)
     transaction = FakeTransaction()
 
-    result = _update_weights(engine, transaction).execute(NEW_WEIGHTS, ADMIN_ID)
+    result = _update_weights(engine, transaction).execute(
+        NEW_WEIGHTS, ADMIN_ID, _current_id(engine)
+    )
 
     assert result.recalculated_reports == 2
     assert result.version.weights == NEW_WEIGHTS
@@ -274,7 +327,7 @@ def test_update_weights_creates_a_version_and_recalculates_active_reports() -> N
 def test_previous_versions_are_kept() -> None:
     engine = _engine()
 
-    _update_weights(engine, FakeTransaction()).execute(NEW_WEIGHTS, ADMIN_ID)
+    _update_weights(engine, FakeTransaction()).execute(NEW_WEIGHTS, ADMIN_ID, _current_id(engine))
 
     versions = engine.weights.list_versions(limit=10, offset=0)
     assert [v.weights for v in versions] == [NEW_WEIGHTS, DEFAULT_WEIGHTS]
@@ -286,7 +339,7 @@ def test_update_weights_rolls_back_if_a_recalculation_fails() -> None:
     transaction = FakeTransaction()
 
     with pytest.raises(RuntimeError, match="fallo al guardar"):
-        _update_weights(engine, transaction).execute(NEW_WEIGHTS, ADMIN_ID)
+        _update_weights(engine, transaction).execute(NEW_WEIGHTS, ADMIN_ID, _current_id(engine))
 
     assert transaction == FakeTransaction(commits=0, rollbacks=1)
 
@@ -295,7 +348,9 @@ def test_update_weights_without_active_reports_still_creates_the_version() -> No
     engine = _engine()
     transaction = FakeTransaction()
 
-    result = _update_weights(engine, transaction).execute(NEW_WEIGHTS, ADMIN_ID)
+    result = _update_weights(engine, transaction).execute(
+        NEW_WEIGHTS, ADMIN_ID, _current_id(engine)
+    )
 
     assert result.recalculated_reports == 0
     assert transaction.commits == 1

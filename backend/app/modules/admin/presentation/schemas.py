@@ -7,10 +7,12 @@ decimal. En la base y el dominio son ``Decimal`` con dos cifras.
 import uuid
 from collections.abc import Sequence
 from datetime import datetime
+from decimal import Decimal
 from typing import Final
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.modules.admin.application.manage_weights import SavedWeights
 from app.modules.admin.domain.ranking_view import (
     HeatPoint,
     RankingItem,
@@ -22,6 +24,8 @@ from app.modules.admin.domain.report_detail import (
     AdminReportDetail,
     EvaluationBreakdown,
 )
+from app.modules.admin.domain.weights_view import WeightVersionView
+from app.modules.priority.domain.weights import Weights
 from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.presentation.schemas import SeverityLevel
 
@@ -266,4 +270,81 @@ class AdminReportResponse(BaseModel):
                 EvaluationResponse.from_breakdown(detail.evaluation) if detail.evaluation else None
             ),
             history=[AdminHistoryEntryResponse.from_entry(entry) for entry in detail.history],
+        )
+
+
+class WeightsUpdateRequest(BaseModel):
+    """Pesos nuevos sobre la versión que se estaba editando (``base_version_id``).
+
+    Se aceptan cadenas («0.50») o números JSON; se convierten a ``Decimal`` y el dominio
+    exige dos decimales exactos que sumen 1,00 (guía 2.2).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    base_version_id: int
+    w_severity: Decimal = Field(allow_inf_nan=False)
+    w_flow: Decimal = Field(allow_inf_nan=False)
+    w_proximity: Decimal = Field(allow_inf_nan=False)
+
+    def to_domain(self) -> Weights:
+        """Lanza ``InvalidWeightsError`` si los pesos no cumplen la regla."""
+        return Weights(severity=self.w_severity, flow=self.w_flow, proximity=self.w_proximity)
+
+
+class WeightVersionResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    id: int
+    w_severity: float
+    w_flow: float
+    w_proximity: float
+    created_at: datetime
+    # null = configuración inicial cargada por el sistema.
+    created_by_name: str | None
+    is_current: bool
+
+    @classmethod
+    def from_view(cls, view: WeightVersionView) -> "WeightVersionResponse":
+        return cls(
+            id=view.id,
+            w_severity=float(view.weights.severity),
+            w_flow=float(view.weights.flow),
+            w_proximity=float(view.weights.proximity),
+            created_at=view.created_at,
+            created_by_name=view.created_by_name,
+            is_current=view.is_current,
+        )
+
+
+class WeightsSavedResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    version: WeightVersionResponse
+    # Reportes activos reevaluados con la versión nueva (todo salvo Reparado).
+    recalculated_reports: int
+
+    @classmethod
+    def from_saved(cls, saved: SavedWeights) -> "WeightsSavedResponse":
+        return cls(
+            version=WeightVersionResponse.from_view(saved.version),
+            recalculated_reports=saved.recalculated_reports,
+        )
+
+
+class WeightVersionsResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    items: list[WeightVersionResponse]
+    limit: int
+    offset: int
+
+    @classmethod
+    def from_views(
+        cls, views: Sequence[WeightVersionView], limit: int, offset: int
+    ) -> "WeightVersionsResponse":
+        return cls(
+            items=[WeightVersionResponse.from_view(view) for view in views],
+            limit=limit,
+            offset=offset,
         )
