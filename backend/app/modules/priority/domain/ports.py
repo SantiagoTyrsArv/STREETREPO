@@ -12,6 +12,10 @@ class WeightVersionRepository(Protocol):
         """Versión vigente, o ``None`` si nunca se configuraron pesos."""
         ...
 
+    def lock_current(self) -> WeightVersion | None:
+        """Versión vigente bloqueada hasta el fin de la transacción (guardados simultáneos)."""
+        ...
+
     def list_versions(self, limit: int, offset: int) -> Sequence[WeightVersion]:
         """Versiones de la más reciente a la más antigua."""
         ...

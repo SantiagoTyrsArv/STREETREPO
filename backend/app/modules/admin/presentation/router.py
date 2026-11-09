@@ -15,6 +15,7 @@ from app.modules.admin.domain.ranking_view import DEFAULT_PAGE_SIZE, MAX_PAGE_SI
 from app.modules.admin.presentation.dependencies import (
     ChangeReportStatusDep,
     GetAdminReportDep,
+    ManageWeightsDep,
     ReadDashboardDep,
 )
 from app.modules.admin.presentation.schemas import (
@@ -23,8 +24,15 @@ from app.modules.admin.presentation.schemas import (
     RankingResponse,
     StatusChangeRequest,
     SummaryResponse,
+    WeightsSavedResponse,
+    WeightsUpdateRequest,
+    WeightVersionResponse,
+    WeightVersionsResponse,
 )
 from app.modules.auth.presentation.dependencies import AdminUserDep, require_admin
+from app.modules.priority.application.evaluate_report import WeightsNotConfiguredError
+from app.modules.priority.application.update_weights import StaleWeightsVersionError
+from app.modules.priority.domain.weights import InvalidWeightsError
 from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.domain.status_machine import InvalidStatusTransitionError
 from app.shared.domain.geo import BoundingBox, InvalidGeometryError
@@ -150,3 +158,66 @@ def change_report_status(
             {"current_status": exc.current.value},
         ) from exc
     return AdminReportResponse.from_detail(detail.execute(report_id))
+
+
+def _weights_not_configured() -> AppError:
+    return AppError(
+        "WEIGHTS_NOT_CONFIGURED", "No hay una versión de pesos vigente.", status.HTTP_404_NOT_FOUND
+    )
+
+
+@router.get(
+    "/weights",
+    response_model=WeightVersionResponse,
+    responses={404: {"description": "No hay pesos vigentes (WEIGHTS_NOT_CONFIGURED)"}},
+)
+def get_current_weights(use_case: ManageWeightsDep) -> WeightVersionResponse:
+    """Versión vigente de los pesos w1 (severidad), w2 (flujo) y w3 (proximidad)."""
+    try:
+        return WeightVersionResponse.from_view(use_case.current())
+    except WeightsNotConfiguredError as exc:
+        raise _weights_not_configured() from exc
+
+
+@router.put(
+    "/weights",
+    response_model=WeightsSavedResponse,
+    responses={
+        409: {
+            "description": "Otro administrador guardó una versión después de base_version_id "
+            "(WEIGHTS_VERSION_CONFLICT); details.current_version_id trae la vigente"
+        },
+        422: {"description": "Pesos fuera de 0-1, con más de dos decimales o que no suman 1,00"},
+    },
+)
+def save_weights(
+    body: WeightsUpdateRequest, admin: AdminUserDep, use_case: ManageWeightsDep
+) -> WeightsSavedResponse:
+    """Crea una versión vigente nueva y recalcula en la misma transacción los reportes
+    activos (guía 4.5). Las versiones anteriores se conservan sin cambios.
+    """
+    try:
+        weights = body.to_domain()
+    except InvalidWeightsError as exc:
+        raise AppError("INVALID_WEIGHTS", str(exc), status.HTTP_422_UNPROCESSABLE_CONTENT) from exc
+    try:
+        saved = use_case.save(weights, admin.id, body.base_version_id)
+    except StaleWeightsVersionError as exc:
+        raise AppError(
+            "WEIGHTS_VERSION_CONFLICT",
+            "Otro administrador guardó pesos nuevos. Revisa la versión vigente e "
+            "inténtalo de nuevo.",
+            status.HTTP_409_CONFLICT,
+            {"current_version_id": exc.current_id},
+        ) from exc
+    return WeightsSavedResponse.from_saved(saved)
+
+
+@router.get("/weights/versions", response_model=WeightVersionsResponse)
+def list_weight_versions(
+    use_case: ManageWeightsDep,
+    limit: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = DEFAULT_PAGE_SIZE,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> WeightVersionsResponse:
+    """Versiones de configuración, de la más nueva a la más antigua."""
+    return WeightVersionsResponse.from_views(use_case.versions(limit, offset), limit, offset)

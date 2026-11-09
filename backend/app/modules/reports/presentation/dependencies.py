@@ -7,11 +7,7 @@ from fastapi import Depends, Request
 
 from app.core.dependencies import SessionDep, SettingsDep
 from app.core.rate_limiting import RateLimiterDep, limit_per_client_ip
-from app.modules.critical_services.infrastructure.locator import PostgisCriticalServiceLocator
-from app.modules.priority.application.evaluate_report import ReportEvaluator
-from app.modules.priority.infrastructure.evaluation_repository import SqlEvaluationRepository
-from app.modules.priority.infrastructure.reports_reader import SqlReportsToEvaluate
-from app.modules.priority.infrastructure.weights_repository import SqlWeightVersionRepository
+from app.modules.priority.presentation.dependencies import build_report_evaluator
 from app.modules.reports.application.create_report import CreateReport, CreateReportPolicy
 from app.modules.reports.application.find_nearby import (
     FindPossibleDuplicates,
@@ -31,7 +27,6 @@ from app.modules.reports.infrastructure.pillow_photos import PillowPhotoProcesso
 from app.modules.reports.infrastructure.report_view import SqlReportViewReader
 from app.modules.reports.infrastructure.repository import SqlReportRepository
 from app.modules.reports.infrastructure.status_history import SqlStatusHistoryRecorder
-from app.modules.roads.infrastructure.matcher import PostgisRoadMatcher
 from app.shared.application.clock import SystemClock
 from app.shared.application.rate_limit import RateLimit
 
@@ -47,21 +42,12 @@ def limit_reports_per_ip(request: Request, limiter: RateLimiterDep, settings: Se
 def get_create_report(
     session: SessionDep, settings: SettingsDep, limiter: RateLimiterDep
 ) -> CreateReport:
-    statuses = SqlStatusHistoryRecorder(session)
-    evaluator = ReportEvaluator(
-        reports=SqlReportsToEvaluate(session),
-        weights=SqlWeightVersionRepository(session),
-        evaluations=SqlEvaluationRepository(session),
-        statuses=statuses,
-        road_matcher=PostgisRoadMatcher(session),
-        service_locator=PostgisCriticalServiceLocator(session),
-    )
     return CreateReport(
         reports=SqlReportRepository(session),
         nearby=PostgisNearbyReportFinder(session),
         creation_lock=PostgresReportCreationLock(session),
-        statuses=statuses,
-        evaluator=evaluator,
+        statuses=SqlStatusHistoryRecorder(session),
+        evaluator=build_report_evaluator(session),
         photo_processor=PillowPhotoProcessor(),
         photo_storage=LocalPhotoStorage(settings.photo_storage_dir),
         rate_limiter=limiter,

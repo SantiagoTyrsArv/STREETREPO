@@ -31,6 +31,12 @@ class SqlWeightVersionRepository:
         ).one_or_none()
         return None if row is None else _to_entity(row)
 
+    def lock_current(self) -> WeightVersion | None:
+        row = self._session.scalars(
+            select(WeightConfigModel).where(WeightConfigModel.is_current).with_for_update()
+        ).one_or_none()
+        return None if row is None else _to_entity(row)
+
     def list_versions(self, limit: int, offset: int) -> Sequence[WeightVersion]:
         rows = self._session.scalars(
             select(WeightConfigModel)
