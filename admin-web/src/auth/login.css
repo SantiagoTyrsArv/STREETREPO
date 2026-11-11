@@ -1,0 +1,88 @@
+/* Figma «Panel · Inicio de sesión» (17:15) y «· Bloqueado» (17:45). */
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 24px;
+}
+
+.login__card {
+  display: flex;
+  flex-direction: column;
+  width: 460px;
+  max-width: 100%;
+  padding: 40px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-dialog);
+  background: var(--color-surface);
+}
+
+.login__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  line-height: normal;
+}
+
+.login__brand-name {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.login__brand-caption {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.login__title {
+  margin-top: 28px;
+  font-size: 28px;
+  line-height: 34px;
+}
+
+.login__intro {
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+  line-height: 21px;
+}
+
+.login__notice {
+  margin-top: 22px;
+  padding: 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-alert);
+  background: var(--color-paper);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.login .alert {
+  margin-top: 22px;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.login .alert + .login__form,
+.login__notice + .login__form {
+  margin-top: 16px;
+}
+
+.login__submit {
+  min-height: 50px;
+  margin-top: 8px;
+}
+
+.login__footnote {
+  margin-top: 16px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: normal;
+  text-align: center;
+}

@@ -4,6 +4,22 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
+  - package-ecosystem: npm
+    directory: /admin-web
+    schedule:
+      interval: weekly
+    ignore:
+      # React 18 por el plan de la fase 6 (react-leaflet 4); migrar a 19 es una decisión aparte.
+      - dependency-name: react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react-dom
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react-leaflet
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

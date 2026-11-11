@@ -105,6 +105,35 @@ jobs:
       - name: Pruebas
         run: flutter test
 
+  admin-web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin-web
+    env:
+      VITE_API_BASE_URL: http://localhost:8000 # solo para compilar; la CI no llama a la API
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22 # LTS
+          cache: npm
+          cache-dependency-path: admin-web/package-lock.json
+      - name: Instalar dependencias (lock exacto)
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Formato
+        run: npm run format:check
+      - name: Tipos
+        run: npm run typecheck
+      - name: Pruebas
+        run: npm test
+      - name: Auditoría de dependencias
+        run: npm audit --audit-level=high
+      - name: Compilar
+        run: npm run build
+
   sonar:
     # Los push de Dependabot no reciben SONAR_TOKEN y el job fallaría siempre; esas ramas se
     # rehacen en una rama propia antes de integrarlas, y ahí sí corre (propuesta 32).
