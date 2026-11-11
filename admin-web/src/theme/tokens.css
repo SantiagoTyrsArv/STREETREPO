@@ -1,0 +1,57 @@
+/*
+ * Tokens visuales (guía 10.1 y Figma del panel). Los componentes usan estas variables;
+ * ningún color ni tipografía se escribe suelto en un componente.
+ */
+:root {
+  /* Base */
+  --color-ink: #1b2430;
+  --color-paper: #f5f3ee;
+  --color-amber: #f5b800;
+  --color-line: #e2ded5;
+  --color-text-secondary: #5b6573;
+  --color-surface: #ffffff;
+  --color-divider: #f0ece3;
+  --color-field-border: #c9c4b8;
+  --color-disabled-bg: #e8e4da;
+
+  /* Barra lateral (Figma «Panel · Priorización») */
+  --color-sidebar-active: #2c3a4d;
+  --color-sidebar-text: #c9ced6;
+  --color-sidebar-muted: #9aa3b0;
+
+  /* Estados del reporte */
+  --color-status-registrado: #5b6573;
+  --color-status-registrado-bg: #e8eaee;
+  --color-status-registrado-text: #3d4756;
+  --color-status-evaluado: #2b6cb0;
+  --color-status-evaluado-bg: #d9e8f7;
+  --color-status-evaluado-text: #1c4e80;
+  --color-status-priorizado: #b7791f;
+  --color-status-priorizado-bg: #fdf0c4;
+  --color-status-priorizado-text: #7a4e00;
+  --color-status-reparado: #1f7a5c;
+  --color-status-reparado-bg: #ddf1e8;
+  --color-status-reparado-text: #14573f;
+
+  /* Severidad */
+  --color-severity-baja: #2b6cb0;
+  --color-severity-media: #b45f06;
+  --color-severity-alta: #b42318;
+
+  /* Avisos */
+  --color-review-bg: #fbe6cc;
+  --color-review-text: #8a4b00;
+  --color-error: #b3261e;
+  --color-error-bg: #fdecea;
+
+  /* Tipografía */
+  --font-heading: "Archivo", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+
+  /* Forma */
+  --radius-chip: 10px;
+  --radius-control: 12px;
+  --radius-card: 18px;
+  --radius-dialog: 22px;
+  --focus-ring: 3px solid var(--color-status-evaluado);
+}

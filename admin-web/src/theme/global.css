@@ -1,0 +1,155 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 800;
+}
+
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Botones compartidos */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.button:disabled {
+  background: var(--color-disabled-bg);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.button--secondary {
+  border: 1.5px solid var(--color-field-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/* Chips de estado, severidad y avisos */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--radius-chip);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.chip[data-status="registrado"] {
+  background: var(--color-status-registrado-bg);
+  color: var(--color-status-registrado-text);
+}
+
+.chip[data-status="evaluado"] {
+  background: var(--color-status-evaluado-bg);
+  color: var(--color-status-evaluado-text);
+}
+
+.chip[data-status="priorizado"] {
+  background: var(--color-status-priorizado-bg);
+  color: var(--color-status-priorizado-text);
+}
+
+.chip[data-status="reparado"] {
+  background: var(--color-status-reparado-bg);
+  color: var(--color-status-reparado-text);
+}
+
+.chip[data-severity] {
+  border: 1.5px solid currentColor;
+  background: var(--color-surface);
+  padding: 2px 8px;
+}
+
+.chip[data-severity="baja"] {
+  color: var(--color-severity-baja);
+}
+
+.chip[data-severity="media"] {
+  color: var(--color-severity-media);
+}
+
+.chip[data-severity="alta"] {
+  color: var(--color-severity-alta);
+}
+
+.chip--review {
+  background: var(--color-review-bg);
+  color: var(--color-review-text);
+}
+
+/* Vistas de estado: cargando, vacío y error */
+.state-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 24px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.state-view__title {
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.state-view--error .state-view__message {
+  color: var(--color-ink);
+}
+
+.state-view .button {
+  margin-top: 8px;
+}
