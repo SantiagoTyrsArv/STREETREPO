@@ -1,0 +1,345 @@
+/* Figma «Panel · Detalle y estado» (10:38). */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--color-status-registrado-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.detail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: normal;
+}
+
+.detail-header__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-header .page__subtitle {
+  margin-top: 0;
+}
+
+.detail-columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.detail-column {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  .detail-columns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+}
+
+.detail-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 230px;
+  border-radius: var(--radius-alert);
+  background: var(--color-photo-bg);
+  color: var(--color-sidebar-text);
+  font-size: 13px;
+  object-fit: contain;
+}
+
+.location-map {
+  height: 185px;
+  overflow: hidden;
+  border-radius: var(--radius-alert);
+}
+
+.location-pin {
+  border: 3px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-status-priorizado);
+  box-shadow: 0 0 0 2px var(--color-status-priorizado);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.fact {
+  padding: 4px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--color-fact-bg);
+  color: var(--color-status-registrado-text);
+  font-size: 13px;
+  line-height: normal;
+}
+
+.detail-description {
+  color: var(--color-status-registrado-text);
+  line-height: 21px;
+}
+
+.detail-confirmations {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-status-registrado-text);
+  font-size: 13px;
+}
+
+/* Cálculo de prioridad */
+.factor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.factor__line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  line-height: normal;
+}
+
+.factor__value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.factor__bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--color-track);
+}
+
+.factor__fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.factor[data-severity="baja"] .factor__fill {
+  background: var(--color-severity-baja);
+}
+
+.factor[data-severity="media"] .factor__fill {
+  background: var(--color-severity-media);
+}
+
+.factor[data-severity="alta"] .factor__fill {
+  background: var(--color-severity-alta);
+}
+
+.factor[data-factor="F"] .factor__fill {
+  background: var(--color-status-evaluado);
+}
+
+.factor[data-factor="P"] .factor__fill {
+  background: var(--color-status-priorizado);
+}
+
+.breakdown__total {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-track);
+  font-weight: 700;
+  line-height: normal;
+}
+
+.breakdown__score {
+  font-family: var(--font-heading);
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.breakdown__scale {
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.breakdown__pending,
+.status-form__closed {
+  color: var(--color-text-secondary);
+}
+
+/* Cambiar estado */
+.status-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.status-form__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.status-form__option {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.status-form__option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.status-form__option span {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--color-field-border);
+  border-radius: 22px;
+  background: var(--color-surface);
+  font-weight: 700;
+}
+
+.status-form__option input:checked + span {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.status-form__option input:focus-visible + span {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.status-form__note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.status-form__note label {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.status-form__note textarea {
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-field-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  resize: vertical;
+}
+
+.status-form__counter {
+  align-self: flex-end;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.status-form .alert {
+  width: 100%;
+}
+
+.status-form__saved {
+  color: var(--color-status-reparado-text);
+  font-weight: 700;
+}
+
+.status-form .button {
+  min-height: 48px;
+  padding: 0 22px;
+}
+
+/* Historial */
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  line-height: normal;
+}
+
+.history__item {
+  display: flex;
+  gap: 10px;
+}
+
+.history__dot {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border-radius: 50%;
+}
+
+.history__dot[data-status="registrado"] {
+  background: var(--color-status-registrado);
+}
+
+.history__dot[data-status="evaluado"] {
+  background: var(--color-status-evaluado);
+}
+
+.history__dot[data-status="priorizado"] {
+  background: var(--color-status-priorizado);
+}
+
+.history__dot[data-status="reparado"] {
+  background: var(--color-status-reparado);
+}
+
+.history__title {
+  font-weight: 700;
+}
+
+.history__meta {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.history__note {
+  margin-top: 2px;
+  color: var(--color-status-registrado-text);
+  font-size: 13px;
+}

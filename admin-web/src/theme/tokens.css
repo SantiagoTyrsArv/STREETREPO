@@ -38,6 +38,11 @@
   --color-severity-media: #b45f06;
   --color-severity-alta: #b42318;
 
+  /* Detalle del reporte (Figma «Panel · Detalle y estado») */
+  --color-photo-bg: #3a4452;
+  --color-fact-bg: #f0ede5;
+  --color-track: #eeeae0;
+
   /* Mapa de calor (Figma «Escala»): de menor a mayor urgencia */
   --color-heat-low: #f9e3a0;
   --color-heat-mid: #f5b800;
