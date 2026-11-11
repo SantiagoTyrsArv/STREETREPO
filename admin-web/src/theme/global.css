@@ -73,6 +73,12 @@ textarea {
   color: var(--color-ink);
 }
 
+.button--outline {
+  border: 1.5px solid var(--color-ink);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
 /* Chips de estado, severidad y avisos */
 .chip {
   display: inline-flex;

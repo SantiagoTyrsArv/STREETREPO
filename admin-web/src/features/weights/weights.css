@@ -1,0 +1,190 @@
+/* Figma «Panel · Pesos del modelo» (10:179). */
+.weights-intro {
+  max-width: 720px;
+  line-height: 20px;
+}
+
+.weights-columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.weights-columns > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.weights-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 1200px) {
+  .weights-columns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.weights-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.weights-card .pagination {
+  padding: 0;
+  border-top: 0;
+}
+
+.weights-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.weight-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weight-control__line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: normal;
+}
+
+.weight-control__input {
+  width: 76px;
+  height: 44px;
+  padding: 0 10px;
+  border: 1.5px solid var(--color-field-border);
+  border-radius: var(--radius-chip);
+  background: var(--color-surface);
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.weight-control__input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.weight-control__slider {
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  accent-color: var(--color-ink);
+}
+
+.weight-control__error {
+  color: var(--color-error);
+  font-size: 13px;
+}
+
+.weights-sum {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-control);
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  font-weight: 700;
+  line-height: normal;
+}
+
+.weights-sum[data-ok="true"] {
+  background: var(--color-status-reparado-bg);
+  color: var(--color-status-reparado-text);
+}
+
+.weights-sum__total {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.weights-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.weights-form__actions .button {
+  min-height: 48px;
+}
+
+.weights-alert {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.weights-saved {
+  color: var(--color-status-reparado-text);
+  font-weight: 700;
+}
+
+/* Reglas de normalización */
+.rules {
+  margin: 0;
+}
+
+.rules__row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-track);
+}
+
+.rules dt {
+  flex-shrink: 0;
+  width: 100px;
+  font-weight: 700;
+  line-height: normal;
+}
+
+.rules dd {
+  margin: 0;
+  color: var(--color-status-registrado-text);
+  line-height: 20px;
+}
+
+/* Versiones */
+.versions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  line-height: normal;
+}
+
+.versions__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.versions__weights {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.versions__meta {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}

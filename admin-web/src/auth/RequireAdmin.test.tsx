@@ -14,6 +14,10 @@ vi.mock("../features/prioritization/PrioritizationPage", () => ({
   PrioritizationPage: () => <h1>Priorización de reportes</h1>,
 }));
 
+vi.mock("../features/weights/WeightsPage", () => ({
+  WeightsPage: () => <h1>Pesos del modelo de priorización</h1>,
+}));
+
 const TOKENS = { access_token: "acceso", token_type: "bearer", expires_in: 900 };
 const ME = { id: "u-1", name: "Ana Funcionaria", email: "ana@pasto.gov.co", role: "administrador" };
 
