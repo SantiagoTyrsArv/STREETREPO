@@ -3,6 +3,7 @@
 osm-import [--bbox sur,oeste,norte,este]   Carga vías y servicios críticos de OSM.
 create-admin --name NOMBRE --email CORREO  Crea un administrador (pide la contraseña sin eco).
 purge-orphan-photos                       Borra las fotos que ninguna evidencia referencia.
+seed-demo [--remove]                      Carga (o borra) los datos de demostración del panel.
 """
 
 import argparse
@@ -11,18 +12,28 @@ import json
 import sys
 from collections.abc import Sequence
 
-from app.core.config import get_settings
+from sqlalchemy.orm import Session
+
+from app.core.config import Settings, get_settings
 from app.core.database import create_session
 from app.core.logging import configure_logging
+from app.modules.admin.application.demo_seed import SeedDemo
 from app.modules.admin.application.import_osm_data import ImportOsmData, OsmSourceError
+from app.modules.admin.domain.demo import NotEnoughOsmDataError
+from app.modules.admin.infrastructure.demo_data import SqlDemoData, load_demo_photos
+from app.modules.admin.infrastructure.demo_points import PostgisDemoPointPicker
 from app.modules.admin.infrastructure.overpass import create_overpass_client
 from app.modules.auth.application.create_admin import CreateAdmin
 from app.modules.auth.domain.passwords import WeakPasswordError
 from app.modules.auth.infrastructure.passwords import Argon2PasswordHasher
 from app.modules.critical_services.infrastructure.repository import SqlCriticalServiceRepository
+from app.modules.priority.presentation.dependencies import build_report_evaluator
 from app.modules.reports.application.photo_cleanup import PhotoFileCleanup, PurgeOrphanPhotos
 from app.modules.reports.infrastructure.evidence import SqlEvidenceKeys
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
+from app.modules.reports.infrastructure.pillow_photos import PillowPhotoProcessor
+from app.modules.reports.infrastructure.repository import SqlReportRepository
+from app.modules.reports.infrastructure.status_history import SqlStatusHistoryRecorder
 from app.modules.roads.infrastructure.repository import SqlRoadRepository
 from app.modules.users.domain.ports import EmailAlreadyRegisteredError
 from app.modules.users.infrastructure.repository import SqlUserRepository
@@ -91,6 +102,46 @@ def _purge_orphan_photos() -> int:
     return 0
 
 
+def _build_seed_demo(session: Session, settings: Settings) -> SeedDemo:
+    storage = LocalPhotoStorage(settings.photo_storage_dir)
+    return SeedDemo(
+        users=SqlUserRepository(session),
+        points=PostgisDemoPointPicker(session),
+        reports=SqlReportRepository(session),
+        statuses=SqlStatusHistoryRecorder(session),
+        evaluator=build_report_evaluator(session),
+        photo_processor=PillowPhotoProcessor(),
+        photo_storage=storage,
+        photo_files=PhotoFileCleanup(storage),
+        demo_data=SqlDemoData(session),
+        photos=load_demo_photos(),
+        service_area=settings.report_area,
+        transaction=session,
+    )
+
+
+def _seed_demo(*, remove: bool) -> int:
+    settings = get_settings()
+    with create_session() as session:
+        seed = _build_seed_demo(session, settings)
+        if remove:
+            print(f"Datos de demostración: {seed.remove()} reportes borrados.")
+            return 0
+        try:
+            created = seed.execute()
+        except NotEnoughOsmDataError as exc:
+            print(f"{exc}", file=sys.stderr)
+            return 1
+    if created == 0:
+        print(
+            "Ya hay datos de demostración; no se creó nada. "
+            "Para rehacerlos, bórralos antes con: seed-demo --remove"
+        )
+    else:
+        print(f"Datos de demostración: {created} reportes creados. No son datos de campo.")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -100,6 +151,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     admin.add_argument("--name", required=True, help="Nombre del administrador")
     admin.add_argument("--email", required=True, help="Correo con el que iniciará sesión")
     commands.add_parser("purge-orphan-photos", help="Borrar las fotos huérfanas de más de una hora")
+    demo = commands.add_parser("seed-demo", help="Cargar los datos de demostración del panel")
+    demo.add_argument("--remove", action="store_true", help="Borrar los datos de demostración")
 
     args = parser.parse_args(argv)
     configure_logging(get_settings().log_level)
@@ -109,6 +162,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _create_admin(args.name, args.email)
     if args.command == "purge-orphan-photos":
         return _purge_orphan_photos()
+    if args.command == "seed-demo":
+        return _seed_demo(remove=args.remove)
     return 2  # pragma: no cover - argparse ya valida el comando
 
 
