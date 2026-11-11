@@ -51,6 +51,7 @@
   /* Forma */
   --radius-chip: 10px;
   --radius-control: 12px;
+  --radius-alert: 14px;
   --radius-card: 18px;
   --radius-dialog: 22px;
   --focus-ring: 3px solid var(--color-status-evaluado);

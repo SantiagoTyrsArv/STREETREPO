@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatCountdown,
   formatDateTime,
   formatDistance,
   formatScore,
   formatShortDate,
+  formatWait,
   severityLabel,
   statusLabel,
 } from "./format";
@@ -55,5 +57,28 @@ describe("etiquetas", () => {
     expect(severityLabel("baja")).toBe("Baja");
     expect(severityLabel("media")).toBe("Media");
     expect(severityLabel("alta")).toBe("Alta");
+  });
+});
+
+describe("formatWait", () => {
+  it.each([
+    [272, "4 min 32 s"],
+    [240, "4 min"],
+    [32, "32 s"],
+    [0.4, "1 s"],
+    [-5, "0 s"],
+  ])("%d s → %s", (seconds, expected) => {
+    expect(formatWait(seconds)).toBe(expected);
+  });
+});
+
+describe("formatCountdown", () => {
+  it.each([
+    [272, "4:32"],
+    [65, "1:05"],
+    [9, "0:09"],
+    [0, "0:00"],
+  ])("%d s → %s", (seconds, expected) => {
+    expect(formatCountdown(seconds)).toBe(expected);
   });
 });

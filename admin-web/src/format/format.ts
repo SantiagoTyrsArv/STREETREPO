@@ -67,6 +67,28 @@ export function formatDistance(meters: number): string {
   return `${distanceFormat.format(meters)} m`;
 }
 
+const SECONDS_PER_MINUTE = 60;
+
+function splitSeconds(totalSeconds: number): { minutes: number; seconds: number } {
+  const whole = Math.max(0, Math.ceil(totalSeconds));
+  return { minutes: Math.floor(whole / SECONDS_PER_MINUTE), seconds: whole % SECONDS_PER_MINUTE };
+}
+
+/** Espera en palabras: `272` → «4 min 32 s». */
+export function formatWait(totalSeconds: number): string {
+  const { minutes, seconds } = splitSeconds(totalSeconds);
+  if (minutes === 0) {
+    return `${seconds} s`;
+  }
+  return seconds === 0 ? `${minutes} min` : `${minutes} min ${seconds} s`;
+}
+
+/** Cuenta regresiva: `272` → «4:32». */
+export function formatCountdown(totalSeconds: number): string {
+  const { minutes, seconds } = splitSeconds(totalSeconds);
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
 const STATUS_LABELS: Record<ReportStatus, string> = {
   registrado: "Registrado",
   evaluado: "Evaluado",

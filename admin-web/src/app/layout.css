@@ -1,0 +1,130 @@
+/* Armazón del panel. Barra lateral según Figma «Panel · Priorización» (8:3). */
+.layout {
+  display: flex;
+  min-height: 100%;
+}
+
+.layout__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 6px;
+  width: 248px;
+  height: 100vh;
+  padding: 24px 16px;
+  overflow-y: auto;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  line-height: normal;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 20px;
+}
+
+.sidebar__brand-name {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.sidebar__caption {
+  color: var(--color-sidebar-muted);
+  font-size: 12px;
+}
+
+.sidebar__menu {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-chip);
+  color: var(--color-sidebar-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sidebar__link:hover,
+.sidebar__link[aria-current="page"] {
+  background: var(--color-sidebar-active);
+}
+
+.sidebar__link[aria-current="page"] {
+  color: var(--color-surface);
+  font-weight: 700;
+}
+
+.sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px;
+}
+
+.sidebar__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-amber);
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sidebar__user-text {
+  min-width: 0;
+}
+
+.sidebar__user-name {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__sign-out {
+  min-height: 44px;
+  border: 1.5px solid var(--color-sidebar-active);
+  border-radius: var(--radius-chip);
+  background: transparent;
+  color: var(--color-sidebar-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sidebar__sign-out:hover:not(:disabled) {
+  background: var(--color-sidebar-active);
+  color: var(--color-surface);
+}
+
+.sidebar__sign-out:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.sidebar :focus-visible {
+  outline-color: var(--color-amber);
+}
