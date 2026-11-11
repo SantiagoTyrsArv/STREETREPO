@@ -67,6 +67,16 @@ export function formatDistance(meters: number): string {
   return `${distanceFormat.format(meters)} m`;
 }
 
+const weightFormat = new Intl.NumberFormat(LOCALE, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: SCORE_DECIMALS,
+});
+
+/** Peso del modelo: `0.5` → «0,5»; `0.25` → «0,25». */
+export function formatWeight(value: number): string {
+  return weightFormat.format(value);
+}
+
 const SECONDS_PER_MINUTE = 60;
 
 function splitSeconds(totalSeconds: number): { minutes: number; seconds: number } {

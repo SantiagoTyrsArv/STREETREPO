@@ -164,6 +164,22 @@ describe("cliente de la API", () => {
     expect(seen).toMatchObject({ body: { status: "priorizado" } });
   });
 
+  it("repite el parámetro de consulta por cada valor de una lista", async () => {
+    let search = "";
+    server.use(
+      http.get(`${API}/api/v1/admin/ranking`, ({ request }) => {
+        search = new URL(request.url).search;
+        return HttpResponse.json({ items: [] });
+      }),
+    );
+
+    await makeClient().get("/api/v1/admin/ranking", { status: ["evaluado", "priorizado"] });
+    expect(search).toBe("?status=evaluado&status=priorizado");
+
+    await makeClient().get("/api/v1/admin/ranking", { status: [], limit: 20 });
+    expect(search).toBe("?limit=20");
+  });
+
   it("una respuesta 204 no devuelve cuerpo", async () => {
     server.use(http.put(`${API}/api/v1/things/1`, () => new HttpResponse(null, { status: 204 })));
 

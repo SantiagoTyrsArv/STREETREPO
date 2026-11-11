@@ -6,6 +6,7 @@ import {
   formatScore,
   formatShortDate,
   formatWait,
+  formatWeight,
   severityLabel,
   statusLabel,
 } from "./format";
@@ -80,5 +81,15 @@ describe("formatCountdown", () => {
     [0, "0:00"],
   ])("%d s → %s", (seconds, expected) => {
     expect(formatCountdown(seconds)).toBe(expected);
+  });
+});
+
+describe("formatWeight", () => {
+  it.each([
+    [0.5, "0,5"],
+    [0.25, "0,25"],
+    [1, "1,0"],
+  ])("%d → %s", (weight, expected) => {
+    expect(formatWeight(weight)).toBe(expected);
   });
 });

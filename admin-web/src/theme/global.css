@@ -146,8 +146,29 @@ textarea {
   font-weight: 800;
 }
 
-.state-view--error .state-view__message {
-  color: var(--color-ink);
+.state-view__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--color-status-priorizado-bg);
+  color: var(--color-status-priorizado);
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.state-view--error .state-view__mark {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.state-view__mark + .state-view__title {
+  font-family: var(--font-heading);
+  font-size: 22px;
 }
 
 .state-view .button {
@@ -218,4 +239,115 @@ textarea {
 .alert__title {
   font-size: 14px;
   font-weight: 700;
+}
+
+/* Solo para lectores de pantalla */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Estructura de una pantalla del panel (Figma «Contenido») */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px 32px;
+}
+
+.page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: normal;
+}
+
+.page__title {
+  font-size: 28px;
+}
+
+.page__subtitle {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+}
+
+.page__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.select {
+  height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--color-field-border);
+  border-radius: var(--radius-chip);
+  background: var(--color-surface);
+}
+
+/* Tarjeta */
+.card {
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 18px;
+  line-height: normal;
+}
+
+.card__title {
+  font-family: var(--font-body);
+  font-size: 16px;
+}
+
+.card__hint,
+.card__note {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.card__note {
+  padding: 12px 18px;
+  border-top: 1px solid var(--color-divider);
+  line-height: 17px;
+}
+
+.card__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-weight: 600;
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--color-divider);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.pagination .button {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
 }

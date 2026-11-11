@@ -9,6 +9,11 @@ import { API, apiError, server } from "../test/server";
 import { fakeSession, WithSession } from "../test/session";
 import { SessionProvider, useSession } from "./SessionProvider";
 
+// Estas pruebas son de rutas y sesión; las pantallas tienen las suyas.
+vi.mock("../features/prioritization/PrioritizationPage", () => ({
+  PrioritizationPage: () => <h1>Priorización de reportes</h1>,
+}));
+
 const TOKENS = { access_token: "acceso", token_type: "bearer", expires_in: 900 };
 const ME = { id: "u-1", name: "Ana Funcionaria", email: "ana@pasto.gov.co", role: "administrador" };
 

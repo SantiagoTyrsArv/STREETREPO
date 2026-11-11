@@ -56,7 +56,9 @@ export async function fetchOrNetworkError(url: string, init: RequestInit): Promi
   }
 }
 
-export type QueryParams = Record<string, string | number | boolean | null | undefined>;
+type QueryValue = string | number | boolean | null | undefined;
+/** Una lista repite el parámetro (`status=a&status=b`); los valores vacíos no se envían. */
+export type QueryParams = Record<string, QueryValue | readonly string[]>;
 
 export type ApiClient = {
   get<T>(path: string, query?: QueryParams): Promise<T>;
@@ -77,7 +79,9 @@ export type ApiClientOptions = {
 function buildUrl(baseUrl: string, path: string, query?: QueryParams): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query ?? {})) {
-    if (value !== undefined && value !== null) {
+    if (Array.isArray(value)) {
+      value.forEach((item: string) => params.append(key, item));
+    } else if (value !== undefined && value !== null) {
       params.set(key, String(value));
     }
   }

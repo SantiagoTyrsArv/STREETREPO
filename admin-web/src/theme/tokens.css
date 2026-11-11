@@ -38,6 +38,11 @@
   --color-severity-media: #b45f06;
   --color-severity-alta: #b42318;
 
+  /* Mapa de calor (Figma «Escala»): de menor a mayor urgencia */
+  --color-heat-low: #f9e3a0;
+  --color-heat-mid: #f5b800;
+  --color-heat-high: #d92d20;
+
   /* Avisos */
   --color-review-bg: #fbe6cc;
   --color-review-text: #8a4b00;
