@@ -17,7 +17,8 @@ type Failure =
   /** Bloqueo por intentos: `until` es el instante (ms) en que se puede reintentar. */
   | { kind: "locked"; until: number | null };
 
-function toFailure(error: unknown): Failure {
+/** `now` es el mismo instante con el que arranca la cuenta regresiva, para que no sobre un segundo. */
+function toFailure(error: unknown, now: number): Failure {
   if (!(error instanceof ApiError)) {
     throw error;
   }
@@ -25,7 +26,7 @@ function toFailure(error: unknown): Failure {
     const seconds = error.details.retry_after_s;
     return {
       kind: "locked",
-      until: typeof seconds === "number" ? Date.now() + seconds * MS_PER_SECOND : null,
+      until: typeof seconds === "number" ? now + seconds * MS_PER_SECOND : null,
     };
   }
   if (error.code === "ADMIN_ROLE_REQUIRED") {
@@ -71,8 +72,9 @@ export function LoginPage() {
     try {
       await signIn(email.trim(), password);
     } catch (error) {
-      setNow(Date.now());
-      setFailure(toFailure(error));
+      const failedAt = Date.now();
+      setNow(failedAt);
+      setFailure(toFailure(error, failedAt));
     } finally {
       setSending(false);
     }
