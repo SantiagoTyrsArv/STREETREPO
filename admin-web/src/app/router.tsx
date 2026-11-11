@@ -4,6 +4,7 @@ import { LOGIN_PATH, RequireAdmin } from "../auth/RequireAdmin";
 import { useSession } from "../auth/SessionProvider";
 import { EmptyView } from "../components/StateViews";
 import { PrioritizationPage } from "../features/prioritization/PrioritizationPage";
+import { ReportDetailPage } from "../features/report-detail/ReportDetailPage";
 import { Layout } from "./Layout";
 
 const HOME_PATH = "/priorizacion";
@@ -14,7 +15,7 @@ function LoginRoute() {
   return status === "signed-in" ? <Navigate to={HOME_PATH} replace /> : <LoginPage />;
 }
 
-/** Marcador de las pantallas que llegan en las tareas 9 y 10 del plan de la fase 6. */
+/** Marcador de la pantalla que llega en las tarea 10 del plan de la fase 6. */
 function PendingScreen({ title }: { title: string }) {
   return <EmptyView title={title} detail="Esta pantalla está en construcción." />;
 }
@@ -27,7 +28,7 @@ export function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/" element={<Navigate to={HOME_PATH} replace />} />
           <Route path={HOME_PATH} element={<PrioritizationPage />} />
-          <Route path="/reportes/:id" element={<PendingScreen title="Detalle y estado" />} />
+          <Route path="/reportes/:id" element={<ReportDetailPage />} />
           <Route path="/pesos" element={<PendingScreen title="Pesos del modelo" />} />
         </Route>
       </Route>
