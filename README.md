@@ -120,6 +120,14 @@ Las vías o servicios eliminados de OSM no se borran de la base en una nueva car
 - Requiere `JWT_SECRET_KEY` (al menos 32 caracteres: `openssl rand -hex 32`) en `.env`.
 - Administradores: `python -m app.cli create-admin --name "Nombre" --email correo@dominio.co`
   (pide la contraseña sin mostrarla). Decisiones en [ADR 0004](docs/adr/0004-autenticacion.md).
+- Datos de demostración para el panel: `python -m app.cli seed-demo` crea 32 reportes sobre vías
+  reales de Pasto (necesita `osm-import` antes), evaluados por el motor real y con estados variados;
+  `python -m app.cli seed-demo --remove` los borra enteros, con sus fotos. Cuelgan de dos cuentas
+  `@demo.invalid` con las que nadie puede iniciar sesión, y sus fotos son imágenes generadas
+  ([origen](backend/app/demo/photos/README.md)). **No son datos de campo**: sirven para capturas y
+  demostraciones, no como resultados (decisión 76). Si la API corre en Docker, ejecútalo dentro del
+  contenedor para que las fotos queden en su volumen:
+  `docker compose -f infra/docker-compose.yml --env-file .env exec api python -m app.cli seed-demo`.
 
 ## Motor de priorización
 

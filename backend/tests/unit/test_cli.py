@@ -8,6 +8,7 @@ import pytest
 
 from app.cli import main
 from app.core.config import Settings
+from app.modules.admin.domain.demo import NotEnoughOsmDataError
 from app.modules.reports.domain.photos import PhotoKeys
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
 
@@ -56,3 +57,67 @@ def test_purge_orphan_photos_prints_how_many_were_deleted(
 class _NoEvidence:
     def referenced_photo_keys(self) -> list[str]:
         return []
+
+
+class _FakeSeedDemo:
+    def __init__(self, created: int = 32, error: Exception | None = None) -> None:
+        self._created = created
+        self._error = error
+        self.calls: list[str] = []
+
+    def execute(self) -> int:
+        self.calls.append("execute")
+        if self._error is not None:
+            raise self._error
+        return self._created
+
+    def remove(self) -> int:
+        self.calls.append("remove")
+        return 32
+
+
+def _use_seed(monkeypatch: pytest.MonkeyPatch, seed: _FakeSeedDemo) -> None:
+    monkeypatch.setattr("app.cli.create_session", nullcontext)
+    monkeypatch.setattr("app.cli._build_seed_demo", lambda _session, _settings: seed)
+
+
+def test_cli_seed_demo_dispatch(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    seed = _FakeSeedDemo()
+    _use_seed(monkeypatch, seed)
+
+    assert main(["seed-demo"]) == 0
+    assert seed.calls == ["execute"]
+    assert capsys.readouterr().out == (
+        "Datos de demostración: 32 reportes creados. No son datos de campo.\n"
+    )
+
+
+def test_cli_seed_demo_says_when_the_data_already_exists(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _use_seed(monkeypatch, _FakeSeedDemo(created=0))
+
+    assert main(["seed-demo"]) == 0
+    assert "Ya hay datos de demostración" in capsys.readouterr().out
+
+
+def test_cli_seed_demo_remove(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    seed = _FakeSeedDemo()
+    _use_seed(monkeypatch, seed)
+
+    assert main(["seed-demo", "--remove"]) == 0
+    assert seed.calls == ["remove"]
+    assert capsys.readouterr().out == "Datos de demostración: 32 reportes borrados.\n"
+
+
+def test_cli_seed_demo_without_osm_data_fails_with_a_hint(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _use_seed(monkeypatch, _FakeSeedDemo(error=NotEnoughOsmDataError("Faltan datos: osm-import")))
+
+    assert main(["seed-demo"]) == 1
+    assert "osm-import" in capsys.readouterr().err

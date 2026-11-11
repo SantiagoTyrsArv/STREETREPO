@@ -33,6 +33,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - `infra/scripts/test-integration.sh`: pruebas de integración con PostGIS en un comando (46b).
 - `is_mine` en los candidatos de `GET /api/v1/reports/nearby` y del 409 `REPORT_DUPLICATE_NEARBY`
   (propuesta 48).
+- `python -m app.cli seed-demo` y `seed-demo --remove`: 32 reportes de demostración para el panel
+  sobre vías reales, evaluados por el motor real, con cuentas `@demo.invalid` sin acceso y fotos
+  generadas. No son datos de campo (decisión 76).
 
 ## [0.5.0] - 2026-10-19
 
