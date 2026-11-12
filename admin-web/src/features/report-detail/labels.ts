@@ -1,12 +1,17 @@
 /** Textos en español para valores que la API entrega tal como están en OSM o en la base. */
 
+/** Cubre las etiquetas `highway` que carga la API (propuesta 7). */
 const HIGHWAY_LABELS: Record<string, string> = {
+  trunk: "troncal",
+  trunk_link: "enlace de troncal",
   primary: "primaria",
+  primary_link: "enlace de primaria",
   secondary: "secundaria",
   tertiary: "terciaria",
   residential: "residencial",
   unclassified: "sin clasificar",
   service: "de servicio",
+  living_street: "de prioridad peatonal",
 };
 
 /** Jerarquía vial de OSM (`highway`); un valor no previsto se muestra tal cual. */
