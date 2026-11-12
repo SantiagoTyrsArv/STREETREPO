@@ -3,10 +3,10 @@
 Sistema Ciudadano de Reporte y Priorización de Daños en la Infraestructura Vial de Pasto, Nariño.
 Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colombia, Campus Pasto.
 
-> **Estado:** fases 1 a 5 del MVP cerradas (versión `v0.5.0`): API base, esquema de base de datos,
-> carga OSM, motor de priorización, autenticación, derechos del titular y reportes con foto y
-> deduplicación a 25 m. Después de `v0.5.0`: la app Flutter con el flujo crítico (decisión 49) y el
-> panel administrativo (fase 6), que se sirve con Docker Compose; falta el cierre con `v0.6.0`.
+> **Estado:** fases 1 a 6 del MVP cerradas (versión `v0.6.0`): API, base de datos georreferenciada,
+> carga OSM, motor de priorización, autenticación, derechos del titular, reportes con foto y
+> deduplicación a 25 m, app ciudadana con el flujo crítico (decisión 49) y panel administrativo
+> (priorización, detalle y estado, pesos del modelo). Lo siguiente es completar la app (fase 7).
 > Historial de versiones en [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Componentes

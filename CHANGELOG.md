@@ -4,6 +4,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+## [0.6.0] - 2026-11-11
+
+Fase 6: panel administrativo de la Secretaría para el objetivo 3 de la tesis (priorización, detalle
+y estado, pesos del modelo), servido con Docker Compose y con datos de demostración. Incluye lo
+construido después de `v0.5.0`: la app ciudadana con el flujo crítico y el backend que necesita.
+
 ### Corregido
 - `POST /api/v1/reports` respondía 500 en la API desplegada: el proceso no registraba el modelo de
   `servicio_critico` y SQLAlchemy no resolvía la clave foránea de `evaluacion_prioridad`. Las
@@ -18,6 +24,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   30). Los límites por usuario y por correo no cambian.
 
 ### Añadido
+- Panel administrativo web (`admin-web/`, React + TypeScript + Leaflet): inicio de sesión de
+  funcionarios; Priorización con indicadores Activos · Evaluados · Priorizados · Reparados
+  (propuesta 75), mapa de calor con leyenda y ranking paginado con S, F, P y U (HU-08); Detalle y
+  estado con evidencia, vía OSM, desglose del cálculo, cambio de estado con observación e historial
+  (HU-12); Pesos del modelo con validación Σ = 1,00, reglas en solo lectura y versiones (HU-14).
+- API del panel, solo para administradores: `GET /api/v1/admin/ranking`, `/admin/summary` y
+  `/admin/heatmap`; `GET /api/v1/admin/reports/{id}` y `PATCH /api/v1/admin/reports/{id}/status`
+  (409 si la transición ya no es válida); `GET` y `PUT /api/v1/admin/weights` (409
+  `WEIGHTS_VERSION_CONFLICT` si otro administrador guardó antes) y `GET /api/v1/admin/weights/versions`.
+- Sesión web del panel (decisión 42): `/api/v1/auth/web/login`, `/refresh` y `/logout` con el
+  refresco en una cookie `HttpOnly`, `Secure` y `SameSite=Strict`, defensa CSRF y acceso en memoria.
 - App ciudadana Flutter para Android con el flujo crítico (decisión 49): registro con la política de
   datos, inicio de sesión, reporte con foto, GPS y severidad, posible duplicado (confirmar o crear),
   Mis reportes, detalle y perfil mínimo. Cómo ejecutarla en un celular, en `mobile/README.md`.
@@ -164,6 +181,7 @@ Fase 1: cimientos.
   GiST (`geometry` y `geography`); modelos ORM por módulo y mapeo en `docs/base-de-datos.md`.
 
 [Sin publicar]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.5.0...HEAD
+[0.6.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/SantiagoTyrsArv/STREETREPO/compare/v0.2.0...v0.3.0
