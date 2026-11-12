@@ -28,6 +28,7 @@ npm run dev                  # http://localhost:5173
 | `npm test`             | Pruebas con Vitest y Testing Library                                |
 | `npm run build`        | Compila a `dist/`                                                   |
 | `npm run gen:api`      | Regenera `src/api/schema.d.ts` desde el OpenAPI de la API en marcha |
+| `npm run e2e`          | Pruebas de punta a punta con Playwright (ver abajo)                 |
 
 Para regenerar los tipos sin levantar la API, exporta el contrato desde `backend/` y pásalo como
 archivo:
@@ -38,6 +39,28 @@ APP_ENV=test uv run python -c "import json; from app.main import app; print(json
 cd ../admin-web
 npx openapi-typescript openapi.json -o src/api/schema.d.ts && rm openapi.json
 ```
+
+## Servir el panel con Docker
+
+`docker compose -f infra/docker-compose.yml --env-file .env up --build` (desde la raíz) compila el
+panel y lo sirve con nginx en `http://localhost:8080`. La imagen (`infra/docker/admin-web.Dockerfile`)
+corre sin root y añade las cabeceras de seguridad (`infra/docker/admin-web.nginx.conf`): CSP que solo
+permite la API y el proveedor de teselas, `X-Content-Type-Options`, `Referrer-Policy: no-referrer` y
+`X-Robots-Tag`. Las teselas del mapa sí envían el origen como `Referer` (lo exige la política de uso
+de OpenStreetMap), nunca la ruta.
+
+## Pruebas de punta a punta
+
+`e2e/panel.spec.ts` recorre los tres flujos críticos contra la API y la base reales. Lo normal es
+lanzarlas con `infra/scripts/e2e-panel.sh` (desde la raíz), que prepara un stack aparte con datos de
+demostración y una cuenta de un solo uso; los detalles están en el README de la raíz. Para
+correrlas contra otro panel ya levantado:
+
+```bash
+E2E_BASE_URL=http://localhost:8080 E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… npm run e2e
+```
+
+Ojo: cambian el estado de un reporte y guardan pesos (una versión nueva que no se borra).
 
 ## Convenciones
 

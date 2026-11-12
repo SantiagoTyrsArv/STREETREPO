@@ -5,7 +5,8 @@ Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colom
 
 > **Estado:** fases 1 a 5 del MVP cerradas (versión `v0.5.0`): API base, esquema de base de datos,
 > carga OSM, motor de priorización, autenticación, derechos del titular y reportes con foto y
-> deduplicación a 25 m. Lo siguiente es la app Flutter y después el panel (decisión 44).
+> deduplicación a 25 m. Después de `v0.5.0`: la app Flutter con el flujo crítico (decisión 49) y el
+> panel administrativo (fase 6), que se sirve con Docker Compose; falta el cierre con `v0.6.0`.
 > Historial de versiones en [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Componentes
@@ -13,7 +14,7 @@ Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colom
 | Carpeta | Contenido | Tecnología |
 |---|---|---|
 | `backend/` | API REST (`/api/v1`) | FastAPI · SQLAlchemy 2 · Alembic |
-| `admin-web/` | Panel administrativo (pendiente, después de la app; decisión 44) | React + Leaflet |
+| `admin-web/` | Panel administrativo: priorización, detalle y estado, pesos del modelo (ver [`admin-web/README.md`](admin-web/README.md)) | React + Leaflet |
 | `mobile/` | App ciudadana: flujo crítico de reporte (decisión 49; ver [`mobile/README.md`](mobile/README.md)) | Flutter |
 | `infra/` | Docker Compose, Dockerfiles, scripts de carga OSM | Docker · PostgreSQL + PostGIS |
 | `docs/` | Decisiones de arquitectura (ADR) | — |
@@ -35,6 +36,45 @@ curl http://localhost:8000/ready     # comprueba PostgreSQL + PostGIS
 ```
 
 El servicio `migrate` aplica las migraciones de Alembic antes de arrancar la API.
+
+## Panel administrativo
+
+El mismo `docker compose … up --build` levanta el panel en **http://localhost:8080** (servicio
+`admin-web`: nginx sin root que sirve la aplicación compilada, con CSP y demás cabeceras de
+seguridad). Para usarlo por primera vez:
+
+```bash
+COMPOSE="docker compose -f infra/docker-compose.yml --env-file .env"
+$COMPOSE exec api python -m app.cli osm-import      # vías y servicios críticos de Pasto (una vez)
+$COMPOSE exec api python -m app.cli create-admin --name "Nombre" --email correo@dominio.co
+$COMPOSE exec api python -m app.cli seed-demo       # opcional: 32 reportes de demostración
+# Abrir http://localhost:8080 e ingresar con la cuenta creada.
+$COMPOSE exec api python -m app.cli seed-demo --remove   # borra los datos de demostración
+```
+
+- `CORS_ORIGINS` en `.env` debe incluir el origen del panel (`http://localhost:8080`; ver
+  `.env.example`). Si la API no lo permite, el inicio de sesión falla.
+- `ADMIN_API_BASE_URL` (origen de la API tal como lo ve el navegador) queda dentro del JavaScript
+  al construir la imagen: si cambia, hay que reconstruirla con `up --build`. `ADMIN_WEB_PORT`
+  cambia el puerto del host.
+- **Los datos de `seed-demo` no son datos de campo.** Sirven para capturas y demostraciones de
+  funcionamiento; no se presentan como resultados (decisión 76).
+- Fuera del equipo local, el panel y la API van detrás del proxy HTTPS (HU-17), que añade HSTS.
+
+Pruebas del panel:
+
+```bash
+cd admin-web && npm ci && npm run lint && npm run typecheck && npm test   # unitarias (las corre la CI)
+infra/scripts/e2e-panel.sh                                                # de punta a punta, con Playwright
+```
+
+`e2e-panel.sh` levanta un **stack aparte** (proyecto `street-repo-e2e`: su propia base, panel en
+`http://localhost:8081` y API en `:8001`), carga OSM la primera vez, rehace los datos de
+demostración, crea una cuenta de administrador de un solo uso y corre los tres flujos (ingresar y
+ver el ranking y el mapa, cambiar un estado y verlo en el historial, guardar pesos y ver la versión
+nueva). Va aparte porque guardar pesos crea versiones que no se borran y recalcula todos los
+reportes activos; así no toca la base de desarrollo. No corre en la CI: necesita los datos de OSM.
+La primera vez hay que instalar el navegador: `cd admin-web && npx playwright install chromium`.
 
 ## Desarrollo del backend
 

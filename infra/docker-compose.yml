@@ -68,6 +68,24 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  admin-web:
+    build:
+      context: ..
+      dockerfile: infra/docker/admin-web.Dockerfile
+      args:
+        # Origen de la API tal como lo ve el navegador; queda dentro del JavaScript.
+        VITE_API_BASE_URL: ${ADMIN_API_BASE_URL:-http://localhost:8000}
+        # Vacío = teselas públicas de OpenStreetMap (guía 3.1).
+        VITE_TILE_URL: ${ADMIN_TILE_URL:-}
+    environment:
+      # Orígenes que la CSP del panel permite: la API y el proveedor de teselas.
+      API_ORIGIN: ${ADMIN_API_BASE_URL:-http://localhost:8000}
+      TILE_ORIGIN: ${ADMIN_TILE_ORIGIN:-https://tile.openstreetmap.org}
+    ports:
+      - "127.0.0.1:${ADMIN_WEB_PORT:-8080}:8080"
+    depends_on:
+      - api
+
 volumes:
   db-data:
   photos:

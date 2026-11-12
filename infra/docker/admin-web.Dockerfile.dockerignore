@@ -1,0 +1,11 @@
+# El contexto es la raíz del repositorio: solo entran el panel y la configuración de nginx.
+*
+!admin-web
+!infra/docker/admin-web.nginx.conf
+admin-web/node_modules
+admin-web/dist
+admin-web/coverage
+admin-web/playwright-report
+admin-web/test-results
+admin-web/.env*
+!admin-web/.env.example
