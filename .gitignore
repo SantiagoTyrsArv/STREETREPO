@@ -20,6 +20,11 @@ build/
 # Node / panel
 node_modules/
 admin-web/dist/
+admin-web/coverage/
+admin-web/playwright-report/
+admin-web/test-results/
+# Capturas locales del navegador automatizado
+.playwright-mcp/
 
 # Flutter
 mobile/.dart_tool/

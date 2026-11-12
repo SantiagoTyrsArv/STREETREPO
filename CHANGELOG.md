@@ -36,6 +36,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - `python -m app.cli seed-demo` y `seed-demo --remove`: 32 reportes de demostración para el panel
   sobre vías reales, evaluados por el motor real, con cuentas `@demo.invalid` sin acceso y fotos
   generadas. No son datos de campo (decisión 76).
+- El panel administrativo se sirve con Docker Compose (servicio `admin-web`, nginx sin root en
+  `http://localhost:8080`) con CSP y cabeceras de seguridad; la CI construye su imagen.
+- Pruebas de punta a punta del panel con Playwright (`infra/scripts/e2e-panel.sh`), en un stack
+  aparte que no toca la base de desarrollo.
 
 ## [0.5.0] - 2026-10-19
 

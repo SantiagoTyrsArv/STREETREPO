@@ -12,6 +12,13 @@ export const DEFAULT_ZOOM = 14;
 const OSM_ATTRIBUTION =
   '&copy; colaboradores de <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
+/**
+ * La política de uso de las teselas de OSM exige un `Referer` válido; sin él responde una imagen
+ * de «Access blocked». El panel se sirve con `Referrer-Policy: no-referrer`, así que solo las
+ * teselas envían el origen (nunca la ruta, que lleva el identificador del reporte).
+ */
+const TILE_REFERRER_POLICY = "strict-origin";
+
 type Props = {
   center?: [number, number];
   zoom?: number;
@@ -32,7 +39,11 @@ export function BaseMap({
   return (
     <div className={className} role="region" aria-label={label}>
       <MapContainer center={center} zoom={zoom} className="base-map" scrollWheelZoom>
-        <TileLayer url={config.tileUrl} attribution={OSM_ATTRIBUTION} />
+        <TileLayer
+          url={config.tileUrl}
+          attribution={OSM_ATTRIBUTION}
+          referrerPolicy={TILE_REFERRER_POLICY}
+        />
         {children}
       </MapContainer>
     </div>
