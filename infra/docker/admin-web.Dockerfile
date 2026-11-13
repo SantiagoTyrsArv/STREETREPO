@@ -1,6 +1,6 @@
 # Imagen del panel: se compila con Node y lo sirve nginx sin root, solo archivos estáticos.
 # Contexto: la raíz del repositorio (ver admin-web.Dockerfile.dockerignore).
-FROM node:22.23.0-alpine AS build
+FROM node:26.13.0-alpine AS build
 WORKDIR /srv
 COPY admin-web/package.json admin-web/package-lock.json admin-web/.npmrc ./
 RUN npm ci
