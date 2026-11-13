@@ -11,7 +11,7 @@ ARG VITE_TILE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} VITE_TILE_URL=${VITE_TILE_URL}
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.28.0-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine AS runtime
 # La imagen sustituye ${API_ORIGIN} y ${TILE_ORIGIN} de la plantilla al arrancar.
 ENV API_ORIGIN=http://localhost:8000 TILE_ORIGIN=https://tile.openstreetmap.org
 COPY infra/docker/admin-web.nginx.conf /etc/nginx/templates/default.conf.template
