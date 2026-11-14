@@ -15,7 +15,7 @@ Este archivo es la fuente de instrucciones para construir el software. Léelo co
 
 Cuando dos fuentes se contradigan, manda la de mayor nivel:
 
-1. **Documento de la tesis** (`CTG_07Septiembre_SantiagoArevalo_Ajustes_A1-A4.docx`): alcance, objetivos, historias de usuario, requisitos y reglas del modelo.
+1. **Documento de la tesis** (`CTG_Noviembre_SantiagoArevalo.docx`, en la carpeta que contiene el repositorio; versión vigente desde el 2026-11-14, decisión 97): alcance, objetivos, historias de usuario, requisitos y reglas del modelo.
 2. **Diagramas** (Lucid: ER y Clases): estructura de datos y de dominio.
 3. **Diseño en Figma** (https://www.figma.com/design/wjbs0QbgIJvRiduvFAimAI): interfaz, flujos y tokens visuales.
 4. **Esta guía**: stack, arquitectura y prácticas.
