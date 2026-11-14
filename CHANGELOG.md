@@ -12,6 +12,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   correo pide la contraseña actual) y solicitar la supresión de los datos con constancia
   (Ley 1581; decisiones 71 y 92).
 
+### Seguridad
+- `dnspython` 2.9.2 y `opentelemetry-api` 1.45.2 (dependencias transitivas del backend) por
+  CVE-2026-128089 y CVE-2026-126360, que dejaban en rojo la auditoría de la CI (decisión 94).
+
 ## [0.6.0] - 2026-11-11
 
 Fase 6: panel administrativo de la Secretaría para el objetivo 3 de la tesis (priorización, detalle
