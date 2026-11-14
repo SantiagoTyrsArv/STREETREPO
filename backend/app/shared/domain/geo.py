@@ -56,11 +56,23 @@ class BoundingBox:
     @classmethod
     def parse(cls, raw: str) -> "BoundingBox":
         """Lee ``"sur,oeste,norte,este"``."""
+        south, west, north, east = cls._four_numbers(raw, "sur,oeste,norte,este")
+        return cls(south, west, north, east)
+
+    @classmethod
+    def parse_min_max(cls, raw: str) -> "BoundingBox":
+        """Lee ``"min_lon,min_lat,max_lon,max_lat"``, el orden de los mapas (``toBBoxString``
+        de Leaflet) y del parámetro ``bbox`` de la API."""
+        west, south, east, north = cls._four_numbers(raw, "min_lon,min_lat,max_lon,max_lat")
+        return cls(south, west, north, east)
+
+    @staticmethod
+    def _four_numbers(raw: str, order: str) -> tuple[float, float, float, float]:
         parts = [part.strip() for part in raw.split(",")]
         if len(parts) != 4:  # noqa: PLR2004 - cuatro lados del rectángulo
-            raise InvalidGeometryError("Se esperan cuatro valores: sur,oeste,norte,este")
+            raise InvalidGeometryError(f"Se esperan cuatro valores: {order}")
         try:
-            south, west, north, east = (float(part) for part in parts)
+            first, second, third, fourth = (float(part) for part in parts)
         except ValueError as exc:
             raise InvalidGeometryError("Los valores del área deben ser números") from exc
-        return cls(south, west, north, east)
+        return first, second, third, fourth

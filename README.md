@@ -197,6 +197,13 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
   confirmaciones; **409** si el reporte está reparado (`REPORT_NOT_ACTIVE`), es propio
   (`CONFIRMATION_OWN_REPORT`) o ya se confirmó (`CONFIRMATION_ALREADY_EXISTS`); **404** si no existe.
   No cambia U.
+- Mapa de reportes de la app: `GET /api/v1/reports?bbox=min_lon,min_lat,max_lon,max_lat` (con
+  sesión; `status` y `limit` opcionales, máximo 200) lista los reportes del área visible, del más
+  reciente al más antiguo, con la **vista pública**: sin autor, descripción ni foto y con la
+  ubicación redondeada a 4 decimales. El área se compara con esa ubicación pública, no con la
+  exacta. `truncated` indica que el área tiene más reportes que `limit`; `is_mine` y
+  `confirmed_by_me` dicen si el ciudadano puede confirmarlo. 422 `INVALID_BBOX` y 429
+  `REPORTS_LIST_RATE_LIMITED` (60 consultas por minuto, `MAP_REQUESTS_PER_USER_PER_MINUTE`).
 - Mis reportes: `GET /api/v1/me/reports?limit=&offset=` (máximo 50) lista los reportes creados
   (`relation: own`, completos) y los confirmados (`relation: confirmed`, vista pública sin autor,
   descripción ni ubicación exacta), del más reciente al más antiguo.

@@ -38,6 +38,28 @@ def test_bbox_rejects_invalid_input(raw: str) -> None:
         BoundingBox.parse(raw)
 
 
+def test_bbox_parses_the_map_order_min_lon_min_lat_max_lon_max_lat() -> None:
+    area = BoundingBox.parse_min_max(" -77.33, 1.16 ,-77.23,1.25 ")
+
+    assert area == BoundingBox(south=1.16, west=-77.33, north=1.25, east=-77.23)
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "-77.33,1.16,-77.23",  # faltan valores
+        "a,b,c,d",  # no numéricos
+        "-77.23,1.16,-77.33,1.25",  # oeste > este
+        "-77.33,1.25,-77.23,1.16",  # sur > norte
+        "-77.33,1.16,-77.23,95",  # latitud fuera de rango
+        "nan,1.16,-77.23,1.25",
+    ],
+)
+def test_bbox_in_map_order_rejects_invalid_input(raw: str) -> None:
+    with pytest.raises(InvalidGeometryError):
+        BoundingBox.parse_min_max(raw)
+
+
 def test_wkt_uses_longitude_first() -> None:
     a = GeoPoint(longitude=-77.28, latitude=1.21)
     b = GeoPoint(longitude=-77.27, latitude=1.22)

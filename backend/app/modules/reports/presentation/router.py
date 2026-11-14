@@ -25,16 +25,20 @@ from app.modules.reports.domain.photos import (
     PhotoTooLargeError,
     UnsupportedPhotoTypeError,
 )
+from app.modules.reports.domain.public_map import MAX_MAP_REPORTS
 from app.modules.reports.domain.report_view import FullReportView, ReportNotVisibleError
+from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.presentation.dependencies import (
     CreateReportDep,
     FindPossibleDuplicatesDep,
     GetReportDep,
     GetReportPhotoDep,
+    ListReportsInAreaDep,
     limit_reports_per_ip,
 )
 from app.modules.reports.presentation.schemas import (
     ConfirmedReportDetail,
+    MapReportsResponse,
     NearbyReportsResponse,
     OwnReportDetail,
     ReportDetailResponse,
@@ -44,7 +48,7 @@ from app.modules.reports.presentation.schemas import (
 from app.modules.users.domain.entities import User
 from app.modules.users.domain.role import UserRole
 from app.shared.application.rate_limit import RateLimitExceededError
-from app.shared.domain.geo import GeoPoint
+from app.shared.domain.geo import BoundingBox, GeoPoint, InvalidGeometryError
 
 router = APIRouter(prefix="/reports", tags=["reportes"])
 
@@ -198,6 +202,51 @@ def _nearby_errors() -> Iterator[None]:
             "Hiciste muchas consultas en poco tiempo. Intenta de nuevo más tarde.",
             exc.retry_after,
         ) from exc
+
+
+@router.get(
+    "",
+    response_model=MapReportsResponse,
+    responses={
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
+            "description": "Rectángulo mal formado (INVALID_BBOX) u otro parámetro inválido"
+        },
+        status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Demasiadas consultas; ver Retry-After"},
+    },
+)
+def list_reports_in_area(
+    user: CurrentUserDep,
+    use_case: ListReportsInAreaDep,
+    bbox: Annotated[str, Query(description="min_lon,min_lat,max_lon,max_lat en grados WGS 84")],
+    report_status: Annotated[
+        ReportStatus | None, Query(alias="status", description="Solo los de este estado")
+    ] = None,
+    limit: Annotated[int, Query(ge=1, le=MAX_MAP_REPORTS)] = MAX_MAP_REPORTS,
+) -> MapReportsResponse:
+    """Reportes del área visible para el mapa de la app, del más reciente al más antiguo.
+
+    Vista pública: sin autor, descripción ni foto, y con la ubicación redondeada a 4
+    decimales. El área se compara con esa ubicación pública, no con la exacta. Si
+    ``truncated`` es true, el área tiene más reportes que ``limit``.
+    """
+    try:
+        area = BoundingBox.parse_min_max(bbox)
+    except InvalidGeometryError as exc:
+        raise AppError(
+            "INVALID_BBOX",
+            "El área del mapa no es válida.",
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {"bbox": "min_lon,min_lat,max_lon,max_lat"},
+        ) from exc
+    try:
+        page = use_case.execute(user.id, area, report_status, limit)
+    except RateLimitExceededError as exc:
+        raise too_many_requests(
+            "REPORTS_LIST_RATE_LIMITED",
+            "Hiciste muchas consultas en poco tiempo. Intenta de nuevo en un momento.",
+            exc.retry_after,
+        ) from exc
+    return MapReportsResponse.from_page(page)
 
 
 @router.get(

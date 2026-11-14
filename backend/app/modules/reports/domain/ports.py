@@ -8,10 +8,11 @@ from app.modules.reports.domain.entities import ReportDetails
 from app.modules.reports.domain.my_reports import MyReportsPage, PublicReportView
 from app.modules.reports.domain.new_report import NewReport
 from app.modules.reports.domain.photos import ProcessedPhoto, ReportPhoto, StoredEvidence
+from app.modules.reports.domain.public_map import MapReport
 from app.modules.reports.domain.report_view import StatusHistoryEntry
 from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.domain.status_machine import StatusChange
-from app.shared.domain.geo import GeoPoint
+from app.shared.domain.geo import BoundingBox, GeoPoint
 
 
 class StatusHistoryRecorder(Protocol):
@@ -51,6 +52,19 @@ class NearbyReportFinder(Protocol):
     ) -> Sequence[DuplicateCandidate]:
         """Reportes activos (todo estado salvo reparado) a ``radius_m``, del más cercano
         al más lejano; marca los de ``viewer_id`` con ``is_mine``."""
+        ...
+
+
+class PublicReportsReader(Protocol):
+    def list_in_area(
+        self,
+        area: BoundingBox,
+        status: ReportStatus | None,
+        limit: int,
+        viewer_id: uuid.UUID,
+    ) -> Sequence[MapReport]:
+        """Reportes cuya ubicación **pública** cae en ``area``, del más reciente al más
+        antiguo; ``status`` filtra por estado. Marca los de ``viewer_id`` y los que confirmó."""
         ...
 
 
