@@ -7,6 +7,13 @@ import 'memory_token_store.dart';
 
 const testUser = UserProfile(id: 'u1', name: 'Ana', email: 'ana@correo.co', role: 'ciudadano');
 
+final testReceipt = DeletionReceipt(
+  id: 's1',
+  status: 'atendida',
+  requestedAt: DateTime.utc(2026, 10, 19, 14, 30),
+  attendedAt: DateTime.utc(2026, 10, 19, 14, 30),
+);
+
 /// Repositorio falso: cada operación hace lo que se le indique y registra las llamadas.
 class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository(this.store);
@@ -59,5 +66,34 @@ class FakeAuthRepository implements AuthRepository {
   Future<UserProfile> me() {
     calls.add('me');
     return onMe();
+  }
+
+  ApiFailure? updateFailure;
+  ApiFailure? deletionFailure;
+
+  /// Lo enviado en la última actualización de datos.
+  ({String? name, String? email, String? currentPassword})? updated;
+  String? deletionPassword;
+
+  @override
+  Future<UserProfile> updateProfile({String? name, String? email, String? currentPassword}) async {
+    calls.add('updateProfile');
+    if (updateFailure != null) throw updateFailure!;
+    updated = (name: name, email: email, currentPassword: currentPassword);
+    return UserProfile(
+      id: testUser.id,
+      name: name ?? testUser.name,
+      email: email ?? testUser.email,
+      role: testUser.role,
+    );
+  }
+
+  @override
+  Future<DeletionReceipt> requestDataDeletion({required String currentPassword}) async {
+    calls.add('requestDataDeletion');
+    if (deletionFailure != null) throw deletionFailure!;
+    deletionPassword = currentPassword;
+    await store.clear();
+    return testReceipt;
   }
 }

@@ -4,6 +4,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Añadido
+- App ciudadana: el perfil permite conocer y actualizar los datos (nombre y correo; cambiar el
+  correo pide la contraseña actual) y solicitar la supresión de los datos con constancia
+  (Ley 1581; decisiones 71 y 92).
+
 ## [0.6.0] - 2026-11-11
 
 Fase 6: panel administrativo de la Secretaría para el objetivo 3 de la tesis (priorización, detalle

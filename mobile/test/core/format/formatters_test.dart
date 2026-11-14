@@ -70,4 +70,11 @@ void main() {
       expect(formatCoordinates(-0.5, 10.25), '0,50000° S · 10,25000° E');
     });
   });
+
+  test('fecha y hora en Bogotá para la constancia', () {
+    expect(formatDateTime(DateTime.utc(2026, 10, 19, 14, 30)), '19 oct 2026 · 9:30 a. m.');
+    expect(formatDateTime(DateTime.utc(2026, 10, 19, 17, 5)), '19 oct 2026 · 12:05 p. m.');
+    expect(formatDateTime(DateTime.utc(2026, 10, 20, 5, 0)), '20 oct 2026 · 12:00 a. m.');
+    expect(formatDateTime(DateTime.utc(2026, 10, 20, 3, 59)), '19 oct 2026 · 10:59 p. m.');
+  });
 }

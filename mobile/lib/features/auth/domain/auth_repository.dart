@@ -20,4 +20,11 @@ abstract interface class AuthRepository {
   Future<void> logout();
 
   Future<UserProfile> me();
+
+  /// Actualiza solo los campos enviados. Cambiar el correo exige [currentPassword].
+  Future<UserProfile> updateProfile({String? name, String? email, String? currentPassword});
+
+  /// Suprime los datos personales del titular (irreversible) y borra los tokens locales:
+  /// la cuenta deja de existir.
+  Future<DeletionReceipt> requestDataDeletion({required String currentPassword});
 }

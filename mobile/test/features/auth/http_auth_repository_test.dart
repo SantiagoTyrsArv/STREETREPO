@@ -126,6 +126,86 @@ void main() {
     expect(user.role, 'ciudadano');
   });
 
+  test('actualizar los datos envía solo los campos que cambian', () async {
+    adapter.reply(
+      'PATCH',
+      '/me',
+      const FakeResponse(
+        200,
+        body: {
+          'id': 'u1',
+          'name': 'Ana María',
+          'email': 'ana@correo.co',
+          'role': 'ciudadano',
+          'registered_at': '2026-10-19T15:00:00Z',
+          'policy_version': '1.0',
+          'policy_accepted_at': '2026-10-19T15:00:00Z',
+        },
+      ),
+    );
+
+    final user = await repository.updateProfile(name: 'Ana María');
+
+    expect(adapter.requests.single.data, {'name': 'Ana María'});
+    expect(user.name, 'Ana María');
+  });
+
+  test('cambiar el correo envía la contraseña actual', () async {
+    adapter.reply(
+      'PATCH',
+      '/me',
+      FakeResponse(403, body: errorBody('PASSWORD_CONFIRMATION_FAILED')),
+    );
+
+    await expectLater(
+      repository.updateProfile(email: 'nueva@correo.co', currentPassword: 'mala'),
+      throwsA(isA<ApiError>().having((e) => e.code, 'code', 'PASSWORD_CONFIRMATION_FAILED')),
+    );
+    expect(adapter.requests.single.data, {'email': 'nueva@correo.co', 'current_password': 'mala'});
+  });
+
+  test('la supresión devuelve la constancia y borra los tokens', () async {
+    store = MemoryTokenStore(const AuthTokens(access: 'a', refresh: 'r'));
+    repository = HttpAuthRepository(api, store);
+    adapter.reply(
+      'POST',
+      '/me/data-deletion-requests',
+      const FakeResponse(
+        201,
+        body: {
+          'id': 's1',
+          'status': 'atendida',
+          'requested_at': '2026-10-19T14:30:00Z',
+          'attended_at': '2026-10-19T14:30:01Z',
+        },
+      ),
+    );
+
+    final receipt = await repository.requestDataDeletion(currentPassword: 'una-clave-larga');
+
+    expect(adapter.requests.single.data, {'current_password': 'una-clave-larga'});
+    expect(receipt.status, 'atendida');
+    expect(receipt.requestedAt, DateTime.utc(2026, 10, 19, 14, 30));
+    expect(receipt.attendedAt, DateTime.utc(2026, 10, 19, 14, 30, 1));
+    expect(await store.read(), isNull);
+  });
+
+  test('si la supresión falla, los tokens se conservan', () async {
+    store = MemoryTokenStore(const AuthTokens(access: 'a', refresh: 'r'));
+    repository = HttpAuthRepository(api, store);
+    adapter.reply(
+      'POST',
+      '/me/data-deletion-requests',
+      FakeResponse(403, body: errorBody('PASSWORD_CONFIRMATION_FAILED')),
+    );
+
+    await expectLater(
+      repository.requestDataDeletion(currentPassword: 'mala'),
+      throwsA(isA<ApiError>()),
+    );
+    expect(await store.read(), isNotNull);
+  });
+
   test('una respuesta con otra forma es UnexpectedFailure', () async {
     adapter.reply('GET', '/me', const FakeResponse(200, body: {'id': 7}));
 

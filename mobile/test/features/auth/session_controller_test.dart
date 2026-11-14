@@ -124,4 +124,37 @@ void main() {
       isA<SignedOut>().having((s) => s.sessionExpired, 'expirada', isTrue),
     );
   });
+
+  test('al actualizar los datos, la sesión muestra los nuevos', () async {
+    store = MemoryTokenStore(const AuthTokens(access: 'a', refresh: 'r'));
+    auth = FakeAuthRepository(store);
+    final c = container();
+    await c.read(sessionControllerProvider.future);
+
+    c
+        .read(sessionControllerProvider.notifier)
+        .userUpdated(
+          const UserProfile(id: 'u1', name: 'Ana María', email: 'a@b.co', role: 'ciudadano'),
+        );
+
+    expect(
+      c.read(sessionControllerProvider).value,
+      isA<SignedIn>().having((s) => s.user.name, 'nombre', 'Ana María'),
+    );
+  });
+
+  test('tras la supresión queda fuera de sesión, sin el aviso de sesión vencida', () async {
+    store = MemoryTokenStore(const AuthTokens(access: 'a', refresh: 'r'));
+    auth = FakeAuthRepository(store);
+    final c = container();
+    await c.read(sessionControllerProvider.future);
+
+    c.read(sessionControllerProvider.notifier).accountDeleted();
+
+    expect(
+      c.read(sessionControllerProvider).value,
+      isA<SignedOut>().having((s) => s.sessionExpired, 'expirada', isFalse),
+    );
+    expect(auth.calls, isNot(contains('logout')));
+  });
 }

@@ -44,6 +44,12 @@ class SessionController extends AsyncNotifier<SessionState> {
     state = const AsyncData(SignedOut());
   }
 
+  /// El titular actualizó sus datos: la sesión muestra los nuevos sin volver a pedirlos.
+  void userUpdated(UserProfile user) => state = AsyncData(SignedIn(user));
+
+  /// La cuenta se suprimió (los tokens ya se borraron): no queda sesión que cerrar.
+  void accountDeleted() => state = const AsyncData(SignedOut());
+
   /// Se llama cuando el cliente HTTP avisa que el refresco falló.
   void expire() => state = const AsyncData(SignedOut(sessionExpired: true));
 

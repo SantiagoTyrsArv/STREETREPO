@@ -38,4 +38,16 @@ class HttpAuthRepository implements AuthRepository {
 
   @override
   Future<UserProfile> me() => _api.me();
+
+  @override
+  Future<UserProfile> updateProfile({String? name, String? email, String? currentPassword}) =>
+      _api.updateMe(name: name, email: email, currentPassword: currentPassword);
+
+  @override
+  Future<DeletionReceipt> requestDataDeletion({required String currentPassword}) async {
+    final receipt = await _api.requestDataDeletion(currentPassword);
+    // El servidor ya cerró todas las sesiones; los tokens guardados no sirven.
+    await _tokens.clear();
+    return receipt;
+  }
 }

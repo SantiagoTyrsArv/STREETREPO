@@ -28,6 +28,24 @@ class UserProfile {
   final DateTime? policyAcceptedAt;
 }
 
+/// Constancia de la supresión de datos (Ley 1581), tal como la devuelve
+/// `POST /me/data-deletion-requests`. Tras recibirla la cuenta ya no existe.
+class DeletionReceipt {
+  const DeletionReceipt({
+    required this.id,
+    required this.status,
+    required this.requestedAt,
+    this.attendedAt,
+  });
+
+  final String id;
+
+  /// Estado del trámite tal como lo informa el servidor (`atendida`).
+  final String status;
+  final DateTime requestedAt;
+  final DateTime? attendedAt;
+}
+
 /// Estado de la sesión. Mientras se recupera la sesión guardada, el proveedor está en
 /// `AsyncLoading`; no hace falta un estado «desconocido» propio.
 sealed class SessionState {
