@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     # operadores móviles comparten una IP pública entre muchos usuarios (CGNAT; decisión 58).
     reports_per_user_per_hour: int = Field(default=10, ge=1)
     reports_per_ip_per_hour: int = Field(default=100, ge=1)
+    # Consultas del mapa de reportes por usuario y minuto (decisión 93): alcanza para mover
+    # el mapa con soltura y frena la descarga masiva de reportes.
+    map_requests_per_user_per_minute: int = Field(default=60, ge=1)
     # Carpeta de las fotos de evidencia (propuesta 34); en Docker, un volumen propio
     # que entra en los respaldos.
     photo_storage_dir: Path = Path("storage/photos")

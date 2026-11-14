@@ -39,8 +39,6 @@ from app.shared.domain.geo import BoundingBox, InvalidGeometryError
 
 router = APIRouter(prefix="/admin", tags=["administración"], dependencies=[Depends(require_admin)])
 
-_BBOX_PARTS = 4
-
 
 def _report_not_found() -> AppError:
     return AppError("REPORT_NOT_FOUND", "No encontramos ese reporte.", status.HTTP_404_NOT_FOUND)
@@ -48,14 +46,7 @@ def _report_not_found() -> AppError:
 
 def parse_bbox(raw: str) -> BoundingBox:
     """Lee ``min_lon,min_lat,max_lon,max_lat`` (orden de Leaflet ``toBBoxString``)."""
-    parts = raw.split(",")
-    if len(parts) != _BBOX_PARTS:
-        raise InvalidGeometryError("Se esperan cuatro valores")
-    try:
-        min_lon, min_lat, max_lon, max_lat = (float(part) for part in parts)
-    except ValueError as exc:
-        raise InvalidGeometryError("Los valores deben ser números") from exc
-    return BoundingBox(south=min_lat, west=min_lon, north=max_lat, east=max_lon)
+    return BoundingBox.parse_min_max(raw)
 
 
 @router.get("/ranking", response_model=RankingResponse)

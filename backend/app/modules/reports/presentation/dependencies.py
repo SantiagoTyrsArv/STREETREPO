@@ -16,6 +16,7 @@ from app.modules.reports.application.find_nearby import (
 from app.modules.reports.application.get_photo import GetReportPhoto
 from app.modules.reports.application.get_report import GetReport
 from app.modules.reports.application.list_my_reports import ListMyReports
+from app.modules.reports.application.list_reports_in_area import ListReportsInArea
 from app.modules.reports.infrastructure.evidence import SqlReportPhotoLookup
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
 from app.modules.reports.infrastructure.my_reports import SqlMyReportsReader
@@ -24,6 +25,7 @@ from app.modules.reports.infrastructure.nearby import (
     PostgresReportCreationLock,
 )
 from app.modules.reports.infrastructure.pillow_photos import PillowPhotoProcessor
+from app.modules.reports.infrastructure.public_map import SqlPublicReportsReader
 from app.modules.reports.infrastructure.report_view import SqlReportViewReader
 from app.modules.reports.infrastructure.repository import SqlReportRepository
 from app.modules.reports.infrastructure.status_history import SqlStatusHistoryRecorder
@@ -31,6 +33,7 @@ from app.shared.application.clock import SystemClock
 from app.shared.application.rate_limit import RateLimit
 
 _ONE_HOUR = timedelta(hours=1)
+_ONE_MINUTE = timedelta(minutes=1)
 
 
 def limit_reports_per_ip(request: Request, limiter: RateLimiterDep, settings: SettingsDep) -> None:
@@ -83,6 +86,20 @@ def get_find_possible_duplicates(
 
 
 FindPossibleDuplicatesDep = Annotated[FindPossibleDuplicates, Depends(get_find_possible_duplicates)]
+
+
+def get_list_reports_in_area(
+    session: SessionDep, settings: SettingsDep, limiter: RateLimiterDep
+) -> ListReportsInArea:
+    return ListReportsInArea(
+        SqlPublicReportsReader(session),
+        limiter,
+        RateLimit(max_requests=settings.map_requests_per_user_per_minute, window=_ONE_MINUTE),
+        SystemClock(),
+    )
+
+
+ListReportsInAreaDep = Annotated[ListReportsInArea, Depends(get_list_reports_in_area)]
 
 
 def get_report_photo(session: SessionDep, settings: SettingsDep) -> GetReportPhoto:

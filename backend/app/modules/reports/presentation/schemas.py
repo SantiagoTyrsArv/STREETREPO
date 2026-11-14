@@ -15,6 +15,7 @@ from app.modules.reports.domain.my_reports import (
     PublicReportView,
 )
 from app.modules.reports.domain.public_location import PUBLIC_COORDINATE_DECIMALS
+from app.modules.reports.domain.public_map import MapReport, MapReportsPage
 from app.modules.reports.domain.report_view import (
     FullReportView,
     LimitedReportView,
@@ -137,6 +138,61 @@ class NearbyReportsResponse(BaseModel):
     @classmethod
     def from_candidates(cls, candidates: Sequence[DuplicateCandidate]) -> "NearbyReportsResponse":
         return cls(items=[DuplicateCandidateResponse.from_candidate(c) for c in candidates])
+
+
+class MapReportResponse(BaseModel):
+    """Reporte en el mapa de la app: vista pública, sin autor, descripción ni foto."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: uuid.UUID
+    # Ubicación pública: redondeada a 4 decimales (unos 11 m), nunca la exacta.
+    location: LocationResponse
+    status: ReportStatus
+    severity: SeverityLevel
+    address: str
+    confirmations: int
+    created_at: datetime
+    # Del propio ciudadano, o ya confirmado por él: en ambos casos no puede confirmarlo.
+    is_mine: bool
+    confirmed_by_me: bool
+
+    @classmethod
+    def from_map_report(cls, report: MapReport) -> "MapReportResponse":
+        view = report.public
+        return cls(
+            id=view.id,
+            location=LocationResponse(
+                longitude=round(view.location.longitude, PUBLIC_COORDINATE_DECIMALS),
+                latitude=round(view.location.latitude, PUBLIC_COORDINATE_DECIMALS),
+            ),
+            status=view.status,
+            severity=SeverityLevel.from_domain(view.severity),
+            address=view.address,
+            confirmations=view.confirmations,
+            created_at=view.created_at,
+            is_mine=report.is_mine,
+            confirmed_by_me=report.confirmed_by_me,
+        )
+
+
+class MapReportsResponse(BaseModel):
+    """Reportes del área visible, del más reciente al más antiguo. ``truncated`` indica que
+    el área tiene más reportes que ``limit``."""
+
+    model_config = ConfigDict(frozen=True)
+
+    items: list[MapReportResponse]
+    limit: int
+    truncated: bool
+
+    @classmethod
+    def from_page(cls, page: MapReportsPage) -> "MapReportsResponse":
+        return cls(
+            items=[MapReportResponse.from_map_report(item) for item in page.items],
+            limit=page.limit,
+            truncated=page.truncated,
+        )
 
 
 class OwnReportItem(ReportResponse):
