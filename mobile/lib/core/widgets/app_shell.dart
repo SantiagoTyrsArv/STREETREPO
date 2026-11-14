@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../routing/app_router.dart';
 import '../theme/app_tokens.dart';
 
-/// Barra de navegación del Figma (`6:122`): Reportar · Mis reportes · Perfil. La pestaña Mapa
-/// se omite en esta entrega porque el mapa está fuera del alcance (spec 2.2).
+/// Barra de navegación del Figma (`6:122`): Mapa · Reportar · Mis reportes · Perfil.
 class AppShell extends StatelessWidget {
   const AppShell({required this.location, required this.child, super.key});
 
@@ -30,6 +29,20 @@ class AppShell extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Expanded(
+                    child: _Tab(
+                      label: 'Mapa',
+                      selected: location == AppRoutes.map,
+                      icon: SvgPicture.asset(
+                        'assets/icons/map.svg',
+                        // El icono exportado es gris; en la pestaña activa va en tinta.
+                        colorFilter: location == AppRoutes.map
+                            ? const ColorFilter.mode(AppTokens.ink, BlendMode.srcIn)
+                            : null,
+                      ),
+                      onTap: () => context.go(AppRoutes.map),
+                    ),
+                  ),
                   Expanded(
                     child: _Tab(
                       label: 'Reportar',

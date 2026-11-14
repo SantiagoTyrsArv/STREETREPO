@@ -15,6 +15,7 @@ import '../../features/profile/presentation/data_deleted_screen.dart';
 import '../../features/profile/presentation/delete_data_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/report_map/presentation/report_map_screen.dart';
 import '../../features/report_new/presentation/duplicate_screen.dart';
 import '../../features/report_new/presentation/permission_denied_screen.dart';
 import '../../features/report_new/presentation/permissions_screen.dart';
@@ -31,6 +32,7 @@ abstract final class AppRoutes {
   static const register = '/registro';
   static const privacyPolicy = '/politica';
   static const login = '/ingresar';
+  static const map = '/mapa';
   static const myReports = '/mis-reportes';
   static const newReport = '/reportar';
   static const newReportPermissions = '/reportar/permisos';
@@ -146,11 +148,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.newReportPhotoRejected,
         builder: (context, state) => const PhotoRejectedScreen(),
       ),
-      // Mis reportes y Perfil comparten la barra inferior; el detalle y el nuevo reporte se
+      // El mapa, Mis reportes y Perfil comparten la barra inferior; el detalle y el nuevo reporte se
       // abren a pantalla completa.
       ShellRoute(
         builder: (context, state, child) => AppShell(location: state.matchedLocation, child: child),
         routes: [
+          GoRoute(
+            path: AppRoutes.map,
+            pageBuilder: (context, state) => const NoTransitionPage(child: ReportMapScreen()),
+          ),
           GoRoute(
             path: AppRoutes.myReports,
             pageBuilder: (context, state) => const NoTransitionPage(child: MyReportsScreen()),

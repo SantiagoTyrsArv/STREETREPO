@@ -16,4 +16,28 @@ void main() {
   test('una URL sin http(s) no arranca', () {
     expect(() => AppConfig.parse('192.168.1.20:8000'), throwsStateError);
   });
+
+  test('el mapa usa las teselas de OpenStreetMap si no se configura otro proveedor', () {
+    expect(AppConfig.parse('http://api.test').tileUrlTemplate, AppConfig.defaultTileUrl);
+  });
+
+  test('el proveedor de teselas se puede cambiar', () {
+    final config = AppConfig.parse(
+      'http://api.test',
+      tileUrl: 'https://teselas.test/{z}/{x}/{y}.png',
+    );
+
+    expect(config.tileUrlTemplate, 'https://teselas.test/{z}/{x}/{y}.png');
+  });
+
+  test('una plantilla de teselas sin https o sin {z} no arranca', () {
+    expect(
+      () => AppConfig.parse('http://api.test', tileUrl: 'http://teselas.test/{z}/{x}/{y}.png'),
+      throwsStateError,
+    );
+    expect(
+      () => AppConfig.parse('http://api.test', tileUrl: 'https://teselas.test/mapa.png'),
+      throwsStateError,
+    );
+  });
 }
