@@ -54,8 +54,37 @@ class AuthApi {
     await _dio.post<Object?>('/auth/logout', data: {'refresh_token': refreshToken});
   });
 
-  Future<UserProfile> me() => _call(() async {
-    final json = _json(await _dio.get<Object?>('/me'));
+  Future<UserProfile> me() => _call(() async => _profile(await _dio.get<Object?>('/me')));
+
+  Future<UserProfile> updateMe({String? name, String? email, String? currentPassword}) => _call(
+    () async => _profile(
+      await _dio.patch<Object?>(
+        '/me',
+        data: {'name': ?name, 'email': ?email, 'current_password': ?currentPassword},
+      ),
+    ),
+  );
+
+  Future<DeletionReceipt> requestDataDeletion(String currentPassword) => _call(() async {
+    final json = _json(
+      await _dio.post<Object?>(
+        '/me/data-deletion-requests',
+        data: {'current_password': currentPassword},
+      ),
+    );
+    return DeletionReceipt(
+      id: _field<String>(json, 'id'),
+      status: _field<String>(json, 'status'),
+      requestedAt: DateTime.parse(_field<String>(json, 'requested_at')),
+      attendedAt: switch (json['attended_at']) {
+        final String value => DateTime.parse(value),
+        _ => null,
+      },
+    );
+  });
+
+  static UserProfile _profile(Response<Object?> response) {
+    final json = _json(response);
     return UserProfile(
       id: _field<String>(json, 'id'),
       name: _field<String>(json, 'name'),
@@ -70,7 +99,7 @@ class AuthApi {
         _ => null,
       },
     );
-  });
+  }
 
   static Future<T> _call<T>(Future<T> Function() request) async {
     try {

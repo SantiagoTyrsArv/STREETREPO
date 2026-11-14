@@ -50,4 +50,14 @@ void main() {
     expect(redirectForSession(signedIn, AppRoutes.newReport), isNull);
     expect(redirectForSession(signedIn, AppRoutes.privacyPolicy), isNull);
   });
+
+  test('la constancia de la supresión se ve sin sesión', () {
+    expect(redirectForSession(signedOut, AppRoutes.dataDeleted), isNull);
+    expect(redirectForSession(signedIn, AppRoutes.dataDeleted), isNull);
+  });
+
+  test('fuera de sesión, editar los datos y la supresión llevan a la Bienvenida', () {
+    expect(redirectForSession(signedOut, AppRoutes.editProfile), AppRoutes.welcome);
+    expect(redirectForSession(signedOut, AppRoutes.deleteData), AppRoutes.welcome);
+  });
 }

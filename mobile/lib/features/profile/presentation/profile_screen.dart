@@ -10,10 +10,10 @@ import '../../../core/widgets/primary_button.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/domain/session.dart';
 
-/// Perfil y privacidad (Figma `6:141`), versión mínima de esta entrega: nombre, correo, la
-/// política aceptada (enlace de solo lectura) y «Cerrar sesión». Editar los datos, la
-/// supresión y las cifras llegan con la siguiente entrega (spec 2.2). El rol no se muestra:
-/// el Figma dice «Ciudadana», y el texto no debe suponer el género de nadie.
+/// Perfil y privacidad (Figma `6:141`): nombre, correo, la política aceptada, los derechos
+/// del titular (conocer y actualizar, y suprimir; Ley 1581) y «Cerrar sesión». No muestra
+/// las cifras del Figma: la API no entrega esos conteos. El rol tampoco se muestra: el
+/// Figma dice «Ciudadana», y el texto no debe suponer el género de nadie.
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -108,46 +108,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 side: const BorderSide(color: AppTokens.line),
               ),
               clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => context.push(AppRoutes.privacyPolicy),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 60),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: Row(
-                      children: [
-                        ExcludeSemantics(child: SvgPicture.asset('assets/icons/shield_small.svg')),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Política de tratamiento de datos',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                              ),
-                              if (accepted != null)
-                                Text(
-                                  switch (user.policyVersion) {
-                                    final version? =>
-                                      'Versión $version · aceptada el ${formatLongDate(accepted)}',
-                                    null => 'Aceptada el ${formatLongDate(accepted)}',
-                                  },
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTokens.repairedChipText,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        ExcludeSemantics(child: SvgPicture.asset('assets/icons/chevron.svg')),
-                      ],
-                    ),
+              child: Column(
+                children: [
+                  _Option(
+                    icon: SvgPicture.asset('assets/icons/shield_small.svg'),
+                    title: 'Política de tratamiento de datos',
+                    subtitle: accepted == null
+                        ? null
+                        : switch (user.policyVersion) {
+                            final version? =>
+                              'Versión $version · aceptada el ${formatLongDate(accepted)}',
+                            null => 'Aceptada el ${formatLongDate(accepted)}',
+                          },
+                    onTap: () => context.push(AppRoutes.privacyPolicy),
                   ),
-                ),
+                  const Divider(height: 1, thickness: 1, color: AppTokens.line),
+                  _Option(
+                    icon: SvgPicture.asset('assets/icons/user_active.svg', width: 22, height: 22),
+                    title: 'Conocer y actualizar mis datos',
+                    onTap: () => context.push(AppRoutes.editProfile),
+                  ),
+                  const Divider(height: 1, thickness: 1, color: AppTokens.line),
+                  _Option(
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      size: 22,
+                      color: AppTokens.errorAccent,
+                    ),
+                    title: 'Solicitar supresión de mis datos',
+                    destructive: true,
+                    onTap: () => context.push(AppRoutes.deleteData),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),
@@ -158,6 +150,74 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPressed: _signOut,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Fila de la tarjeta «Privacidad» del Figma: icono, título, detalle opcional y flecha. La
+/// acción irreversible va en rojo y sin flecha.
+class _Option extends StatelessWidget {
+  const _Option({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+    this.destructive = false,
+  });
+
+  final Widget icon;
+  final String title;
+  final String? subtitle;
+  final bool destructive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 60),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                ExcludeSemantics(child: icon),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: destructive ? AppTokens.errorAccent : null,
+                        ),
+                      ),
+                      if (subtitle != null)
+                        Text(
+                          subtitle!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTokens.repairedChipText,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (!destructive) ...[
+                  const SizedBox(width: 12),
+                  ExcludeSemantics(child: SvgPicture.asset('assets/icons/chevron.svg')),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

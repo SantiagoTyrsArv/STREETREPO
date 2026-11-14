@@ -19,6 +19,15 @@ String formatShortDate(DateTime utc) =>
 String formatLongDate(DateTime utc) =>
     DateFormat('d MMM y', _locale).format(_inBogota(utc)).replaceAll('.', '');
 
+/// Fecha y hora en Bogotá, como en la constancia de la supresión: `19 oct 2026 · 9:30 a. m.`.
+String formatDateTime(DateTime utc) {
+  final local = _inBogota(utc);
+  final minutes = local.minute.toString().padLeft(2, '0');
+  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+  final period = local.hour < 12 ? 'a. m.' : 'p. m.';
+  return '${formatLongDate(utc)} · $hour:$minutes $period';
+}
+
 /// Antigüedad como en el diseño de «Mis reportes»: `hoy`, `hace 3 días`, `hace 1 semana`.
 String formatRelative(DateTime utc, DateTime nowUtc) {
   final days = _day(_inBogota(nowUtc)).difference(_day(_inBogota(utc))).inDays;

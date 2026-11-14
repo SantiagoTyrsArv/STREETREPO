@@ -17,6 +17,9 @@ enum ButtonVariant {
 
   /// Papel con borde de tinta: la alternativa al botón oscuro («Ahora no», «Volver»).
   secondary,
+
+  /// Rojo con texto blanco: acciones irreversibles («Eliminar mis datos»).
+  danger,
 }
 
 /// Botón del Figma: 54 px de alto y radio 14. Mientras [loading] está activo no responde,
@@ -43,6 +46,7 @@ class PrimaryButton extends StatelessWidget {
       ButtonVariant.outline => (AppTokens.surface, AppTokens.ink, AppTokens.line),
       ButtonVariant.dark => (AppTokens.ink, AppTokens.surface, null),
       ButtonVariant.secondary => (AppTokens.paper, AppTokens.ink, AppTokens.ink),
+      ButtonVariant.danger => (AppTokens.errorAccent, AppTokens.surface, null),
     };
     // El botón oscuro deshabilitado es arena con texto gris («Reintentar en 4:32» del Figma).
     final (disabledBackground, disabledForeground) = loading

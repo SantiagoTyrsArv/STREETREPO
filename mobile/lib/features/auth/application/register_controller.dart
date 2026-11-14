@@ -9,7 +9,7 @@ import 'session_controller.dart';
 // Límites del backend (`auth/domain/passwords.py`); la validación de aquí es solo de UX.
 const int minPasswordLength = 12;
 const int maxPasswordLength = 128;
-final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+final RegExp emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
 class RegisterState {
   const RegisterState({
@@ -82,7 +82,7 @@ class RegisterController extends Notifier<RegisterState> {
 
   static RegisterState? _validate(String name, String email, String password) {
     final nameError = name.isEmpty ? 'Escribe tu nombre.' : null;
-    final emailError = _emailPattern.hasMatch(email) ? null : 'Escribe un correo válido.';
+    final emailError = emailPattern.hasMatch(email) ? null : 'Escribe un correo válido.';
     final passwordError = password.length < minPasswordLength || password.length > maxPasswordLength
         ? 'La contraseña debe tener de $minPasswordLength a $maxPasswordLength caracteres.'
         : null;

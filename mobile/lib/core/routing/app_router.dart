@@ -11,6 +11,9 @@ import '../../features/auth/presentation/startup_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/my_reports/presentation/my_reports_screen.dart';
 import '../../features/my_reports/presentation/report_detail_screen.dart';
+import '../../features/profile/presentation/data_deleted_screen.dart';
+import '../../features/profile/presentation/delete_data_screen.dart';
+import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/report_new/presentation/duplicate_screen.dart';
 import '../../features/report_new/presentation/permission_denied_screen.dart';
@@ -39,6 +42,11 @@ abstract final class AppRoutes {
   static const newReportRateLimited = '/reportar/limite';
   static const newReportPhotoRejected = '/reportar/foto-rechazada';
   static const profile = '/perfil';
+  static const editProfile = '/perfil/editar';
+  static const deleteData = '/perfil/eliminar-datos';
+
+  /// Constancia de la supresión: se ve ya sin sesión, porque la cuenta dejó de existir.
+  static const dataDeleted = '/supresion-atendida';
   static const reportDetail = '/reportes/:id';
 
   static String reportDetailOf(String id) => '/reportes/$id';
@@ -51,7 +59,7 @@ abstract final class AppRoutes {
 /// - Mientras se recupera la sesión (o si falló por red) → pantalla de inicio.
 /// - Fuera de sesión → Bienvenida, o «Ingresar» si la sesión venció.
 /// - En sesión, las rutas de acceso llevan a «Mis reportes».
-/// La política es accesible en ambos casos.
+/// La política y la constancia de la supresión son accesibles en ambos casos.
 String? redirectForSession(AsyncValue<SessionState> session, String location) {
   final state = switch (session) {
     AsyncData(:final value) => value,
@@ -61,7 +69,9 @@ String? redirectForSession(AsyncValue<SessionState> session, String location) {
     case null:
       return location == AppRoutes.startup ? null : AppRoutes.startup;
     case SignedOut(:final sessionExpired):
-      if (AppRoutes.signedOutOnly.contains(location) || location == AppRoutes.privacyPolicy) {
+      if (AppRoutes.signedOutOnly.contains(location) ||
+          location == AppRoutes.privacyPolicy ||
+          location == AppRoutes.dataDeleted) {
         return null;
       }
       return sessionExpired ? AppRoutes.login : AppRoutes.welcome;
@@ -71,10 +81,23 @@ String? redirectForSession(AsyncValue<SessionState> session, String location) {
   }
 }
 
+/// Lo único de la sesión que decide la redirección.
+String _sessionKind(AsyncValue<SessionState> session) => switch (session) {
+  AsyncData(value: SignedIn()) => 'signed-in',
+  AsyncData(value: SignedOut(sessionExpired: true)) => 'expired',
+  AsyncData(value: SignedOut()) => 'signed-out',
+  _ => 'pending',
+};
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   // El enrutador se crea una vez; cada cambio de sesión vuelve a evaluar la redirección.
   final sessionChanged = ValueNotifier<int>(0);
-  ref.listen(sessionControllerProvider, (_, _) => sessionChanged.value++);
+  ref.listen(sessionControllerProvider, (previous, next) {
+    // Si solo cambian los datos del titular (editó su nombre o correo), la redirección es la
+    // misma: volver a evaluarla repondría la ruta actual y desharía un «volver» en curso.
+    if (previous != null && _sessionKind(previous) == _sessionKind(next)) return;
+    sessionChanged.value++;
+  });
   final router = GoRouter(
     initialLocation: AppRoutes.startup,
     refreshListenable: sessionChanged,
@@ -137,6 +160,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
           ),
         ],
+      ),
+      GoRoute(path: AppRoutes.editProfile, builder: (context, state) => const EditProfileScreen()),
+      GoRoute(path: AppRoutes.deleteData, builder: (context, state) => const DeleteDataScreen()),
+      GoRoute(
+        path: AppRoutes.dataDeleted,
+        // Sin constancia (p. ej. al restaurar la app) no hay nada que mostrar.
+        redirect: (context, state) => state.extra is DeletionReceipt ? null : AppRoutes.welcome,
+        builder: (context, state) => DataDeletedScreen(receipt: state.extra! as DeletionReceipt),
       ),
       GoRoute(
         path: AppRoutes.reportDetail,
