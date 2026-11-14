@@ -8,6 +8,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - `GET /api/v1/reports?bbox=…`: reportes del área visible para el mapa de la app, con la vista
   pública (sin autor, descripción ni foto; ubicación redondeada), filtro por estado, tope de 200 y
   60 consultas por minuto por usuario (decisión 93).
+- App ciudadana: pestaña «Mapa» con los reportes del área visible, filtros por estado, ficha del
+  reporte y «Confirmar este daño» desde la ficha; teselas de OpenStreetMap con atribución y
+  proveedor configurable (`MAP_TILE_URL`) (decisión 95).
 - App ciudadana: el perfil permite conocer y actualizar los datos (nombre y correo; cambiar el
   correo pide la contraseña actual) y solicitar la supresión de los datos con constancia
   (Ley 1581; decisiones 71 y 92).

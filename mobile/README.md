@@ -15,15 +15,15 @@ confirmados. Diseño en `docs/superpowers/specs/2026-10-19-app-flutter-flujo-cri
 lib/
 ├─ app.dart, main.dart
 ├─ core/        # configuración, tema (tokens de la guía 10.1), formatos, red, rutas, componentes
-└─ features/    # auth, report_new, my_reports, profile; cada una con
+└─ features/    # auth, report_new, report_map, my_reports, profile; cada una con
                 # presentation / application / domain / data
 assets/
 ├─ fonts/       # Archivo y Manrope (licencia OFL)
 └─ icons/       # iconos SVG exportados del Figma
 ```
 
-Estado con Riverpod (decisión 1), rutas con `go_router`, HTTP con `dio`. La app no calcula nada
-del dominio: muestra lo que responde la API.
+Estado con Riverpod (decisión 1), rutas con `go_router`, HTTP con `dio` y mapa con `flutter_map`.
+La app no calcula nada del dominio: muestra lo que responde la API.
 
 ## Pruebas y calidad
 
@@ -42,6 +42,10 @@ La URL del backend se pasa al compilar; no hay valor por defecto:
 ```bash
 flutter run --dart-define=API_BASE_URL=http://<ip-del-computador>:8000
 ```
+
+El mapa usa las teselas públicas de OpenStreetMap, con su atribución. Para otro proveedor se añade
+`--dart-define=MAP_TILE_URL=https://…/{z}/{x}/{y}.png` (debe ser https). Las teselas se descargan
+con los datos del celular, no pasan por la API.
 
 En el emulador de Android el computador es `10.0.2.2`. La variante *debug* acepta HTTP sin cifrar
 (`android/app/src/debug/res/xml/network_security_config.xml`); la de *release* exige HTTPS (HU-17).
@@ -93,3 +97,16 @@ de las pruebas del 2026-10-21 y del 2026-11-08 (decisiones 65 y 74 de la bitáco
   conectado el modo avión no corta la API; usar `adb reverse --remove tcp:8000` y volver a
   reenviar el puerto antes de «Reintentar».
 - [x] Cerrar sesión: vuelve a la Bienvenida.
+
+Pendiente de probar en el celular (fase 7, decisiones 92 y 95 de la bitácora):
+
+- [ ] Perfil → «Conocer y actualizar mis datos»: cambiar el nombre (sin contraseña) y el correo
+  (pide la contraseña actual).
+- [ ] Perfil → «Solicitar supresión de mis datos» con una cuenta de prueba: muestra la constancia,
+  la cuenta ya no puede ingresar y el correo queda libre para registrarse de nuevo.
+- [ ] Mapa: aparecen las teselas, la atribución de OpenStreetMap y los reportes de la zona; los
+  filtros por estado cambian los marcadores.
+- [ ] Mapa: tocar un reporte de otra cuenta y «Confirmar este daño»; después aparece en Mis
+  reportes con «Lo confirmaste».
+- [ ] Mapa sin red (`adb reverse --remove tcp:8000`): avisa «Sin conexión» y «Reintentar» vuelve a
+  cargar al restablecer el reenvío.
