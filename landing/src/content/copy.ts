@@ -39,6 +39,24 @@ export const COPY = {
     title: "Una foto, una ubicación y la severidad.",
     lead: "La app toma la evidencia con la cámara y el GPS del celular. Si alguien ya reportó el mismo daño a menos de 25 m, te lo muestra para que lo confirmes en lugar de duplicarlo.",
     alt: "Pantallas reales de la app Street Repo: foto y ubicación, severidad, reporte enviado y mapa.",
+    screens: [
+      {
+        src: "/media/app/captura-foto.webp",
+        alt: "Captura real de la app, paso 1: foto del daño y ubicación por GPS sobre la vía.",
+      },
+      {
+        src: "/media/app/captura-severidad.webp",
+        alt: "Captura real de la app, paso 2: elegir la severidad (baja, media o alta) y describir el daño.",
+      },
+      {
+        src: "/media/app/captura-enviado.webp",
+        alt: "Captura real de la app: reporte registrado y ya evaluado por el modelo de prioridad.",
+      },
+      {
+        src: "/media/app/captura-mapa.webp",
+        alt: "Captura real de la app: mapa de reportes de Pasto con su estado, con datos de demostración.",
+      },
+    ],
   },
   priorizar: {
     kicker: "03 · Priorizar",
