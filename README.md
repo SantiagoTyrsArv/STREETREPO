@@ -16,6 +16,7 @@ Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colom
 | `backend/` | API REST (`/api/v1`) | FastAPI · SQLAlchemy 2 · Alembic |
 | `admin-web/` | Panel administrativo: priorización, detalle y estado, pesos del modelo (ver [`admin-web/README.md`](admin-web/README.md)) | React + Leaflet |
 | `mobile/` | App ciudadana: flujo crítico de reporte (decisión 49; ver [`mobile/README.md`](mobile/README.md)) | Flutter |
+| `landing/` | Página de presentación y descarga (en construcción; ver [`landing/README.md`](landing/README.md)) | React + GSAP + Lenis · Vercel |
 | `infra/` | Docker Compose, Dockerfiles, scripts de carga OSM | Docker · PostgreSQL + PostGIS |
 | `docs/` | Decisiones de arquitectura (ADR) | — |
 

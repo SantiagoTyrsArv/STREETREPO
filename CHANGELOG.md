@@ -14,6 +14,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - App ciudadana: el perfil permite conocer y actualizar los datos (nombre y correo; cambiar el
   correo pide la contraseña actual) y solicitar la supresión de los datos con constancia
   (Ley 1581; decisiones 71 y 92).
+- Página de presentación y descarga `landing/` (en construcción, decisiones 99 a 104): proyecto
+  Vite + React con la identidad editorial de la página, la marca nueva (símbolo «SR» con la vía y
+  el Galeras, favicon e ícono), el motor de secuencias de cuadros guiado por el *scroll*, los
+  capítulos Apertura, Problema, Priorizar y Reparado con sus textos, y el paquete de prompts de
+  Higgsfield para generar las escenas. Faltan las escenas, el teléfono 3D, la descarga y el
+  despliegue en Vercel.
 
 ### Seguridad
 - `dnspython` 2.9.2 y `opentelemetry-api` 1.45.2 (dependencias transitivas del backend) por
