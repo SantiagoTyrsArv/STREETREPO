@@ -44,7 +44,7 @@ Instrument Serif), qrcode, vitest + Testing Library, ffmpeg (local), Higgsfield 
 
 ---
 
-### Tarea 1: Andamiaje de `landing/`, tokens, fuentes y CI
+### Task 1: Andamiaje de `landing/`, tokens, fuentes y CI
 
 Rama: `feat/landing-andamiaje`.
 
@@ -87,7 +87,7 @@ Rama: `feat/landing-andamiaje`.
   compilar) con `working-directory: landing`, más el paso de presupuesto de medios que añade la Tarea 9.
 - [ ] **Step 7:** Commit `feat(landing): andamiaje con tokens, fuentes y CI`, subir la rama y comprobar la CI en verde.
 
-### Tarea 2: Despliegue en Vercel con cabeceras de seguridad
+### Task 2: Despliegue en Vercel con cabeceras de seguridad
 
 Rama: `chore/landing-vercel`.
 
@@ -108,7 +108,7 @@ Rama: `chore/landing-vercel`.
   cabeceras de seguridad; la página carga sin errores de CSP en la consola (Chrome DevTools MCP).
 - [ ] **Step 4:** Commit `chore(landing): despliegue en Vercel con cabeceras de seguridad`; integrar a `main` y verificar el despliegue de producción.
 
-### Tarea 3: Marca — símbolo y logotipo
+### Task 3: Marca — símbolo y logotipo
 
 Rama: `feat/landing-marca`.
 
@@ -140,7 +140,7 @@ Rama: `feat/landing-marca`.
 - [ ] **Step 7:** Hoja de uso (área de reserva = alto de la «S», tamaño mínimo 24 px, versiones) en
   `landing/media/README.md`. Commit `feat(landing): símbolo y logotipo de Street Repo`; integrar.
 
-### Tarea 4: Biblia de estilo, cuadros clave y videos de las escenas
+### Task 4: Biblia de estilo, cuadros clave y videos de las escenas
 
 Rama: `feat/landing-escenas`. Es la tarea más larga: el responsable aprueba cada cuadro clave y cada video.
 
@@ -176,7 +176,7 @@ Rama: `feat/landing-escenas`. Es la tarea más larga: el responsable aprueba cad
   que se cumple el presupuesto; si no, bajar `fps` o `quality` de la escena más pesada.
 - [ ] **Step 8:** Commit `feat(landing): escenas generadas y secuencias de cuadros` (cuerpo: modelos y aprobación); integrar.
 
-### Tarea 5: Motor de secuencias de cuadros
+### Task 5: Motor de secuencias de cuadros
 
 Rama: `feat/landing-secuencias`.
 
@@ -225,7 +225,7 @@ Rama: `feat/landing-secuencias`.
   componente expone `role="img"` con su `alt` y pide `manifest.json` del capítulo.
 - [ ] **Step 5:** `npm test` → PASA. Commit `feat(landing): motor de secuencias de cuadros`; integrar.
 
-### Tarea 6: Capítulos, *scroll* y textos
+### Task 6: Capítulos, *scroll* y textos
 
 Rama: `feat/landing-capitulos`.
 
@@ -261,7 +261,7 @@ Rama: `feat/landing-capitulos`.
 - [ ] **Step 5:** `npm test` → PASA. Revisar en la vista previa de Vercel en escritorio y en el
   celular del responsable. Commit `feat(landing): capítulos guiados por el scroll`; integrar.
 
-### Tarea 7: Teléfono 3D con capturas reales
+### Task 7: Teléfono 3D con capturas reales
 
 Rama: `feat/landing-telefono-3d`.
 
@@ -291,7 +291,7 @@ Rama: `feat/landing-telefono-3d`.
 - [ ] **Step 5:** `npm test` → PASA; verificar 60 fps en escritorio (Performance de Chrome DevTools)
   y fluidez en el celular. Commit `feat(landing): teléfono 3D con capturas reales`; integrar.
 
-### Tarea 8: Capítulo del panel, descarga y pie
+### Task 8: Capítulo del panel, descarga y pie
 
 Rama: `feat/landing-descarga`.
 
@@ -325,7 +325,7 @@ Rama: `feat/landing-descarga`.
   Priorizar, Panel, Reparado, `DownloadSection`, `SiteFooter`.
 - [ ] **Step 4:** `npm test` → PASA. Commit `feat(landing): panel, descarga y pie`; integrar.
 
-### Tarea 9: Rendimiento, accesibilidad y cierre
+### Task 9: Rendimiento, accesibilidad y cierre
 
 Rama: `chore/landing-cierre`.
 
