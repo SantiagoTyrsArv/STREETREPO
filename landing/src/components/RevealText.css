@@ -1,0 +1,11 @@
+.reveal__mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.08em;
+}
+
+.reveal__word {
+  display: inline-block;
+  will-change: transform;
+}

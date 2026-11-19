@@ -1,0 +1,39 @@
+.formula {
+  margin-top: 2rem;
+}
+
+.formula__equation {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-weight: 800;
+  font-size: clamp(1.75rem, 4.5vw, 3.75rem);
+  letter-spacing: -0.02em;
+  color: var(--signal);
+}
+
+.formula__factors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1.5rem;
+  margin: 1.75rem 0 0;
+}
+
+.formula__factor {
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--signal) 50%, transparent);
+}
+
+.formula__factor dt {
+  font-family: var(--font-brand);
+  font-weight: 700;
+}
+
+.formula__symbol {
+  color: var(--signal);
+}
+
+.formula__factor dd {
+  margin: 0.35rem 0 0;
+  color: var(--mist);
+  font-size: 0.95rem;
+}
