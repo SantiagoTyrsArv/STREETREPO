@@ -1,6 +1,6 @@
 # Street Repo — página de presentación y descarga
 
-Página estática que presenta Street Repo con un recorrido guiado por el *scroll* y, más adelante,
+Página estática que presenta Street Repo con un recorrido guiado por el _scroll_ y, más adelante,
 aloja la descarga del APK. Diseño: `docs/superpowers/specs/2026-11-19-landing-descarga-apk-design.md`;
 plan: `docs/superpowers/plans/2026-11-19-landing-descarga-apk.md`; bitácora, fila 99.
 
