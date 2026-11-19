@@ -21,6 +21,7 @@ export const COPY = {
   header: {
     download: "Descargar",
   },
+  skipLink: "Saltar a la descarga",
   apertura: {
     kicker: "Pasto, Nariño",
     title: "Cada calle cuenta.",
@@ -74,6 +75,28 @@ export const COPY = {
     title: "Y quien reportó, lo ve.",
     lead: "Registrado, evaluado, priorizado, reparado: el ciudadano sigue el estado de su reporte desde la app.",
     alt: "Ilustración: la misma calle, ya reparada, al amanecer.",
+  },
+  descarga: {
+    kicker: "06 · Descarga",
+    title: "Lleva Street Repo en tu bolsillo.",
+    lead: "La app ciudadana es para Android y se descargará desde esta página.",
+    soon: "Próximamente",
+    soonNote: "La app está en pruebas. Cuando la versión esté lista, la podrás descargar aquí.",
+    cta: "Descargar Street Repo para Android",
+    qrAlt: "Código QR con el enlace de descarga de la app",
+    qrHint: "Escanéalo con la cámara del celular.",
+    stepsLabel: "Pasos para instalar",
+    steps: [
+      "Si Android lo pide, permite instalar apps desconocidas desde tu navegador.",
+      "Abre el archivo descargado.",
+      "Toca «Instalar» y abre Street Repo.",
+    ],
+    checksumLabel: "Suma SHA-256",
+  },
+  footer: {
+    project:
+      "Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colombia, campus Pasto",
+    aiNotice: "Imágenes y videos ilustrativos generados con IA",
   },
 } as const satisfies Record<string, unknown>;
 

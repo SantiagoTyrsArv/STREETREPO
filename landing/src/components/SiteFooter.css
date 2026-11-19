@@ -1,0 +1,17 @@
+.site-footer {
+  display: grid;
+  gap: 0.75rem;
+  padding: 3rem var(--gutter) 3.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--paper) 12%, transparent);
+  background: var(--night);
+  font-size: var(--fs-small);
+  color: var(--mist);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer__project {
+  color: var(--paper);
+}

@@ -1,0 +1,134 @@
+.download {
+  position: relative;
+  padding: clamp(5rem, 14vh, 10rem) var(--gutter) clamp(4rem, 10vh, 7rem);
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 85% 0%,
+      color-mix(in srgb, var(--amber) 16%, transparent),
+      transparent 70%
+    ),
+    var(--night);
+  outline: none;
+}
+
+.download__intro {
+  max-width: 52rem;
+}
+
+.download__kicker {
+  margin: 0 0 1rem;
+  font-family: var(--font-brand);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.download__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-title);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.download__lead {
+  margin: 1.5rem 0 0;
+  max-width: 40rem;
+  font-size: var(--fs-lead);
+  color: var(--mist);
+}
+
+.download__panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+  align-items: flex-start;
+  margin-top: 3rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--paper) 18%, transparent);
+}
+
+.download__main {
+  flex: 1 1 22rem;
+}
+
+.download__cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 0 2rem;
+  border-radius: 999px;
+  background: var(--amber);
+  color: var(--night);
+  font-family: var(--font-brand);
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-decoration: none;
+  transition: transform 0.3s var(--ease-out);
+}
+
+.download__cta:hover {
+  transform: translateY(-2px);
+}
+
+.download__meta {
+  margin: 1rem 0 0;
+  color: var(--mist);
+  font-size: 0.95rem;
+}
+
+.download__steps {
+  margin: 2rem 0 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.download__checksum {
+  margin: 2rem 0 0;
+  font-size: var(--fs-small);
+  color: var(--mist);
+  overflow-wrap: anywhere;
+}
+
+.download__checksum code {
+  font-size: inherit;
+}
+
+.download__qr {
+  margin: 0;
+  flex: 0 0 auto;
+  text-align: center;
+  font-size: var(--fs-small);
+  color: var(--mist);
+}
+
+.download__qr-code {
+  display: block;
+  width: 168px;
+  height: 168px;
+  margin-bottom: 0.75rem;
+  border-radius: 12px;
+}
+
+.download__soon {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-weight: 800;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  color: var(--amber);
+}
+
+.download__soon-note {
+  margin: 0;
+  flex: 1 1 22rem;
+  max-width: 34rem;
+  color: var(--mist);
+}
+
+.download__panel--soon {
+  align-items: baseline;
+}

@@ -1,8 +1,13 @@
 import { useReducedMotion } from "./a11y/useReducedMotion";
 import { Formula } from "./chapters/Formula";
+import { Panel } from "./chapters/Panel";
 import { SEQUENCE_CHAPTERS, SequenceChapter } from "./chapters/SequenceChapter";
+import { DownloadSection } from "./components/DownloadSection";
 import { Logo } from "./components/Logo";
+import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
+import { SkipLink } from "./components/SkipLink";
+import { RELEASE } from "./config/release";
 import { useSmoothScroll } from "./scroll/useSmoothScroll";
 import type { ChapterId } from "./sequence/types";
 
@@ -20,6 +25,7 @@ export function App() {
 
   return (
     <>
+      <SkipLink />
       <SiteHeader />
       <main id="contenido">
         <SequenceChapter
@@ -32,8 +38,11 @@ export function App() {
         <SequenceChapter chapter={chapter("priorizar")}>
           {(progress, isStill) => <Formula progress={progress} still={isStill} />}
         </SequenceChapter>
+        <Panel />
         <SequenceChapter chapter={chapter("reparado")} />
+        <DownloadSection release={RELEASE} />
       </main>
+      <SiteFooter />
       <div className="grain" aria-hidden="true" />
     </>
   );
