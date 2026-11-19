@@ -1,0 +1,127 @@
+/* Se fija mientras se recorre: debe caber exactamente en una pantalla. */
+.panel {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vh, 3rem);
+  padding: clamp(5rem, 12vh, 8rem) var(--gutter) clamp(2rem, 6vh, 4rem);
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--night);
+}
+
+.panel__glow {
+  position: absolute;
+  inset: 20% -10% -30%;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 55% 45% at 50% 50%,
+    color-mix(in srgb, var(--signal) 28%, transparent),
+    transparent 70%
+  );
+  will-change: transform;
+}
+
+.panel__content {
+  max-width: 52rem;
+}
+
+.panel__kicker {
+  margin: 0 0 1rem;
+  font-family: var(--font-brand);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--signal);
+}
+
+.panel__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-title);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.panel__lead {
+  margin: 1.25rem 0 0;
+  max-width: 40rem;
+  font-size: var(--fs-lead);
+  line-height: 1.45;
+  color: var(--mist);
+}
+
+.panel__stage {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  container-type: size;
+  perspective: 1400px;
+  perspective-origin: 50% 0%;
+}
+
+.panel__screen {
+  position: relative;
+  margin: 0;
+  /* La captura mide 1600 × 1111: el ancho no pasa de 1,44 veces el alto disponible. */
+  width: min(100cqw, 68rem, 144cqh);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--paper) 14%, transparent),
+    0 40px 120px -30px color-mix(in srgb, var(--signal) 55%, transparent);
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+}
+
+.panel__screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Atribución obligatoria de OSM, legible sobre la captura (guía 3.1). */
+.panel__attribution {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--night) 82%, transparent);
+  color: var(--paper);
+  font-size: var(--fs-small);
+}
+
+@media (min-width: 1024px) {
+  .panel {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .panel__title {
+    font-size: clamp(2.5rem, 4.4vw, 4.5rem);
+  }
+
+  .panel__lead {
+    font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+  }
+
+  .panel__stage {
+    height: 100%;
+  }
+}
+
+@media (max-width: 599px) {
+  .panel__attribution {
+    left: 0.4rem;
+    bottom: 0.4rem;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.625rem;
+  }
+}
