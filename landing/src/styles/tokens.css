@@ -1,0 +1,24 @@
+/* Identidad de la página (diseño, sección 5). Ningún color fuera de este archivo. */
+:root {
+  --night: #0a0e13;
+  --ink: #1b2430;
+  --paper: #f5f3ee;
+  --mist: #8a94a3;
+  --amber: #f5b800;
+  --signal: #4c8dff;
+  --repair: #3dd68c;
+
+  --font-display: "Instrument Serif", "Times New Roman", serif;
+  --font-brand: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+
+  --fs-display: clamp(3.5rem, 11vw, 11rem);
+  --fs-title: clamp(2.5rem, 6vw, 5.5rem);
+  --fs-lead: clamp(1.25rem, 2.2vw, 1.75rem);
+  --fs-body: 1.0625rem;
+  --fs-label: 0.8125rem;
+  --fs-small: 0.75rem;
+
+  --gutter: clamp(1rem, 4vw, 4rem);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
