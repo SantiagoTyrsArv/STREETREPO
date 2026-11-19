@@ -1,0 +1,27 @@
+.frame-sequence {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--night);
+}
+
+.frame-sequence__poster,
+.frame-sequence__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.frame-sequence__poster {
+  object-fit: cover;
+}
+
+.frame-sequence__canvas {
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.frame-sequence__canvas[data-ready="true"] {
+  opacity: 1;
+}
