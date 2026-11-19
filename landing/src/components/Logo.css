@@ -1,0 +1,41 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  line-height: 1;
+}
+
+.logo--stacked {
+  flex-direction: column;
+  gap: 0.35em;
+}
+
+.logo__symbol {
+  width: 1.6em;
+  height: 1.6em;
+  flex: none;
+}
+
+.logo--stacked .logo__symbol {
+  width: 3em;
+  height: 3em;
+}
+
+.logo__wordmark {
+  font-family: var(--font-brand);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.logo--light .logo__wordmark {
+  color: var(--paper);
+}
+
+.logo--dark .logo__wordmark {
+  color: var(--ink);
+}
+
+.logo--mono .logo__wordmark {
+  color: currentColor;
+}
