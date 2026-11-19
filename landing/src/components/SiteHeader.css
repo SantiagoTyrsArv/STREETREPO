@@ -1,0 +1,39 @@
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem var(--gutter);
+  font-size: 1.05rem;
+  mix-blend-mode: difference;
+}
+
+.site-header__brand {
+  text-decoration: none;
+}
+
+.site-header__cta {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  border: 1px solid var(--paper);
+  border-radius: 999px;
+  font-family: var(--font-brand);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--paper);
+  transition:
+    background 0.3s var(--ease-out),
+    color 0.3s var(--ease-out);
+}
+
+.site-header__cta:hover {
+  background: var(--paper);
+  color: var(--night);
+}
