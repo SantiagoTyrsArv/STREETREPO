@@ -1,0 +1,69 @@
+/* Se fija mientras se recorre: debe caber exactamente en una pantalla. */
+.reportar {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(1rem, 3vh, 2.5rem);
+  padding: clamp(5rem, 12vh, 8rem) var(--gutter) clamp(1.5rem, 4vh, 3rem);
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      ellipse 50% 45% at 70% 60%,
+      color-mix(in srgb, var(--amber) 14%, transparent),
+      transparent 70%
+    ),
+    var(--night);
+}
+
+.reportar__content {
+  max-width: 44rem;
+}
+
+.reportar__kicker {
+  margin: 0 0 1rem;
+  font-family: var(--font-brand);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.reportar__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.25rem, 6vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.reportar__lead {
+  margin: 1.25rem 0 0;
+  max-width: 38rem;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  line-height: 1.5;
+  color: var(--mist);
+}
+
+@media (max-width: 767px) {
+  /* En el celular el texto largo no cabe junto al teléfono: queda el titular y el teléfono. */
+  .reportar__lead {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 1024px) {
+  .reportar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: center;
+  }
+}

@@ -1,6 +1,7 @@
 import { useReducedMotion } from "./a11y/useReducedMotion";
 import { Formula } from "./chapters/Formula";
 import { Panel } from "./chapters/Panel";
+import { Reportar } from "./chapters/Reportar";
 import { SEQUENCE_CHAPTERS, SequenceChapter } from "./chapters/SequenceChapter";
 import { DownloadSection } from "./components/DownloadSection";
 import { Logo } from "./components/Logo";
@@ -35,6 +36,7 @@ export function App() {
           before={<Logo variant="stacked" className="apertura__logo" />}
         />
         <SequenceChapter chapter={chapter("problema")} />
+        <Reportar />
         <SequenceChapter chapter={chapter("priorizar")}>
           {(progress, isStill) => <Formula progress={progress} still={isStill} />}
         </SequenceChapter>
