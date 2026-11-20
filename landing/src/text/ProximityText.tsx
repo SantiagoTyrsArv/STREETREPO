@@ -1,9 +1,10 @@
 import gsap from "gsap";
-import { useEffect, useRef, type ElementType, type RefObject } from "react";
+import { Fragment, useEffect, useRef, type ElementType, type RefObject } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
 import { damp } from "../interaction/motion";
 import { pointer, startPointerTracking } from "../interaction/pointer";
 import { trackVisibility } from "../interaction/visibility";
+import { measureCenters } from "./measure";
 import { falloff } from "./proximity";
 import "./ProximityText.css";
 
@@ -45,10 +46,6 @@ function settings(axes: ProximityAxes, t: number): string {
   return `"wght" ${wght}, "wdth" ${wdth}`;
 }
 
-function split(text: string, by: "char" | "word"): string[] {
-  return by === "word" ? text.split(" ") : [...text];
-}
-
 /**
  * Aplica *variable proximity* a las partes de `ref` que cumplen `selector` (letras o palabras ya
  * partidas): cada una se engrosa (y se ensancha) cuanto más cerca está el puntero o el dedo
@@ -87,11 +84,7 @@ export function useProximity(
     // en cada cuadro (en cada cuadro solo se lee la posición del contenedor).
     let centers: { x: number; y: number }[] = [];
     const measure = () => {
-      const box = root.getBoundingClientRect();
-      centers = parts.map((part) => {
-        const r = part.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top };
-      });
+      centers = measureCenters(root, parts);
     };
     measure();
     window.addEventListener("resize", measure, { passive: true });
@@ -172,31 +165,33 @@ export function ProximityText({
     );
   }
 
-  const pieces = split(text, by);
   let index = 0;
+  const part = (piece: string, key: number) => (
+    <span
+      key={key}
+      className="prox__part"
+      data-index={index++}
+      style={mode === "font" ? { fontVariationSettings: settings(axes, 0) } : undefined}
+    >
+      {piece}
+    </span>
+  );
+  const words = text.split(" ");
   return (
     <Tag id={id} className={className}>
       <span className="visually-hidden">{text}</span>
       <span ref={ref} className="prox" aria-hidden="true">
-        {pieces.map((piece, i) => {
-          const gap = by === "word" && i < pieces.length - 1 ? " " : "";
-          if (piece.trim() === "") {
-            return <span key={i}>{piece}</span>;
-          }
-          const n = index++;
-          return (
-            <span key={i}>
-              <span
-                className="prox__part"
-                data-index={n}
-                style={mode === "font" ? { fontVariationSettings: settings(axes, 0) } : undefined}
-              >
-                {piece}
-              </span>
-              {gap}
-            </span>
-          );
-        })}
+        {words.map((word, w) => (
+          <Fragment key={w}>
+            {/* Por letra, las letras de una palabra van juntas: nunca se corta a mitad de palabra. */}
+            {by === "word" ? (
+              part(word, w)
+            ) : (
+              <span className="prox__word">{[...word].map(part)}</span>
+            )}
+            {w < words.length - 1 ? " " : null}
+          </Fragment>
+        ))}
       </span>
     </Tag>
   );

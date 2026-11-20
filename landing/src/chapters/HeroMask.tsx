@@ -88,6 +88,9 @@ export function HeroMask({ progress }: { progress: number }) {
           height="100%"
           mask="url(#hero-mask-letters)"
         />
+        <text className="hero-mask__text hero-mask__outline" {...TEXT_PROPS}>
+          {letters(false)}
+        </text>
       </svg>
     </div>
   );

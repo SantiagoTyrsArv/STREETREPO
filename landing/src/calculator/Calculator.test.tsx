@@ -40,4 +40,12 @@ describe("Calculator", () => {
     expect(section).toHaveAttribute("data-accent", "signal");
     expect(section).toHaveAttribute("data-ambient", "visible");
   });
+
+  it("solo anuncia la urgencia (y la marca de vía), no el desglose ni la nota", () => {
+    render(<Calculator />);
+    const status = screen.getByRole("status");
+    expect(status.textContent).toContain("8,70");
+    expect(status.textContent).not.toContain("pesos por defecto");
+    expect(status.textContent).not.toContain("=");
+  });
 });

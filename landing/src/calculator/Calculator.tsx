@@ -107,12 +107,17 @@ export function Calculator() {
           </div>
         </form>
 
-        <div className="calc__result" role="status">
+        <div className="calc__result">
           <p className="calc__result-label">{copy.resultLabel}</p>
-          <p className="calc__u">
-            <span>{formatDecimal(u)}</span>
-            <small> / 10</small>
-          </p>
+          {/* Solo la urgencia (y la marca de vía) se anuncia: el desglose y la nota se leen al
+              recorrer la página, no en cada paso del deslizador. */}
+          <div role="status">
+            <p className="calc__u">
+              <span>{formatDecimal(u)}</span>
+              <small> / 10</small>
+            </p>
+            {road === "sin-via" ? <p className="calc__flag">{copy.reviewRoad}</p> : null}
+          </div>
           <div className="calc__bar" aria-hidden="true">
             <span style={{ width: `${u * 10}%` }} />
           </div>
@@ -120,7 +125,6 @@ export function Calculator() {
             {formatDecimal(w.s).replace(/0$/, "")} · {s} + {formatDecimal(w.f).replace(/0$/, "")} ·{" "}
             {f} + {formatDecimal(w.p).replace(/0$/, "")} · {formatDecimal(p)} = {formatDecimal(u)}
           </p>
-          {road === "sin-via" ? <p className="calc__flag">{copy.reviewRoad}</p> : null}
           <p className="calc__note">{copy.note}</p>
         </div>
       </div>

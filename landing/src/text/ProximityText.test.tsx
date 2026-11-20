@@ -97,6 +97,14 @@ describe("ProximityText", () => {
     }
   });
 
+  it("por letra no corta una palabra entre líneas", () => {
+    const { container } = render(
+      <ProximityText text="Descargar Street Repo" by="char" axes={{ wght: [700, 900] }} />,
+    );
+    const words = container.querySelectorAll(".prox__word");
+    expect([...words].map((w) => w.textContent)).toEqual(["Descargar", "Street", "Repo"]);
+  });
+
   it("por palabra (párrafos) solo aclara: nunca cambia el grosor", () => {
     const { container } = render(
       <ProximityText text="Una foto y la ubicación" by="word" axes={{ wght: [400, 600] }} />,

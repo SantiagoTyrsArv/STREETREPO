@@ -53,7 +53,8 @@ export function Formula({ progress, still }: FormulaProps) {
 
   useEffect(() => {
     const el = animated.current;
-    if (still || !started || !el) return;
+    // Una vez descifrada no se repite: ScrambleText reescribiría los S, F y P resaltados.
+    if (still || !started || decoded || !el) return;
     const tween = gsap.to(el, {
       duration: 1.2,
       ease: "none",
@@ -63,7 +64,7 @@ export function Formula({ progress, still }: FormulaProps) {
     return () => {
       tween.kill();
     };
-  }, [still, started]);
+  }, [still, started, decoded]);
 
   const style = (from: number) =>
     still

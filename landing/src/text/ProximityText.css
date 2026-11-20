@@ -1,4 +1,8 @@
 /* Las partes no cambian el flujo del texto: solo su grosor o ancho. */
+.prox__word {
+  white-space: nowrap;
+}
+
 .prox__part {
   display: inline-block;
   white-space: pre;

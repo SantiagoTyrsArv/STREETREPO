@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import gsap from "gsap";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { COPY } from "../content/copy";
@@ -47,5 +47,20 @@ describe("relleno de la fórmula", () => {
       container.querySelector(".formula__equation") as HTMLElement
     ).style.getPropertyValue("--fill");
     expect(Number.parseInt(fill, 10) % 5).toBe(0);
+  });
+});
+
+describe("volver a la fórmula", () => {
+  it("no la descifra de nuevo al subir y bajar (conserva S, F y P resaltados)", () => {
+    const to = vi.spyOn(gsap, "to");
+    const { rerender, container } = render(<Formula progress={0.45} still={false} />);
+    const first = scrambles(to)[0]?.[1] as { onComplete: () => void };
+    act(() => first.onComplete());
+    expect(container.querySelectorAll(".formula__var")).toHaveLength(3);
+
+    rerender(<Formula progress={0.1} still={false} />);
+    rerender(<Formula progress={0.45} still={false} />);
+    expect(scrambles(to)).toHaveLength(1);
+    expect(container.querySelectorAll(".formula__var")).toHaveLength(3);
   });
 });

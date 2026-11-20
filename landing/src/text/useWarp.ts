@@ -3,6 +3,7 @@ import { useEffect, type RefObject } from "react";
 import { damp } from "../interaction/motion";
 import { pointer, startPointerTracking } from "../interaction/pointer";
 import { trackVisibility } from "../interaction/visibility";
+import { measureCenters } from "./measure";
 import { warpOffset } from "./warp";
 
 const WARP_LAMBDA = 9;
@@ -22,11 +23,7 @@ export function useWarp(ref: RefObject<HTMLElement>, enabled: boolean, version: 
     const view = trackVisibility(root);
     let centers: { x: number; y: number }[] = [];
     const measure = () => {
-      const box = root.getBoundingClientRect();
-      centers = words.map((w) => {
-        const r = w.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top };
-      });
+      centers = measureCenters(root, words);
     };
     measure();
     window.addEventListener("resize", measure, { passive: true });

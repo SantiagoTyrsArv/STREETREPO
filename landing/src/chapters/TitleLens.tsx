@@ -113,11 +113,24 @@ export function TitleLens({ section }: { section: RefObject<HTMLElement> }) {
         const ascent = m.fontBoundingBoxAscent ?? size * 0.8;
         const descent = m.fontBoundingBoxDescent ?? size * 0.2;
         const halfLeading = (r.height * dpr - (ascent + descent)) / 2;
+        // Cada palabra solo se pinta dentro de la máscara de su línea (como el título real
+        // mientras entra); sin máscara, dentro del título.
+        const clip = (word.closest(".reveal__line-mask") ?? title).getBoundingClientRect();
+        mctx.save();
+        mctx.beginPath();
+        mctx.rect(
+          (clip.left - box.left) * dpr,
+          (clip.top - box.top) * dpr,
+          clip.width * dpr,
+          clip.height * dpr,
+        );
+        mctx.clip();
         mctx.fillText(
           text,
           (r.left - box.left) * dpr,
           (r.top - box.top) * dpr + halfLeading + ascent,
         );
+        mctx.restore();
       });
       ctx.globalCompositeOperation = "destination-in";
       ctx.drawImage(mask, 0, 0);
