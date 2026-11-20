@@ -1,0 +1,41 @@
+/* Capa de noche con «STREET REPO» recortado: la escena se ve solo dentro de las letras. */
+.hero-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.hero-mask__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-mask__night {
+  fill: var(--night);
+}
+
+.hero-mask__text {
+  font-family: var(--font-brand);
+  font-weight: 900;
+  font-variation-settings:
+    "wght" 900,
+    "wdth" 125;
+  font-size: min(9vw, 28vh);
+  letter-spacing: -0.02em;
+}
+
+@media (orientation: portrait) {
+  .hero-mask__text {
+    font-size: min(17vw, 20vh);
+  }
+}
+
+/* Contorno tenue: la forma de las letras se lee aunque la escena sea casi negra al inicio. */
+.hero-mask__outline {
+  fill: none;
+  stroke: color-mix(in srgb, var(--paper) 28%, transparent);
+  stroke-width: 1;
+}

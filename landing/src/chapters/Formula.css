@@ -11,6 +11,34 @@
   color: var(--signal);
 }
 
+/* Contorno con relleno que sube por dentro (--fill 0 % → 100 %) y efecto de datos. */
+.formula__equation--stroke {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--paper);
+  font-variant-numeric: tabular-nums;
+}
+
+.formula__equation--stroke .formula__glyphs {
+  background: linear-gradient(
+    to top,
+    var(--paper) 0 var(--fill, 0%),
+    transparent var(--fill, 0%) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.formula__var {
+  -webkit-text-stroke-color: var(--signal);
+  background: linear-gradient(
+    to top,
+    var(--signal) 0 var(--fill, 0%),
+    transparent var(--fill, 0%) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
 .formula__factors {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));

@@ -1,0 +1,60 @@
+.scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.25rem, 4vh, 2.5rem);
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  transform: translateX(-50%);
+  font-family: var(--font-brand);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--paper);
+  pointer-events: none;
+  animation: scroll-cue-in 1s 0.8s var(--ease-out) both;
+}
+
+/* Una línea por la que cae una gota de luz, en bucle: «hay más abajo». */
+.scroll-cue__track {
+  position: relative;
+  width: 1px;
+  height: 3rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--paper) 25%, transparent);
+}
+
+.scroll-cue__dot {
+  position: absolute;
+  left: -1px;
+  width: 3px;
+  height: 0.9rem;
+  border-radius: 2px;
+  background: var(--amber);
+  animation: scroll-cue-drop 1.8s var(--ease-out) infinite;
+}
+
+@keyframes scroll-cue-drop {
+  from {
+    transform: translateY(-1rem);
+  }
+  to {
+    transform: translateY(3rem);
+  }
+}
+
+@keyframes scroll-cue-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0.75rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue,
+  .scroll-cue__dot {
+    animation: none;
+  }
+}

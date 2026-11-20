@@ -9,3 +9,24 @@
   display: inline-block;
   will-change: transform;
 }
+
+/* Por líneas (SplitText): la máscara deja aire abajo para los descendentes (y, p, g). */
+.reveal__line-mask {
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+.reveal__line {
+  display: block;
+  transform-origin: 0% 100%;
+  will-change: transform, filter;
+}
+
+.reveal__line .reveal__word {
+  will-change: auto;
+}
+
+/* Proximidad en párrafos: la palabra cerca del puntero se aclara hacia el papel (--near 0–1). */
+.reveal__word {
+  color: color-mix(in srgb, var(--paper) calc(var(--near, 0) * 100%), currentColor);
+}

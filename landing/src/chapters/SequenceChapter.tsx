@@ -3,9 +3,12 @@ import { useReducedMotion } from "../a11y/useReducedMotion";
 import { RevealText } from "../components/RevealText";
 import { SEQUENCE_COPY } from "../content/copy";
 import { useDrift } from "../interaction/useDrift";
+import { TitleLens } from "./TitleLens";
 import { useChapterProgress } from "../scroll/useChapterProgress";
 import { FrameSequence } from "../sequence/FrameSequence";
 import type { ChapterId } from "../sequence/types";
+import { ProximityText } from "../text/ProximityText";
+import { KICKER_AXES, LEAD_AXES } from "../text/proximity";
 import "./SequenceChapter.css";
 
 type Accent = "amber" | "signal" | "repair" | "none";
@@ -15,6 +18,8 @@ export interface SequenceChapterConfig {
   /** Largo del recorrido fijado, en % del alto de la ventana. */
   pinLengthVh: number;
   accent: Accent;
+  /** El título hace de lupa sobre la escena (Reparado). */
+  lens?: boolean;
 }
 
 /** Capítulos con escena generada, en el orden del guion (diseño, sección 6). */
@@ -22,7 +27,7 @@ export const SEQUENCE_CHAPTERS: readonly SequenceChapterConfig[] = [
   { id: "apertura", pinLengthVh: 250, accent: "none" },
   { id: "problema", pinLengthVh: 350, accent: "amber" },
   { id: "priorizar", pinLengthVh: 400, accent: "signal" },
-  { id: "reparado", pinLengthVh: 300, accent: "repair" },
+  { id: "reparado", pinLengthVh: 300, accent: "repair", lens: true },
 ];
 
 /** Fracción final del progreso en la que la escena se desvanece hacia la siguiente. */
@@ -36,8 +41,14 @@ interface SequenceChapterProps {
   level?: "h1" | "h2";
   /** Contenido sobre el antetítulo (la apertura muestra el logotipo). */
   before?: ReactNode;
+  /** Contenido al final del texto (la apertura muestra «Ver el video» si existe). */
+  after?: ReactNode;
   /** Texto visible desde la carga (portada), con una entrada propia en lugar del *scroll*. */
   introText?: boolean;
+  /** Capa sobre la escena (la máscara de la portada y su indicador), recibe el progreso. */
+  overlay?: (progress: number, still: boolean) => ReactNode;
+  /** El texto aparece a partir de este progreso (la portada espera a atravesar las letras). */
+  revealAfter?: number;
 }
 
 export function SequenceChapter({
@@ -45,7 +56,10 @@ export function SequenceChapter({
   children,
   level = "h2",
   before,
+  after,
   introText = false,
+  overlay,
+  revealAfter = 0,
 }: SequenceChapterProps) {
   const ref = useRef<HTMLElement>(null);
   const still = useReducedMotion();
@@ -67,6 +81,7 @@ export function SequenceChapter({
     <section
       ref={ref}
       className={`chapter chapter--${chapter.accent}`}
+      id={chapter.id}
       data-accent={chapter.accent}
       aria-labelledby={`${chapter.id}-titulo`}
     >
@@ -87,12 +102,28 @@ export function SequenceChapter({
         </div>
         <div className="chapter__shade" aria-hidden="true" />
       </div>
+      {overlay?.(progress, still)}
       <div
         className={introText ? "chapter__content chapter__content--intro" : "chapter__content"}
-        style={still ? undefined : { opacity: 1 - vanish }}
+        style={
+          still
+            ? undefined
+            : {
+                opacity: Math.min(
+                  1 - vanish,
+                  revealAfter > 0 ? Math.min(1, Math.max(0, (progress - revealAfter) / 0.06)) : 1,
+                ),
+              }
+        }
       >
         {before}
-        <p className="chapter__kicker">{copy.kicker}</p>
+        <ProximityText
+          as="p"
+          className="chapter__kicker"
+          text={copy.kicker}
+          by="char"
+          axes={KICKER_AXES}
+        />
         <RevealText
           as={level}
           id={`${chapter.id}-titulo`}
@@ -106,12 +137,16 @@ export function SequenceChapter({
         <RevealText
           className="chapter__lead"
           text={copy.lead}
+          proximity={LEAD_AXES}
+          split="words"
           progress={progress}
           from={0.3}
           to={0.6}
           still={still || introText}
         />
         {children?.(progress, still)}
+        {after}
+        {chapter.lens && !still ? <TitleLens section={ref} /> : null}
       </div>
     </section>
   );

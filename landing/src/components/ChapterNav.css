@@ -1,0 +1,104 @@
+/* Celular: línea fina arriba con el avance. Escritorio: puntos a la derecha. */
+.chapter-line {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 25;
+  height: 2px;
+  background: color-mix(in srgb, var(--paper) 10%, transparent);
+  pointer-events: none;
+}
+
+.chapter-line span {
+  display: block;
+  height: 100%;
+  background: var(--amber);
+  transform-origin: 0 50%;
+}
+
+.chapter-nav {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .chapter-line {
+    display: none;
+  }
+
+  .chapter-nav {
+    display: block;
+    position: fixed;
+    right: clamp(0.75rem, 1.5vw, 1.5rem);
+    top: 50%;
+    z-index: 25;
+    transform: translateY(-50%);
+  }
+
+  .chapter-nav ol {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* El área clicable es amplia (44 px de alto); el punto visible es pequeño. */
+  .chapter-nav__dot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 44px;
+    height: 32px;
+    text-decoration: none;
+    color: var(--paper);
+  }
+
+  .chapter-nav__dot::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--paper) 45%, transparent);
+    transition:
+      height 0.3s var(--ease-out),
+      background 0.3s var(--ease-out);
+  }
+
+  .chapter-nav__dot[aria-current="true"]::after {
+    height: 22px;
+    border-radius: 3px;
+    background: var(--amber);
+  }
+
+  /* El nombre aparece al pasar el mouse o con el foco del teclado. */
+  .chapter-nav__label {
+    position: absolute;
+    right: 100%;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--night) 85%, transparent);
+    font: 700 var(--fs-small) var(--font-brand);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(0.5rem);
+    transition:
+      opacity 0.2s var(--ease-out),
+      transform 0.2s var(--ease-out);
+    pointer-events: none;
+  }
+
+  .chapter-nav__dot:hover .chapter-nav__label,
+  .chapter-nav__dot:focus-visible .chapter-nav__label {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-nav__dot::after,
+  .chapter-nav__label {
+    transition: none;
+  }
+}

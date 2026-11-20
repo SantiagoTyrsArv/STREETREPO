@@ -4,6 +4,8 @@ import { COPY } from "../content/copy";
 import { useMagnetic } from "../interaction/useMagnetic";
 import { formatSize, type Release } from "../config/release";
 import { QrCode } from "./QrCode";
+import { ProximityText } from "../text/ProximityText";
+import { KICKER_AXES, DOWNLOAD_CTA_AXES, LEAD_AXES } from "../text/proximity";
 import "./DownloadSection.css";
 
 interface DownloadSectionProps {
@@ -21,22 +23,34 @@ export function DownloadSection({ release }: DownloadSectionProps) {
       tabIndex={-1}
       className="download"
       aria-labelledby="descarga-titulo"
-      data-accent="amber"
+      data-accent="repair"
       data-ambient="visible"
     >
       <div className="download__intro">
-        <p className="download__kicker">{copy.kicker}</p>
+        <ProximityText
+          as="p"
+          className="download__kicker"
+          text={copy.kicker}
+          by="char"
+          axes={KICKER_AXES}
+        />
         <h2 id="descarga-titulo" className="download__title">
           {copy.title}
         </h2>
-        <p className="download__lead">{copy.lead}</p>
+        <ProximityText
+          as="p"
+          className="download__lead"
+          text={copy.lead}
+          by="word"
+          axes={LEAD_AXES}
+        />
       </div>
 
       {release ? (
         <div className="download__panel">
           <div className="download__main">
             <a ref={ctaRef} className="download__cta" href={release.apkUrl} download>
-              {copy.cta}
+              <ProximityText text={copy.cta} by="char" axes={DOWNLOAD_CTA_AXES} />
             </a>
             <p className="download__meta">
               Versión {release.version} · {formatSize(release.sizeBytes)} · Android{" "}

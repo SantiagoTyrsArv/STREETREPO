@@ -4,6 +4,8 @@ import { RevealText } from "../components/RevealText";
 import { COPY } from "../content/copy";
 import { useTilt } from "../interaction/useTilt";
 import { useChapterProgress } from "../scroll/useChapterProgress";
+import { ProximityText } from "../text/ProximityText";
+import { KICKER_AXES, LEAD_AXES } from "../text/proximity";
 import "./Panel.css";
 
 /** Largo del recorrido fijado, en % del alto de la ventana. */
@@ -35,6 +37,7 @@ export function Panel() {
   return (
     <section
       ref={ref}
+      id="panel"
       className="panel"
       aria-labelledby="panel-titulo"
       data-accent="signal"
@@ -42,7 +45,13 @@ export function Panel() {
     >
       <div className="panel__glow" style={glowStyle} aria-hidden="true" />
       <div className="panel__content">
-        <p className="panel__kicker">{copy.kicker}</p>
+        <ProximityText
+          as="p"
+          className="panel__kicker"
+          text={copy.kicker}
+          by="char"
+          axes={KICKER_AXES}
+        />
         <RevealText
           as="h2"
           id="panel-titulo"
@@ -56,6 +65,8 @@ export function Panel() {
         <RevealText
           className="panel__lead"
           text={copy.lead}
+          proximity={LEAD_AXES}
+          split="words"
           progress={progress}
           from={0.2}
           to={0.45}

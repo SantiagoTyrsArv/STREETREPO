@@ -9,8 +9,9 @@
   --repair: #3dd68c;
 
   --font-display: "Instrument Serif", "Times New Roman", serif;
-  --font-brand: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+  /* Versiones variables (ejes de grosor y ancho) para los textos que reaccionan al puntero. */
+  --font-brand: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Manrope Variable", "Manrope", "Helvetica Neue", Arial, sans-serif;
 
   --fs-display: clamp(3.5rem, 11vw, 11rem);
   --fs-title: clamp(2.5rem, 6vw, 5.5rem);

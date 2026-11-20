@@ -1,8 +1,5 @@
-import "@fontsource/archivo/700.css";
-import "@fontsource/archivo/800.css";
-import "@fontsource/manrope/400.css";
-import "@fontsource/manrope/500.css";
-import "@fontsource/manrope/600.css";
+import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource-variable/manrope/index.css";
 import "@fontsource/instrument-serif/400.css";
 import "@fontsource/instrument-serif/400-italic.css";
 import "./styles/tokens.css";

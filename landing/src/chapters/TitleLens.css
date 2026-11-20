@@ -1,0 +1,11 @@
+/* La lupa se dibuja encima del título; el título real queda sin relleno (sigue siendo el texto). */
+.title-lens {
+  position: absolute;
+  pointer-events: none;
+}
+
+.chapter__title--lens {
+  color: transparent;
+  /* Contorno fino para definir el borde de las letras sobre la escena. */
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--paper) 45%, transparent);
+}

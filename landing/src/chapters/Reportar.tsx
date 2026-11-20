@@ -4,6 +4,8 @@ import { RevealText } from "../components/RevealText";
 import { COPY } from "../content/copy";
 import { useChapterProgress } from "../scroll/useChapterProgress";
 import { PhoneStage } from "../three/PhoneStage";
+import { ProximityText } from "../text/ProximityText";
+import { KICKER_AXES, LEAD_AXES } from "../text/proximity";
 import "./Reportar.css";
 
 /** Largo del recorrido fijado: cuatro capturas necesitan más recorrido que una escena. */
@@ -18,13 +20,20 @@ export function Reportar() {
   return (
     <section
       ref={ref}
+      id="reportar"
       className="reportar"
       aria-labelledby="reportar-titulo"
       data-accent="amber"
       data-ambient="visible"
     >
       <div className="reportar__content">
-        <p className="reportar__kicker">{copy.kicker}</p>
+        <ProximityText
+          as="p"
+          className="reportar__kicker"
+          text={copy.kicker}
+          by="char"
+          axes={KICKER_AXES}
+        />
         <RevealText
           as="h2"
           id="reportar-titulo"
@@ -38,6 +47,8 @@ export function Reportar() {
         <RevealText
           className="reportar__lead"
           text={copy.lead}
+          proximity={LEAD_AXES}
+          split="words"
           progress={progress}
           from={0.15}
           to={0.35}
