@@ -79,6 +79,32 @@
   will-change: transform, opacity;
 }
 
+/* Inclinación hacia el puntero (useTilt) por encima del giro del scroll de la figura. */
+.panel__tilt {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Reflejo que se desliza al inclinar la captura, como luz sobre una pantalla. */
+.panel__screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in srgb, var(--paper) 12%, transparent) 48%,
+    transparent 66%
+  );
+  transform: translateX(calc(var(--tilt-x, 0) * 35%)) translateY(calc(var(--tilt-y, 0) * 10%));
+  mix-blend-mode: screen;
+}
+
 .panel__screen img {
   display: block;
   width: 100%;

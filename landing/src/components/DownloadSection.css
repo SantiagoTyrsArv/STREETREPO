@@ -74,11 +74,6 @@
   font-weight: 800;
   font-size: 1.05rem;
   text-decoration: none;
-  transition: transform 0.3s var(--ease-out);
-}
-
-.download__cta:hover {
-  transform: translateY(-2px);
 }
 
 .download__meta {
@@ -138,4 +133,43 @@
 
 .download__panel--soon {
   align-items: baseline;
+}
+
+/* Brillo que sigue al cursor dentro del botón (useMagnetic publica --spot-x/--spot-y) y presión
+   al tocar o hacer clic. «scale» es independiente del «transform» del imán. */
+.download__cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition-property: background, color, scale;
+  transition-duration: 0.3s, 0.3s, 0.15s;
+  transition-timing-function: var(--ease-out);
+}
+
+.download__cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    7rem circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--paper) 45%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-out);
+}
+
+.download__cta:hover::before {
+  opacity: 1;
+}
+
+.download__cta:active {
+  scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .download__cta:active {
+    scale: none;
+  }
 }

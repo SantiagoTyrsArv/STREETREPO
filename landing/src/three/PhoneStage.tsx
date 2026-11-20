@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
+import { usePointerTracking } from "../interaction/pointer";
 import { isWebGLAvailable } from "./isWebGLAvailable";
 import type { PhoneScreen } from "./types";
 import "./PhoneStage.css";
@@ -50,6 +51,7 @@ export function PhoneStage({ progress, screens }: PhoneStageProps) {
   const [webgl] = useState(isWebGLAvailable);
   const live = webgl && !still;
   const { ref, near } = useNearViewport(live);
+  usePointerTracking(live && near);
   const index = still ? 0 : screenIndexForProgress(progress, screens.length);
   const current = screens[index];
   if (!current) {

@@ -1,4 +1,7 @@
+import { useRef } from "react";
+import { useReducedMotion } from "../a11y/useReducedMotion";
 import { COPY } from "../content/copy";
+import { useMagnetic } from "../interaction/useMagnetic";
 import { formatSize, type Release } from "../config/release";
 import { QrCode } from "./QrCode";
 import "./DownloadSection.css";
@@ -9,6 +12,9 @@ interface DownloadSectionProps {
 
 export function DownloadSection({ release }: DownloadSectionProps) {
   const copy = COPY.descarga;
+  const ctaRef = useRef<HTMLAnchorElement>(null);
+  const still = useReducedMotion();
+  useMagnetic(ctaRef, Boolean(release) && !still);
   return (
     <section
       id="descarga"
@@ -29,7 +35,7 @@ export function DownloadSection({ release }: DownloadSectionProps) {
       {release ? (
         <div className="download__panel">
           <div className="download__main">
-            <a className="download__cta" href={release.apkUrl} download>
+            <a ref={ctaRef} className="download__cta" href={release.apkUrl} download>
               {copy.cta}
             </a>
             <p className="download__meta">
