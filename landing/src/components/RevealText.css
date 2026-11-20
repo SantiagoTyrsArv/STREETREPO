@@ -9,3 +9,19 @@
   display: inline-block;
   will-change: transform;
 }
+
+/* Por líneas (SplitText): la máscara deja aire abajo para los descendentes (y, p, g). */
+.reveal__line-mask {
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+.reveal__line {
+  display: block;
+  transform-origin: 0% 100%;
+  will-change: transform, filter;
+}
+
+.reveal__line .reveal__word {
+  will-change: auto;
+}

@@ -115,6 +115,7 @@ export function SequenceChapter({
           className="chapter__lead"
           text={copy.lead}
           proximity={LEAD_AXES}
+          split="words"
           progress={progress}
           from={0.3}
           to={0.6}

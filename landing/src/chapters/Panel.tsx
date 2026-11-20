@@ -65,6 +65,7 @@ export function Panel() {
           className="panel__lead"
           text={copy.lead}
           proximity={LEAD_AXES}
+          split="words"
           progress={progress}
           from={0.2}
           to={0.45}
