@@ -1,0 +1,197 @@
+/* «Pruébalo»: sección propia, translúcida al fondo azul (diseño 6.6). */
+.calc {
+  position: relative;
+  display: grid;
+  gap: clamp(2rem, 5vh, 3.5rem);
+  padding: clamp(5rem, 14vh, 9rem) var(--gutter);
+}
+
+.calc__intro {
+  max-width: 46rem;
+}
+
+.calc__kicker {
+  margin: 0 0 1rem;
+  font-family: var(--font-brand);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--signal);
+}
+
+.calc__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-title);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.calc__lead {
+  margin: 1.25rem 0 0;
+  font-size: var(--fs-lead);
+  line-height: 1.45;
+  color: var(--mist);
+}
+
+.calc__panel {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  border: 1px solid color-mix(in srgb, var(--paper) 14%, transparent);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--night) 78%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+@media (min-width: 900px) {
+  .calc__panel {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: center;
+  }
+}
+
+.calc__controls {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.calc__field {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-weight: 600;
+}
+
+.calc__field legend {
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+.calc__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Botones de opción grandes (≥ 44 px) con el radio nativo dentro (teclado y lector intactos). */
+.calc__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.calc__option input {
+  accent-color: var(--signal);
+  margin: 0;
+}
+
+.calc__option:has(input:checked) {
+  border-color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 18%, transparent);
+}
+
+.calc__option:has(input:focus-visible) {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.calc select {
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent);
+  border-radius: 0.75rem;
+  background: var(--ink);
+  color: var(--paper);
+  font: inherit;
+  font-weight: 500;
+}
+
+.calc input[type="range"] {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--signal);
+}
+
+.calc__result-label {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mist);
+}
+
+.calc__u {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-brand);
+  font-weight: 800;
+  font-size: clamp(3.5rem, 9vw, 6.5rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--paper);
+}
+
+.calc__u small {
+  font-size: 0.3em;
+  font-weight: 600;
+  color: var(--mist);
+}
+
+.calc__bar {
+  height: 6px;
+  margin-top: 1.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 12%, transparent);
+  overflow: hidden;
+}
+
+.calc__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--signal);
+  transition: width 0.4s var(--ease-out);
+}
+
+.calc__breakdown {
+  margin: 1rem 0 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--paper);
+}
+
+.calc__flag {
+  display: inline-block;
+  margin: 0.75rem 0 0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 20%, transparent);
+  color: var(--amber);
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+
+.calc__note {
+  margin: 1rem 0 0;
+  font-size: var(--fs-small);
+  color: var(--mist);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calc__bar span {
+    transition: none;
+  }
+}

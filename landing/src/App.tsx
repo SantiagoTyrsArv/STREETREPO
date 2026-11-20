@@ -1,5 +1,6 @@
 import { useReducedMotion } from "./a11y/useReducedMotion";
 import { AmbientBackground } from "./ambient/AmbientBackground";
+import { Calculator } from "./calculator/Calculator";
 import { Formula } from "./chapters/Formula";
 import { HeroMask } from "./chapters/HeroMask";
 import { MASK_UNTIL } from "./chapters/heroMaskScale";
@@ -56,6 +57,7 @@ export function App() {
         <SequenceChapter chapter={chapter("priorizar")}>
           {(progress, isStill) => <Formula progress={progress} still={isStill} />}
         </SequenceChapter>
+        <Calculator />
         <Panel />
         <SequenceChapter chapter={chapter("reparado")} />
         <DownloadSection release={RELEASE} />

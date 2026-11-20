@@ -13,7 +13,16 @@ it("cada sección declara el acento que tiñe el fondo ambiental", () => {
   const sections = screen.getByRole("main").querySelectorAll("section");
   expect(sections.length).toBeGreaterThan(0);
   const accents = [...sections].map((s) => s.getAttribute("data-accent"));
-  expect(accents).toEqual(["none", "amber", "amber", "signal", "signal", "repair", "amber"]);
+  expect(accents).toEqual([
+    "none",
+    "amber",
+    "amber",
+    "signal",
+    "signal",
+    "signal",
+    "repair",
+    "amber",
+  ]);
 });
 
 it("las secciones sin video dejan ver el fondo ambiental", () => {
@@ -21,7 +30,7 @@ it("las secciones sin video dejan ver el fondo ambiental", () => {
   const seeThrough = [...container.querySelectorAll('[data-ambient="visible"]')].map(
     (el) => el.className.split(" ")[0],
   );
-  expect(seeThrough).toEqual(["reportar", "panel", "download", "site-footer"]);
+  expect(seeThrough).toEqual(["reportar", "calc", "panel", "download", "site-footer"]);
 });
 
 afterEach(() => {
