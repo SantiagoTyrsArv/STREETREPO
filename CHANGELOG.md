@@ -14,7 +14,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - App ciudadana: el perfil permite conocer y actualizar los datos (nombre y correo; cambiar el
   correo pide la contraseña actual) y solicitar la supresión de los datos con constancia
   (Ley 1581; decisiones 71 y 92).
-- Página de presentación y descarga `landing/` (en construcción, decisiones 99 a 108): proyecto
+- Página de presentación y descarga `landing/` (en construcción, decisiones 99 a 109): proyecto
   Vite + React con la identidad editorial de la página, la marca nueva (símbolo «SR» con la vía y
   el Galeras, favicon e ícono), el motor de secuencias de cuadros guiado por el *scroll*, los
   capítulos Apertura, Problema, Priorizar y Reparado con sus textos y sus escenas generadas con
@@ -24,6 +24,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Página de presentación: fondo vivo en WebGL que toma el color de cada capítulo y responde al
   mouse y al tacto (lente y onda), escenas que respiran con paralaje, botones con imán y brillo, e
   inclinación del teléfono 3D y del panel; todo se detiene con «reducir movimiento» (decisión 108).
+- Página de presentación: textos vivos (fuentes variables que se engrosan cerca del puntero o del
+  dedo, títulos que entran por líneas y se deforman con el puntero, fórmula U que se descifra y se
+  rellena), portada con la escena dentro de «STREET REPO» e indicador «Desliza», lupa en el título
+  de Reparado, calculadora de urgencia «Pruébalo» con la fórmula real, barra de progreso por
+  capítulos, Descarga en verde y espacio para un video promocional de YouTube (oculto hasta tener
+  el video; decisión 109).
 
 ### Seguridad
 - `dnspython` 2.9.2 y `opentelemetry-api` 1.45.2 (dependencias transitivas del backend) por
