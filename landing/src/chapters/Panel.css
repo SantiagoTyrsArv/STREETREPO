@@ -10,7 +10,7 @@
   padding: clamp(5rem, 12vh, 8rem) var(--gutter) clamp(2rem, 6vh, 4rem);
   overflow: hidden;
   isolation: isolate;
-  background: var(--night);
+  background: transparent;
 }
 
 .panel__glow {

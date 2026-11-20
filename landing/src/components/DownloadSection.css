@@ -7,7 +7,7 @@
       color-mix(in srgb, var(--amber) 16%, transparent),
       transparent 70%
     ),
-    var(--night);
+    transparent;
   outline: none;
 }
 
@@ -47,8 +47,15 @@
   gap: 2.5rem;
   align-items: flex-start;
   margin-top: 3rem;
-  padding-top: 2.5rem;
-  border-top: 1px solid color-mix(in srgb, var(--paper) 18%, transparent);
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  border: 1px solid color-mix(in srgb, var(--paper) 14%, transparent);
+  border-radius: 1.25rem;
+  /* Vidrio esmerilado sobre el fondo vivo: deja ver el movimiento y asegura el contraste de los
+     textos pequeños (≥ 4,5:1). */
+  background: color-mix(in srgb, var(--night) 78%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--paper) 8%, transparent);
 }
 
 .download__main {

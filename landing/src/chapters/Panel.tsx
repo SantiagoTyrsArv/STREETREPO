@@ -30,7 +30,13 @@ export function Panel() {
   const glowStyle = still ? undefined : { transform: `translateY(${(1 - progress) * 30}%)` };
 
   return (
-    <section ref={ref} className="panel" aria-labelledby="panel-titulo">
+    <section
+      ref={ref}
+      className="panel"
+      aria-labelledby="panel-titulo"
+      data-accent="signal"
+      data-ambient="visible"
+    >
       <div className="panel__glow" style={glowStyle} aria-hidden="true" />
       <div className="panel__content">
         <p className="panel__kicker">{copy.kicker}</p>

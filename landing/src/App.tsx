@@ -1,4 +1,5 @@
 import { useReducedMotion } from "./a11y/useReducedMotion";
+import { AmbientBackground } from "./ambient/AmbientBackground";
 import { Formula } from "./chapters/Formula";
 import { Panel } from "./chapters/Panel";
 import { Reportar } from "./chapters/Reportar";
@@ -28,6 +29,7 @@ export function App() {
     <>
       <SkipLink />
       <SiteHeader />
+      <AmbientBackground />
       <main id="contenido">
         <SequenceChapter
           chapter={chapter("apertura")}

@@ -16,7 +16,7 @@
       color-mix(in srgb, var(--amber) 14%, transparent),
       transparent 70%
     ),
-    var(--night);
+    transparent;
 }
 
 .reportar__content {

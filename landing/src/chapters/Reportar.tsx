@@ -16,7 +16,13 @@ export function Reportar() {
   const copy = COPY.reportar;
 
   return (
-    <section ref={ref} className="reportar" aria-labelledby="reportar-titulo">
+    <section
+      ref={ref}
+      className="reportar"
+      aria-labelledby="reportar-titulo"
+      data-accent="amber"
+      data-ambient="visible"
+    >
       <div className="reportar__content">
         <p className="reportar__kicker">{copy.kicker}</p>
         <RevealText

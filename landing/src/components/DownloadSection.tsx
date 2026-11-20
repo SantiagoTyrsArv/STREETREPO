@@ -10,7 +10,14 @@ interface DownloadSectionProps {
 export function DownloadSection({ release }: DownloadSectionProps) {
   const copy = COPY.descarga;
   return (
-    <section id="descarga" tabIndex={-1} className="download" aria-labelledby="descarga-titulo">
+    <section
+      id="descarga"
+      tabIndex={-1}
+      className="download"
+      aria-labelledby="descarga-titulo"
+      data-accent="amber"
+      data-ambient="visible"
+    >
       <div className="download__intro">
         <p className="download__kicker">{copy.kicker}</p>
         <h2 id="descarga-titulo" className="download__title">
