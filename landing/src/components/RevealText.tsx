@@ -1,4 +1,5 @@
-import { Fragment, type ElementType } from "react";
+import { Fragment, useRef, type ElementType } from "react";
+import { useProximity, type ProximityAxes } from "../text/ProximityText";
 import "./RevealText.css";
 
 interface RevealTextProps {
@@ -13,6 +14,8 @@ interface RevealTextProps {
   className?: string;
   /** Sin animación: el texto aparece completo. */
   still?: boolean;
+  /** *Variable proximity* por palabra (textos de apoyo). */
+  proximity?: ProximityAxes;
 }
 
 function clamp01(value: number): number {
@@ -29,7 +32,14 @@ export function RevealText({
   id,
   className,
   still,
+  proximity,
 }: RevealTextProps) {
+  const ref = useRef<HTMLElement>(null);
+  useProximity(ref, {
+    selector: ".reveal__word",
+    axes: proximity ?? { wght: [400, 400] },
+    enabled: Boolean(proximity) && !still,
+  });
   const classes = ["reveal", className].filter(Boolean).join(" ");
   if (still) {
     return (
@@ -41,7 +51,7 @@ export function RevealText({
   const words = text.split(" ");
   const span = (to - from) / words.length;
   return (
-    <Tag id={id} className={classes}>
+    <Tag ref={ref} id={id} className={classes}>
       {words.map((word, i) => {
         const local = clamp01((progress - from - i * span * 0.6) / (span * 2));
         return (

@@ -6,6 +6,8 @@ import { useDrift } from "../interaction/useDrift";
 import { useChapterProgress } from "../scroll/useChapterProgress";
 import { FrameSequence } from "../sequence/FrameSequence";
 import type { ChapterId } from "../sequence/types";
+import { ProximityText } from "../text/ProximityText";
+import { KICKER_AXES, LEAD_AXES } from "../text/proximity";
 import "./SequenceChapter.css";
 
 type Accent = "amber" | "signal" | "repair" | "none";
@@ -92,7 +94,13 @@ export function SequenceChapter({
         style={still ? undefined : { opacity: 1 - vanish }}
       >
         {before}
-        <p className="chapter__kicker">{copy.kicker}</p>
+        <ProximityText
+          as="p"
+          className="chapter__kicker"
+          text={copy.kicker}
+          by="char"
+          axes={KICKER_AXES}
+        />
         <RevealText
           as={level}
           id={`${chapter.id}-titulo`}
@@ -106,6 +114,7 @@ export function SequenceChapter({
         <RevealText
           className="chapter__lead"
           text={copy.lead}
+          proximity={LEAD_AXES}
           progress={progress}
           from={0.3}
           to={0.6}

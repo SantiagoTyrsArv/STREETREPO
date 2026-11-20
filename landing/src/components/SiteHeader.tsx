@@ -3,6 +3,8 @@ import { useReducedMotion } from "../a11y/useReducedMotion";
 import { COPY } from "../content/copy";
 import { useMagnetic } from "../interaction/useMagnetic";
 import { Logo } from "./Logo";
+import { ProximityText } from "../text/ProximityText";
+import { HEADER_CTA_AXES } from "../text/proximity";
 import "./SiteHeader.css";
 
 export function SiteHeader() {
@@ -14,7 +16,7 @@ export function SiteHeader() {
         <Logo variant="horizontal" />
       </a>
       <a ref={ctaRef} className="site-header__cta" href="#descarga">
-        {COPY.header.download}
+        <ProximityText text={COPY.header.download} by="char" axes={HEADER_CTA_AXES} />
       </a>
     </header>
   );
