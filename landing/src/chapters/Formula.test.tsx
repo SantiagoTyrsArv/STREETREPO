@@ -39,3 +39,13 @@ describe("Formula", () => {
     expect(vars.scrambleText.text).toBe(COPY.formula);
   });
 });
+
+describe("relleno de la fórmula", () => {
+  it("sube en pasos de 5 % (no repinta en cada cuadro de scroll)", () => {
+    const { container } = render(<Formula progress={0.5133} still={false} />);
+    const fill = (
+      container.querySelector(".formula__equation") as HTMLElement
+    ).style.getPropertyValue("--fill");
+    expect(Number.parseInt(fill, 10) % 5).toBe(0);
+  });
+});

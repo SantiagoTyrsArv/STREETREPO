@@ -25,3 +25,8 @@
 .reveal__line .reveal__word {
   will-change: auto;
 }
+
+/* Proximidad en párrafos: la palabra cerca del puntero se aclara hacia el papel (--near 0–1). */
+.reveal__word {
+  color: color-mix(in srgb, var(--paper) calc(var(--near, 0) * 100%), currentColor);
+}

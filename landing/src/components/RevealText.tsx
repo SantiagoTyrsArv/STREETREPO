@@ -19,7 +19,7 @@ interface RevealTextProps {
   className?: string;
   /** Sin animación: el texto aparece completo. */
   still?: boolean;
-  /** *Variable proximity* por palabra (textos de apoyo). */
+  /** Proximidad por palabra (textos de apoyo): las palabras cerca del puntero se aclaran. */
   proximity?: ProximityAxes;
   /** Por líneas desde una máscara (títulos) o por palabras (textos de apoyo). */
   split?: "lines" | "words";
@@ -65,6 +65,7 @@ export function RevealText({
     selector: ".reveal__word",
     axes: proximity ?? { wght: [400, 400] },
     enabled: Boolean(proximity) && !still,
+    mode: "glow",
   });
   useWarp(ref, !still && typeof Tag === "string" && TITLE_TAGS.has(Tag), version);
 

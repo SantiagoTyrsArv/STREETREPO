@@ -29,10 +29,19 @@ interface ProximityTextProps {
 /** Respuesta del grosor (1/s): ágil al acercarse, sin parpadeos. */
 const PROXIMITY_LAMBDA = 8;
 
+/**
+ * Pasos de cada eje: el navegador dibuja de nuevo las letras con cada valor distinto, así que se
+ * escalonan (a la vista sigue siendo progresivo y casi ningún cuadro cambia algo).
+ */
+const WGHT_STEP = 50;
+const WDTH_STEP = 5;
+
+const snap = (value: number, step: number) => Math.round(value / step) * step;
+
 function settings(axes: ProximityAxes, t: number): string {
-  const wght = Math.round(axes.wght[0] + (axes.wght[1] - axes.wght[0]) * t);
+  const wght = snap(axes.wght[0] + (axes.wght[1] - axes.wght[0]) * t, WGHT_STEP);
   if (!axes.wdth) return `"wght" ${wght}`;
-  const wdth = Math.round(axes.wdth[0] + (axes.wdth[1] - axes.wdth[0]) * t);
+  const wdth = snap(axes.wdth[0] + (axes.wdth[1] - axes.wdth[0]) * t, WDTH_STEP);
   return `"wght" ${wght}, "wdth" ${wdth}`;
 }
 
@@ -47,14 +56,29 @@ function split(text: string, by: "char" | "word"): string[] {
  */
 export function useProximity(
   ref: RefObject<HTMLElement>,
-  { selector, axes, enabled }: { selector: string; axes: ProximityAxes; enabled: boolean },
+  {
+    selector,
+    axes,
+    enabled,
+    mode = "font",
+  }: {
+    selector: string;
+    axes: ProximityAxes;
+    enabled: boolean;
+    /**
+     * «font»: cambia grosor y ancho (textos cortos). «glow»: solo aclara la palabra con `--near`
+     * (0–1). En párrafos el grosor obliga a recomponer todo el texto en cada cuadro y traba el
+     * celular; el brillo es solo pintura.
+     */
+    mode?: "font" | "glow";
+  },
 ): void {
   const axesKey = JSON.stringify(axes);
   useEffect(() => {
     const root = ref.current;
     if (!enabled || !root) return;
     const ax = JSON.parse(axesKey) as ProximityAxes;
-    const rest = settings(ax, 0);
+    const rest = mode === "glow" ? "" : settings(ax, 0);
     const parts = [...root.querySelectorAll<HTMLElement>(selector)];
     if (parts.length === 0) return;
     const stopTracking = startPointerTracking();
@@ -73,9 +97,11 @@ export function useProximity(
     window.addEventListener("resize", measure, { passive: true });
     const amount = parts.map(() => 0);
     const written = parts.map(() => rest);
-    parts.forEach((part) => {
-      part.style.fontVariationSettings = rest;
-    });
+    if (mode === "font") {
+      parts.forEach((part) => {
+        part.style.fontVariationSettings = rest;
+      });
+    }
 
     const tick = (_time: number, deltaMs: number) => {
       if (!view.visible) return;
@@ -93,10 +119,15 @@ export function useProximity(
         let next = damp(amount[i] as number, goal, PROXIMITY_LAMBDA, dt);
         if (goal === 0 && next < 0.001) next = 0;
         amount[i] = next;
-        const value = settings(ax, next);
+        const value = mode === "glow" ? (next === 0 ? "" : next.toFixed(2)) : settings(ax, next);
         if (value !== written[i]) {
           written[i] = value;
-          part.style.fontVariationSettings = value;
+          if (mode === "glow") {
+            if (value === "") part.style.removeProperty("--near");
+            else part.style.setProperty("--near", value);
+          } else {
+            part.style.fontVariationSettings = value;
+          }
         }
       });
     };
@@ -109,9 +140,10 @@ export function useProximity(
       window.removeEventListener("resize", measure);
       parts.forEach((part) => {
         part.style.fontVariationSettings = "";
+        part.style.removeProperty("--near");
       });
     };
-  }, [ref, selector, axesKey, enabled]);
+  }, [ref, selector, axesKey, enabled, mode]);
 }
 
 /**
@@ -128,8 +160,9 @@ export function ProximityText({
 }: ProximityTextProps) {
   const still = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
-  const rest = settings(axes, 0);
-  useProximity(ref, { selector: "[data-index]", axes, enabled: !still });
+  // Por palabra son párrafos: solo brillo (el grosor recompondría todo el párrafo en cada cuadro).
+  const mode = by === "word" ? "glow" : "font";
+  useProximity(ref, { selector: "[data-index]", axes, enabled: !still, mode });
 
   if (still) {
     return (
@@ -153,7 +186,11 @@ export function ProximityText({
           const n = index++;
           return (
             <span key={i}>
-              <span className="prox__part" data-index={n} style={{ fontVariationSettings: rest }}>
+              <span
+                className="prox__part"
+                data-index={n}
+                style={mode === "font" ? { fontVariationSettings: settings(axes, 0) } : undefined}
+              >
                 {piece}
               </span>
               {gap}

@@ -84,7 +84,7 @@ export function Formula({ progress, still }: FormulaProps) {
       ) : (
         <p
           className="formula__equation formula__equation--stroke"
-          style={{ ...style(FORMULA_FROM), ["--fill" as string]: `${Math.round(fill * 100)}%` }}
+          style={{ ...style(FORMULA_FROM), ["--fill" as string]: `${Math.round(fill * 20) * 5}%` }}
         >
           <span className="visually-hidden">{COPY.formula}</span>
           {/* GSAP escribe el descifrado en este nodo; al terminar, React lo reemplaza entero (otra
