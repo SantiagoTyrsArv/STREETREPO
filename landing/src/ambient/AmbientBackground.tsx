@@ -12,6 +12,7 @@ import {
   type AmbientTokens,
   type Rgb,
 } from "./palette";
+import { advanceTime } from "./clock";
 import { FRAGMENT_SOURCE, VERTEX_SOURCE } from "./shader";
 import "./AmbientBackground.css";
 
@@ -137,7 +138,7 @@ export function AmbientBackground() {
     const ripple = { x: 0, y: 0, start: -Infinity, seen: -1 };
     let seeThroughVisible = 0;
     let firstFrame = true;
-    const start = performance.now();
+    let clock = 0;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -199,7 +200,8 @@ export function AmbientBackground() {
       const age = (now - ripple.start) / 1000;
 
       const { gl, uniforms } = scene;
-      gl.uniform1f(uniforms.time, (now - start) / 1000);
+      clock = advanceTime(clock, dt);
+      gl.uniform1f(uniforms.time, clock);
       gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
       gl.uniform2f(uniforms.pointer, smooth.x, smooth.y);
       gl.uniform1f(uniforms.strength, smooth.strength);

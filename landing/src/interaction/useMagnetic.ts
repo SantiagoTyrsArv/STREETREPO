@@ -18,8 +18,12 @@ export function useMagnetic(ref: RefObject<HTMLElement>, enabled: boolean): void
     if (!enabled || !el || !window.matchMedia(FINE_POINTER).matches) return;
     const target = { x: 0, y: 0 };
     const current = { x: 0, y: 0 };
+    // Sin transform en línea el botón ya está en reposo: no hace falta escribirlo.
+    let written = `translate(${px(0)}, ${px(0)})`;
 
     const onMove = (event: PointerEvent) => {
+      // En portátiles con pantalla táctil, el dedo no debe arrastrar el botón.
+      if (event.pointerType !== "mouse") return;
       const rect = el.getBoundingClientRect();
       const offset = magnetOffset(
         event.clientX - (rect.left + rect.width / 2),
@@ -42,7 +46,12 @@ export function useMagnetic(ref: RefObject<HTMLElement>, enabled: boolean): void
       const dt = Math.min(deltaMs / 1000, 0.1);
       current.x = damp(current.x, target.x, MAGNET_LAMBDA, dt);
       current.y = damp(current.y, target.y, MAGNET_LAMBDA, dt);
-      el.style.transform = `translate(${px(current.x)}, ${px(current.y)})`;
+      const next = `translate(${px(current.x)}, ${px(current.y)})`;
+      // En reposo el valor no cambia: no se toca el DOM.
+      if (next !== written) {
+        written = next;
+        el.style.transform = next;
+      }
     };
 
     window.addEventListener("pointermove", onMove, { passive: true });

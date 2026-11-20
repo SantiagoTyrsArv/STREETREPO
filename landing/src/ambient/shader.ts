@@ -15,7 +15,11 @@ void main() {
 `;
 
 export const FRAGMENT_SOURCE = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
 precision mediump float;
+#endif
 
 uniform float u_time;
 uniform vec2 u_resolution;
@@ -87,8 +91,8 @@ void main() {
 
   // La luz viene del lado de los visuales: el texto va a la izquierda en pantallas anchas y
   // arriba en el celular, así que esa zona queda en penumbra y conserva el contraste.
-  float side = aspect >= 1.0 ? smoothstep(0.25, 0.85, uv.x) : smoothstep(0.7, 0.2, uv.y);
-  float light = 0.06 + 0.94 * side;
+  float side = aspect >= 1.0 ? smoothstep(0.5, 0.95, uv.x) : smoothstep(0.45, 0.05, uv.y);
+  float light = 0.02 + 0.98 * side;
 
   // Mucha noche y tinta; el acento solo en las crestas más altas.
   vec3 col = u_colors[0];
@@ -110,7 +114,7 @@ void main() {
   col = mix(u_colors[0], col, u_veil);
 
   // Estela de luz del puntero y del toque, por encima del velo para que se sienta la respuesta.
-  col += u_colors[3] * (lens * 0.16 + ring * 0.4);
+  col += u_colors[3] * (lens * 0.16 + ring * 0.4) * light;
 
   // Tramado mínimo para que el degradado no se vea en escalones.
   col += (hash(gl_FragCoord.xy + t) - 0.5) / 255.0;

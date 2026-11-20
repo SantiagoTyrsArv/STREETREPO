@@ -1,6 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import gsap from "gsap";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mockIntersection } from "../test/intersection";
 import { useDrift } from "./useDrift";
 
 type Tick = (time: number, deltaMs: number) => void;
@@ -18,6 +19,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -69,6 +71,38 @@ describe("useDrift", () => {
     el.style.transform = "translate3d(3px, 2px, 0)";
     rerender({ on: false });
     expect(remove).toHaveBeenCalledWith(tick);
+    expect(el.style.transform).toBe("");
+  });
+
+  it("en reposo no vuelve a escribir estilos", () => {
+    renderHook(() => useDrift({ current: el }, { enabled: true }));
+    const tick = lastTick();
+    for (let i = 0; i < 120; i++) tick(i / 60, 16);
+    el.style.transform = "translate3d(7px, 7px, 0px)";
+    for (let i = 0; i < 10; i++) tick(i / 60, 16);
+    expect(el.style.transform).toBe("translate3d(7px, 7px, 0px)");
+  });
+
+  it("no lee el tamaño del elemento en cada cuadro", () => {
+    const reads = vi.fn(() => 1000);
+    const sized = document.createElement("div");
+    Object.defineProperty(sized, "offsetWidth", { get: reads });
+    Object.defineProperty(sized, "offsetHeight", { get: reads });
+    renderHook(() => useDrift({ current: sized }, { enabled: true }));
+    const tick = lastTick();
+    window.dispatchEvent(
+      new PointerEvent("pointermove", { clientX: 10, clientY: 10, pointerType: "mouse" }),
+    );
+    for (let i = 0; i < 60; i++) tick(i / 60, 16);
+    expect(reads.mock.calls.length).toBeLessThanOrEqual(2);
+  });
+
+  it("fuera de pantalla no trabaja", () => {
+    const io = mockIntersection();
+    renderHook(() => useDrift({ current: el }, { enabled: true }));
+    const tick = lastTick();
+    io.set(false);
+    for (let i = 0; i < 60; i++) tick(i / 60, 16);
     expect(el.style.transform).toBe("");
   });
 });

@@ -50,15 +50,26 @@ function onMove(event: PointerEvent): void {
   state.active = true;
 }
 
+function markTap(): void {
+  state.tap = { x: state.x, y: state.y, time: performance.now() };
+}
+
 function onDown(event: PointerEvent): void {
   place(event);
   state.speed = 0;
   state.active = true;
-  state.tap = { x: state.x, y: state.y, time: performance.now() };
+  // El clic cuenta al presionar. Un dedo puede estar empezando un scroll: su toque se confirma al
+  // levantarlo (si el navegador lo convierte en scroll, llega «pointercancel» y no hay toque).
+  if (event.pointerType === "mouse") {
+    markTap();
+  }
 }
 
 function onUp(event: PointerEvent): void {
   if (event.pointerType !== "mouse") {
+    if (state.active) {
+      markTap();
+    }
     state.active = false;
   }
 }

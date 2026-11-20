@@ -25,13 +25,24 @@ describe("pointer", () => {
     expect(pointer).toMatchObject({ x: 0, y: 0, active: true, touch: false });
   });
 
-  it("un toque activa, marca el punto tocado y se suelta al levantar el dedo", () => {
+  it("un toque activa, se suelta al levantar el dedo y entonces marca el punto tocado", () => {
     fire("pointerdown", { clientX: 800, clientY: 0, pointerType: "touch" });
-    expect(pointer).toMatchObject({ active: true, touch: true });
-    expect(pointer.tap).toMatchObject({ x: 1, y: -1 });
+    expect(pointer).toMatchObject({ active: true, touch: true, tap: null });
 
     fire("pointerup", { clientX: 800, clientY: 0, pointerType: "touch" });
     expect(pointer.active).toBe(false);
+    expect(pointer.tap).toMatchObject({ x: 1, y: -1 });
+  });
+
+  it("deslizar el dedo para hacer scroll no cuenta como toque (no abre onda)", () => {
+    fire("pointerdown", { clientX: 200, clientY: 400, pointerType: "touch" });
+    fire("pointercancel", { pointerType: "touch" });
+    expect(pointer.tap).toBeNull();
+  });
+
+  it("un clic del mouse marca el punto al presionar", () => {
+    fire("pointerdown", { clientX: 400, clientY: 300, pointerType: "mouse" });
+    expect(pointer.tap).toMatchObject({ x: 0, y: 0 });
   });
 
   it("un toque cancelado por el scroll del navegador también suelta", () => {

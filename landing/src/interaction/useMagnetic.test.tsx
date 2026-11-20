@@ -83,4 +83,23 @@ describe("useMagnetic", () => {
     unmount();
     expect(el.style.transform).toBe("");
   });
+
+  it("en reposo no vuelve a escribir estilos", () => {
+    mockFinePointer(true);
+    renderHook(() => useMagnetic({ current: el }, true));
+    settle();
+    el.style.transform = "translate(9px, 9px)";
+    settle();
+    expect(el.style.transform).toBe("translate(9px, 9px)");
+  });
+
+  it("un dedo en una pantalla táctil con mouse no mueve el botón", () => {
+    mockFinePointer(true);
+    renderHook(() => useMagnetic({ current: el }, true));
+    window.dispatchEvent(
+      new PointerEvent("pointermove", { clientX: 190, clientY: 120, pointerType: "touch" }),
+    );
+    settle();
+    expect(el.style.transform).toBe("");
+  });
 });

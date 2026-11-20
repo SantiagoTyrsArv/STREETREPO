@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { SRGBColorSpace, type Group, type Texture } from "three";
 import { damp, tiltFromPointer } from "../interaction/motion";
 import { pointer } from "../interaction/pointer";
+import { phoneWakeKey } from "./phoneWake";
 import type { PhoneScreen } from "./types";
 
 /** Proporción de las capturas (1080 × 2264). */
@@ -30,10 +31,12 @@ interface PhoneModelProps {
   progress: number;
   screens: readonly PhoneScreen[];
   index: number;
+  /** Si el lienzo está en pantalla: fuera de ella el puntero no lo despierta. */
+  isVisible: () => boolean;
 }
 
 /** Teléfono hecho en código (sin modelos externos) con la captura como textura de la pantalla. */
-export function PhoneModel({ progress, screens, index }: PhoneModelProps) {
+export function PhoneModel({ progress, screens, index, isVisible }: PhoneModelProps) {
   const textures = useTexture(screens.map((s) => s.src)) as Texture[];
   useMemo(() => {
     for (const texture of textures) {
@@ -47,17 +50,17 @@ export function PhoneModel({ progress, screens, index }: PhoneModelProps) {
   const tiltRef = useRef<Group>(null);
   const invalidate = useThree((state) => state.invalidate);
   useEffect(() => {
-    let last = "";
+    let last: string | null = null;
     const wake = () => {
-      const now = `${pointer.active}:${pointer.x}:${pointer.y}`;
-      if (now !== last) {
-        last = now;
+      const now = phoneWakeKey(isVisible(), pointer);
+      if (now !== null && now !== last) {
         invalidate();
       }
+      last = now;
     };
     gsap.ticker.add(wake);
     return () => gsap.ticker.remove(wake);
-  }, [invalidate]);
+  }, [invalidate, isVisible]);
   useFrame((_state, delta) => {
     const group = tiltRef.current;
     if (!group) return;

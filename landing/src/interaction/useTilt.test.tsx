@@ -1,6 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import gsap from "gsap";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mockIntersection } from "../test/intersection";
 import { useTilt } from "./useTilt";
 
 type Tick = (time: number, deltaMs: number) => void;
@@ -14,6 +15,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -56,5 +58,21 @@ describe("useTilt", () => {
     window.dispatchEvent(new PointerEvent("pointerup", { pointerType: "touch" }));
     settle();
     expect(el.style.transform).toBe("perspective(1200px) rotateX(0deg) rotateY(0deg)");
+  });
+
+  it("en reposo no vuelve a escribir estilos", () => {
+    renderHook(() => useTilt({ current: el }, { enabled: true }));
+    settle();
+    el.style.transform = "rotate(1deg)";
+    settle();
+    expect(el.style.transform).toBe("rotate(1deg)");
+  });
+
+  it("fuera de pantalla no trabaja", () => {
+    const io = mockIntersection();
+    renderHook(() => useTilt({ current: el }, { enabled: true }));
+    io.set(false);
+    settle();
+    expect(el.style.transform).toBe("");
   });
 });
