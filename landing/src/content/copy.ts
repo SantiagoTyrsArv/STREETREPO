@@ -22,6 +22,7 @@ export const COPY = {
     download: "Descargar",
   },
   skipLink: "Saltar a la descarga",
+  scrollCue: "Desliza",
   apertura: {
     kicker: "Pasto, Nariño",
     title: "Cada calle cuenta.",

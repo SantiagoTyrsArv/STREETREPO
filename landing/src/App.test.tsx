@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
+import { mockReducedMotion } from "./test/matchMedia";
 import { App } from "./App";
 
 it("tiene una región principal", () => {
@@ -21,4 +22,20 @@ it("las secciones sin video dejan ver el fondo ambiental", () => {
     (el) => el.className.split(" ")[0],
   );
   expect(seeThrough).toEqual(["reportar", "panel", "download", "site-footer"]);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+it("la portada empieza enmascarada con el indicador de scroll", () => {
+  const { container } = render(<App />);
+  expect(container.querySelector(".hero-mask")).not.toBeNull();
+  expect(screen.getByText("Desliza")).toBeInTheDocument();
+});
+
+it("con movimiento reducido la portada no tiene máscara", () => {
+  mockReducedMotion(true);
+  const { container } = render(<App />);
+  expect(container.querySelector(".hero-mask")).toBeNull();
 });

@@ -3,6 +3,7 @@ import { useReducedMotion } from "../a11y/useReducedMotion";
 import { RevealText } from "../components/RevealText";
 import { SEQUENCE_COPY } from "../content/copy";
 import { useDrift } from "../interaction/useDrift";
+import { TitleLens } from "./TitleLens";
 import { useChapterProgress } from "../scroll/useChapterProgress";
 import { FrameSequence } from "../sequence/FrameSequence";
 import type { ChapterId } from "../sequence/types";
@@ -17,6 +18,8 @@ export interface SequenceChapterConfig {
   /** Largo del recorrido fijado, en % del alto de la ventana. */
   pinLengthVh: number;
   accent: Accent;
+  /** El título hace de lupa sobre la escena (Reparado). */
+  lens?: boolean;
 }
 
 /** Capítulos con escena generada, en el orden del guion (diseño, sección 6). */
@@ -24,7 +27,7 @@ export const SEQUENCE_CHAPTERS: readonly SequenceChapterConfig[] = [
   { id: "apertura", pinLengthVh: 250, accent: "none" },
   { id: "problema", pinLengthVh: 350, accent: "amber" },
   { id: "priorizar", pinLengthVh: 400, accent: "signal" },
-  { id: "reparado", pinLengthVh: 300, accent: "repair" },
+  { id: "reparado", pinLengthVh: 300, accent: "repair", lens: true },
 ];
 
 /** Fracción final del progreso en la que la escena se desvanece hacia la siguiente. */
@@ -40,6 +43,10 @@ interface SequenceChapterProps {
   before?: ReactNode;
   /** Texto visible desde la carga (portada), con una entrada propia en lugar del *scroll*. */
   introText?: boolean;
+  /** Capa sobre la escena (la máscara de la portada y su indicador), recibe el progreso. */
+  overlay?: (progress: number, still: boolean) => ReactNode;
+  /** El texto aparece a partir de este progreso (la portada espera a atravesar las letras). */
+  revealAfter?: number;
 }
 
 export function SequenceChapter({
@@ -48,6 +55,8 @@ export function SequenceChapter({
   level = "h2",
   before,
   introText = false,
+  overlay,
+  revealAfter = 0,
 }: SequenceChapterProps) {
   const ref = useRef<HTMLElement>(null);
   const still = useReducedMotion();
@@ -89,9 +98,19 @@ export function SequenceChapter({
         </div>
         <div className="chapter__shade" aria-hidden="true" />
       </div>
+      {overlay?.(progress, still)}
       <div
         className={introText ? "chapter__content chapter__content--intro" : "chapter__content"}
-        style={still ? undefined : { opacity: 1 - vanish }}
+        style={
+          still
+            ? undefined
+            : {
+                opacity: Math.min(
+                  1 - vanish,
+                  revealAfter > 0 ? Math.min(1, Math.max(0, (progress - revealAfter) / 0.06)) : 1,
+                ),
+              }
+        }
       >
         {before}
         <ProximityText
@@ -122,6 +141,7 @@ export function SequenceChapter({
           still={still || introText}
         />
         {children?.(progress, still)}
+        {chapter.lens && !still ? <TitleLens section={ref} /> : null}
       </div>
     </section>
   );

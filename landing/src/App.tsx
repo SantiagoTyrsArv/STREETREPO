@@ -1,11 +1,14 @@
 import { useReducedMotion } from "./a11y/useReducedMotion";
 import { AmbientBackground } from "./ambient/AmbientBackground";
 import { Formula } from "./chapters/Formula";
+import { HeroMask } from "./chapters/HeroMask";
+import { MASK_UNTIL } from "./chapters/heroMaskScale";
 import { Panel } from "./chapters/Panel";
 import { Reportar } from "./chapters/Reportar";
 import { SEQUENCE_CHAPTERS, SequenceChapter } from "./chapters/SequenceChapter";
 import { DownloadSection } from "./components/DownloadSection";
 import { Logo } from "./components/Logo";
+import { ScrollCue } from "./components/ScrollCue";
 import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
 import { SkipLink } from "./components/SkipLink";
@@ -35,6 +38,17 @@ export function App() {
           chapter={chapter("apertura")}
           level="h1"
           introText
+          revealAfter={MASK_UNTIL * 0.9}
+          overlay={(progress, isStill) =>
+            isStill ? (
+              <ScrollCue />
+            ) : (
+              <>
+                <HeroMask progress={progress} />
+                <ScrollCue />
+              </>
+            )
+          }
           before={<Logo variant="stacked" className="apertura__logo" />}
         />
         <SequenceChapter chapter={chapter("problema")} />
