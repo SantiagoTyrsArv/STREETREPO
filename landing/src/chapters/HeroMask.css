@@ -4,7 +4,8 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  will-change: transform, opacity;
+  /* No se fija la capa: debe dibujarse de nuevo a cada escala (fijarla dejaba un trozo
+     pixelado al volver a la portada desde abajo). */
 }
 
 .hero-mask__svg {
