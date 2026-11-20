@@ -3,7 +3,12 @@
   gap: 0.75rem;
   padding: 3rem var(--gutter) 3.5rem;
   border-top: 1px solid color-mix(in srgb, var(--paper) 12%, transparent);
-  background: var(--night);
+  /* Velo que se funde hacia abajo: el fondo vivo se apaga y los textos pequeños se leen. */
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--night) 55%, transparent),
+    color-mix(in srgb, var(--night) 85%, transparent) 60%
+  );
   font-size: var(--fs-small);
   color: var(--mist);
 }

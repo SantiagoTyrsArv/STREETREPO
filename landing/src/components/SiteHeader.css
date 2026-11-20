@@ -28,12 +28,48 @@
   text-transform: uppercase;
   text-decoration: none;
   color: var(--paper);
-  transition:
-    background 0.3s var(--ease-out),
-    color 0.3s var(--ease-out);
 }
 
 .site-header__cta:hover {
   background: var(--paper);
   color: var(--night);
+}
+
+/* Brillo que sigue al cursor dentro del botón (useMagnetic publica --spot-x/--spot-y) y presión
+   al tocar o hacer clic. «scale» es independiente del «transform» del imán. */
+.site-header__cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition-property: background, color, scale;
+  transition-duration: 0.3s, 0.3s, 0.15s;
+  transition-timing-function: var(--ease-out);
+}
+
+.site-header__cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    7rem circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--amber) 45%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-out);
+}
+
+.site-header__cta:hover::before {
+  opacity: 1;
+}
+
+.site-header__cta:active {
+  scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header__cta:active {
+    scale: none;
+  }
 }

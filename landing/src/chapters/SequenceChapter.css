@@ -13,6 +13,39 @@
   will-change: opacity, filter, transform;
 }
 
+/* Respiración: un zoom muy lento que nunca deja ver los bordes (escala ≥ 1,03, más que el
+   paralaje máximo de 1,5 % por lado). */
+.chapter__breath,
+.chapter__drift {
+  position: absolute;
+  inset: 0;
+}
+
+.chapter__breath {
+  animation: chapter-breath 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+.chapter__drift {
+  will-change: transform;
+}
+
+@keyframes chapter-breath {
+  0%,
+  100% {
+    transform: scale(1.03);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter__breath {
+    animation: none;
+  }
+}
+
 .chapter__still {
   width: 100%;
   height: 100%;

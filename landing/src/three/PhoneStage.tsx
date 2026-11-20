@@ -1,5 +1,7 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
+import { usePointerTracking } from "../interaction/pointer";
+import { trackVisibility } from "../interaction/visibility";
 import { isWebGLAvailable } from "./isWebGLAvailable";
 import type { PhoneScreen } from "./types";
 import "./PhoneStage.css";
@@ -50,6 +52,19 @@ export function PhoneStage({ progress, screens }: PhoneStageProps) {
   const [webgl] = useState(isWebGLAvailable);
   const live = webgl && !still;
   const { ref, near } = useNearViewport(live);
+  usePointerTracking(live && near);
+  // Si el lienzo está en pantalla (el teléfono no dibuja con el mouse cuando ya se pasó Reportar).
+  const view = useRef<{ readonly visible: boolean; stop(): void } | null>(null);
+  useEffect(() => {
+    const element = ref.current;
+    if (!live || !near || !element) return undefined;
+    view.current = trackVisibility(element);
+    return () => {
+      view.current?.stop();
+      view.current = null;
+    };
+  }, [live, near, ref]);
+  const isVisible = useCallback(() => view.current?.visible ?? true, []);
   const index = still ? 0 : screenIndexForProgress(progress, screens.length);
   const current = screens[index];
   if (!current) {
@@ -61,7 +76,12 @@ export function PhoneStage({ progress, screens }: PhoneStageProps) {
       {live && near ? (
         <>
           <Suspense fallback={null}>
-            <PhoneCanvas progress={progress} screens={screens} index={index} />
+            <PhoneCanvas
+              progress={progress}
+              screens={screens}
+              index={index}
+              isVisible={isVisible}
+            />
           </Suspense>
           {/* El lienzo es decorativo; el lector de pantalla recibe la captura que se ve. */}
           <p className="visually-hidden" aria-live="polite">

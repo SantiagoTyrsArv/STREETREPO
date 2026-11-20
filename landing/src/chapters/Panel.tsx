@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
 import { RevealText } from "../components/RevealText";
 import { COPY } from "../content/copy";
+import { useTilt } from "../interaction/useTilt";
 import { useChapterProgress } from "../scroll/useChapterProgress";
 import "./Panel.css";
 
@@ -17,6 +18,8 @@ export function Panel() {
   const still = useReducedMotion();
   const progress = useChapterProgress(ref, { pinLengthVh: PIN_LENGTH_VH, enabled: !still });
   const copy = COPY.panel;
+  const tiltRef = useRef<HTMLDivElement>(null);
+  useTilt(tiltRef, { enabled: !still });
 
   const settle = still ? 1 : Math.min(1, progress / SETTLE_UNTIL);
   const eased = 1 - (1 - settle) ** 3;
@@ -30,7 +33,13 @@ export function Panel() {
   const glowStyle = still ? undefined : { transform: `translateY(${(1 - progress) * 30}%)` };
 
   return (
-    <section ref={ref} className="panel" aria-labelledby="panel-titulo">
+    <section
+      ref={ref}
+      className="panel"
+      aria-labelledby="panel-titulo"
+      data-accent="signal"
+      data-ambient="visible"
+    >
       <div className="panel__glow" style={glowStyle} aria-hidden="true" />
       <div className="panel__content">
         <p className="panel__kicker">{copy.kicker}</p>
@@ -54,17 +63,19 @@ export function Panel() {
         />
       </div>
       <div className="panel__stage">
-        <figure className="panel__screen" style={screenStyle}>
-          <img
-            src="/media/panel/priorizacion.webp"
-            alt={copy.alt}
-            width={1600}
-            height={1111}
-            loading="lazy"
-            decoding="async"
-          />
-          <figcaption className="panel__attribution">{OSM_ATTRIBUTION}</figcaption>
-        </figure>
+        <div className="panel__tilt" ref={tiltRef}>
+          <figure className="panel__screen" style={screenStyle}>
+            <img
+              src="/media/panel/priorizacion.webp"
+              alt={copy.alt}
+              width={1600}
+              height={1111}
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption className="panel__attribution">{OSM_ATTRIBUTION}</figcaption>
+          </figure>
+        </div>
       </div>
     </section>
   );

@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
 import { RevealText } from "../components/RevealText";
 import { SEQUENCE_COPY } from "../content/copy";
+import { useDrift } from "../interaction/useDrift";
 import { useChapterProgress } from "../scroll/useChapterProgress";
 import { FrameSequence } from "../sequence/FrameSequence";
 import type { ChapterId } from "../sequence/types";
@@ -50,6 +51,8 @@ export function SequenceChapter({
   const still = useReducedMotion();
   const progress = useChapterProgress(ref, { pinLengthVh: chapter.pinLengthVh, enabled: !still });
   const copy = SEQUENCE_COPY[chapter.id];
+  const driftRef = useRef<HTMLDivElement>(null);
+  useDrift(driftRef, { enabled: !still });
 
   const vanish = still ? 0 : Math.max(0, (progress - VANISH_FROM) / (1 - VANISH_FROM));
   const sceneStyle = still
@@ -64,14 +67,24 @@ export function SequenceChapter({
     <section
       ref={ref}
       className={`chapter chapter--${chapter.accent}`}
+      data-accent={chapter.accent}
       aria-labelledby={`${chapter.id}-titulo`}
     >
       <div className="chapter__scene" style={sceneStyle}>
-        {still ? (
-          <img className="chapter__still" src={`/media/${chapter.id}/key.webp`} alt={copy.alt} />
-        ) : (
-          <FrameSequence chapter={chapter.id} progress={progress} alt={copy.alt} />
-        )}
+        {/* En reposo la escena «respira» (CSS) y se desplaza hacia el puntero o el dedo. */}
+        <div className="chapter__breath">
+          <div className="chapter__drift" ref={driftRef}>
+            {still ? (
+              <img
+                className="chapter__still"
+                src={`/media/${chapter.id}/key.webp`}
+                alt={copy.alt}
+              />
+            ) : (
+              <FrameSequence chapter={chapter.id} progress={progress} alt={copy.alt} />
+            )}
+          </div>
+        </div>
         <div className="chapter__shade" aria-hidden="true" />
       </div>
       <div

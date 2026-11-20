@@ -4,7 +4,7 @@ import "./SiteFooter.css";
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer">
+    <footer className="site-footer" data-accent="none" data-ambient="visible">
       <Logo variant="horizontal" />
       <p className="site-footer__project">{COPY.footer.project}</p>
       <p className="site-footer__notice">
