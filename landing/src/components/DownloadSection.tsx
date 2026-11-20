@@ -23,7 +23,7 @@ export function DownloadSection({ release }: DownloadSectionProps) {
       tabIndex={-1}
       className="download"
       aria-labelledby="descarga-titulo"
-      data-accent="amber"
+      data-accent="repair"
       data-ambient="visible"
     >
       <div className="download__intro">

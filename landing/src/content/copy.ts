@@ -135,6 +135,14 @@ export const COPY = {
     ],
     checksumLabel: "Suma SHA-256",
   },
+  video: {
+    kicker: "En video",
+    title: "Street Repo en 60 segundos.",
+    open: "Ver el video",
+    play: "Reproducir video",
+    close: "Cerrar video",
+    aiLabel: "Recreación generada con IA",
+  },
   footer: {
     project:
       "Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colombia, campus Pasto",

@@ -14,8 +14,11 @@ import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
 import { SkipLink } from "./components/SkipLink";
 import { RELEASE } from "./config/release";
+import { VIDEO } from "./config/video";
 import { useSmoothScroll } from "./scroll/useSmoothScroll";
 import type { ChapterId } from "./sequence/types";
+import { VideoButton } from "./video/VideoButton";
+import { VideoSection } from "./video/VideoSection";
 
 function chapter(id: ChapterId) {
   const config = SEQUENCE_CHAPTERS.find((c) => c.id === id);
@@ -51,6 +54,7 @@ export function App() {
             )
           }
           before={<Logo variant="stacked" className="apertura__logo" />}
+          after={<VideoButton video={VIDEO} />}
         />
         <SequenceChapter chapter={chapter("problema")} />
         <Reportar />
@@ -60,6 +64,7 @@ export function App() {
         <Calculator />
         <Panel />
         <SequenceChapter chapter={chapter("reparado")} />
+        <VideoSection video={VIDEO} />
         <DownloadSection release={RELEASE} />
       </main>
       <SiteFooter />

@@ -21,7 +21,8 @@ it("cada sección declara el acento que tiñe el fondo ambiental", () => {
     "signal",
     "signal",
     "repair",
-    "amber",
+    // Descarga en verde (la solución); el botón sigue ámbar.
+    "repair",
   ]);
 });
 
