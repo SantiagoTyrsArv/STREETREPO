@@ -1,0 +1,15 @@
+{
+  "id": "problema",
+  "fps": 16,
+  "frameCount": 129,
+  "resolutions": {
+    "desktop": {
+      "width": 1280,
+      "height": 720
+    },
+    "mobile": {
+      "width": 720,
+      "height": 1280
+    }
+  }
+}
