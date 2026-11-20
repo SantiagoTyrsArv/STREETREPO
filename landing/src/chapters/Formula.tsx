@@ -1,5 +1,16 @@
+import gsap from "gsap";
+import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
+import { useEffect, useRef, useState } from "react";
 import { COPY } from "../content/copy";
 import "./Formula.css";
+
+gsap.registerPlugin(ScrambleTextPlugin);
+
+/** Caracteres del descifrado: los de la propia fórmula, como una pantalla de datos. */
+const SCRAMBLE_CHARS = "0123456789·=+SFPU";
+/** Tramo en el que el relleno sube por dentro del contorno. */
+const FILL_FROM = 0.06;
+const FILL_TO = 0.2;
 
 interface FormulaProps {
   progress: number;
@@ -14,8 +25,46 @@ function visibility(progress: number, from: number): number {
   return Math.min(1, Math.max(0, (progress - from) / 0.08));
 }
 
-/** La fórmula de urgencia U y sus factores, que aparecen uno a uno con el *scroll*. */
+/** Fórmula con S, F y P resaltados (el azul del capítulo). */
+function ColoredFormula({ text }: { text: string }) {
+  return (
+    <>
+      {[...text].map((ch, i) =>
+        "SFP".includes(ch) ? (
+          <span key={i} className="formula__var">
+            {ch}
+          </span>
+        ) : (
+          ch
+        ),
+      )}
+    </>
+  );
+}
+
+/**
+ * La fórmula de urgencia U: al entrar se descifra en contorno (caracteres de datos que se asientan)
+ * y después el relleno sube por dentro; los factores aparecen uno a uno con el *scroll*.
+ */
 export function Formula({ progress, still }: FormulaProps) {
+  const animated = useRef<HTMLSpanElement>(null);
+  const [decoded, setDecoded] = useState(false);
+  const started = progress >= FORMULA_FROM;
+
+  useEffect(() => {
+    const el = animated.current;
+    if (still || !started || !el) return;
+    const tween = gsap.to(el, {
+      duration: 1.2,
+      ease: "none",
+      scrambleText: { text: COPY.formula, chars: SCRAMBLE_CHARS, revealDelay: 0.25, speed: 0.6 },
+      onComplete: () => setDecoded(true),
+    });
+    return () => {
+      tween.kill();
+    };
+  }, [still, started]);
+
   const style = (from: number) =>
     still
       ? undefined
@@ -23,11 +72,33 @@ export function Formula({ progress, still }: FormulaProps) {
           opacity: visibility(progress, from),
           transform: `translateY(${(1 - visibility(progress, from)) * 1.5}rem)`,
         };
+  const fill = Math.min(
+    1,
+    Math.max(0, (progress - FORMULA_FROM - FILL_FROM) / (FILL_TO - FILL_FROM)),
+  );
+
   return (
     <div className="formula">
-      <p className="formula__equation" style={style(FORMULA_FROM)}>
-        {COPY.formula}
-      </p>
+      {still ? (
+        <p className="formula__equation">{COPY.formula}</p>
+      ) : (
+        <p
+          className="formula__equation formula__equation--stroke"
+          style={{ ...style(FORMULA_FROM), ["--fill" as string]: `${Math.round(fill * 100)}%` }}
+        >
+          <span className="visually-hidden">{COPY.formula}</span>
+          {/* GSAP escribe el descifrado en este nodo; al terminar, React lo reemplaza entero (otra
+              key) por la versión con S, F y P resaltados, sin pelear por el mismo texto. */}
+          <span
+            key={decoded ? "decoded" : "scramble"}
+            ref={animated}
+            className="formula__glyphs"
+            aria-hidden="true"
+          >
+            {decoded ? <ColoredFormula text={COPY.formula} /> : COPY.formula}
+          </span>
+        </p>
+      )}
       <dl className="formula__factors">
         {COPY.factors.map((factor, i) => (
           <div
