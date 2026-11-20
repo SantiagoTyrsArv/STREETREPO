@@ -81,6 +81,7 @@ export function SequenceChapter({
     <section
       ref={ref}
       className={`chapter chapter--${chapter.accent}`}
+      id={chapter.id}
       data-accent={chapter.accent}
       aria-labelledby={`${chapter.id}-titulo`}
     >

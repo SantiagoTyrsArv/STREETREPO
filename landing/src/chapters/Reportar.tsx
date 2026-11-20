@@ -20,6 +20,7 @@ export function Reportar() {
   return (
     <section
       ref={ref}
+      id="reportar"
       className="reportar"
       aria-labelledby="reportar-titulo"
       data-accent="amber"

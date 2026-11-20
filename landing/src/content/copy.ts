@@ -23,6 +23,20 @@ export const COPY = {
   },
   skipLink: "Saltar a la descarga",
   scrollCue: "Desliza",
+  chapterNav: {
+    label: "Capítulos",
+    names: {
+      apertura: "Inicio",
+      problema: "El problema",
+      reportar: "Reportar",
+      priorizar: "Priorizar",
+      prueba: "Pruébalo",
+      panel: "Gestionar",
+      reparado: "Reparado",
+      video: "Video",
+      descarga: "Descarga",
+    },
+  },
   apertura: {
     kicker: "Pasto, Nariño",
     title: "Cada calle cuenta.",

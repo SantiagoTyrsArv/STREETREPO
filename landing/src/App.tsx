@@ -8,17 +8,26 @@ import { Panel } from "./chapters/Panel";
 import { Reportar } from "./chapters/Reportar";
 import { SEQUENCE_CHAPTERS, SequenceChapter } from "./chapters/SequenceChapter";
 import { DownloadSection } from "./components/DownloadSection";
+import { ChapterNav } from "./components/ChapterNav";
+import { CHAPTER_IDS } from "./components/chapters";
 import { Logo } from "./components/Logo";
 import { ScrollCue } from "./components/ScrollCue";
 import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
 import { SkipLink } from "./components/SkipLink";
 import { RELEASE } from "./config/release";
+import { COPY } from "./content/copy";
 import { VIDEO } from "./config/video";
 import { useSmoothScroll } from "./scroll/useSmoothScroll";
 import type { ChapterId } from "./sequence/types";
 import { VideoButton } from "./video/VideoButton";
 import { VideoSection } from "./video/VideoSection";
+
+/** Capítulos de la barra de progreso (sin «Video» mientras no exista). */
+const NAV_CHAPTERS = CHAPTER_IDS.filter((id) => id !== "video" || VIDEO !== null).map((id) => ({
+  id,
+  label: COPY.chapterNav.names[id],
+}));
 
 function chapter(id: ChapterId) {
   const config = SEQUENCE_CHAPTERS.find((c) => c.id === id);
@@ -36,6 +45,7 @@ export function App() {
     <>
       <SkipLink />
       <SiteHeader />
+      <ChapterNav chapters={NAV_CHAPTERS} />
       <AmbientBackground />
       <main id="contenido">
         <SequenceChapter

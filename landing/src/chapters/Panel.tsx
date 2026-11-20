@@ -37,6 +37,7 @@ export function Panel() {
   return (
     <section
       ref={ref}
+      id="panel"
       className="panel"
       aria-labelledby="panel-titulo"
       data-accent="signal"
