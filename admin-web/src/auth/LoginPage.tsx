@@ -29,7 +29,7 @@ function toFailure(error: unknown, now: number): Failure {
       until: typeof seconds === "number" ? now + seconds * MS_PER_SECOND : null,
     };
   }
-  if (error.code === "ADMIN_ROLE_REQUIRED") {
+  if (error.code === "STAFF_ROLE_REQUIRED") {
     return { kind: "message", text: ROLE_REQUIRED_MESSAGE };
   }
   if (error.status === HTTP_UNAUTHORIZED) {

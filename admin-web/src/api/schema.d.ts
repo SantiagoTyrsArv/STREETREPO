@@ -1504,7 +1504,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Falta X-CSRF-Protection: 1 o el Origin no es el del panel (CSRF_CHECK_FAILED), o la cuenta no es de administrador (ADMIN_ROLE_REQUIRED) */
+            /** @description Falta X-CSRF-Protection: 1 o el Origin no es el del panel (CSRF_CHECK_FAILED), o la cuenta no es de administrador ni de evaluador (STAFF_ROLE_REQUIRED) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1556,7 +1556,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Falta X-CSRF-Protection: 1 o el Origin no es el del panel (CSRF_CHECK_FAILED), o la cuenta no es de administrador (ADMIN_ROLE_REQUIRED) */
+            /** @description Falta X-CSRF-Protection: 1 o el Origin no es el del panel (CSRF_CHECK_FAILED), o la cuenta no es de administrador ni de evaluador (STAFF_ROLE_REQUIRED) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1592,7 +1592,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Falta X-CSRF-Protection: 1 o el Origin no es el del panel (CSRF_CHECK_FAILED), o la cuenta no es de administrador (ADMIN_ROLE_REQUIRED) */
+            /** @description Falta X-CSRF-Protection: 1 o el Origin no es el del panel (CSRF_CHECK_FAILED), o la cuenta no es de administrador ni de evaluador (STAFF_ROLE_REQUIRED) */
             403: {
                 headers: {
                     [name: string]: unknown;

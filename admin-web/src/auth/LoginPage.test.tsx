@@ -70,7 +70,7 @@ describe("inicio de sesión de funcionarios", () => {
 
   it("shows_admin_role_required_message: una cuenta de ciudadano no entra", async () => {
     renderLogin({
-      signIn: failingWith(new ApiError(403, "ADMIN_ROLE_REQUIRED", "Sin acceso")),
+      signIn: failingWith(new ApiError(403, "STAFF_ROLE_REQUIRED", "Sin acceso")),
     });
 
     await submit();

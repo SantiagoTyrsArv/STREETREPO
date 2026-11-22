@@ -52,7 +52,7 @@ describe("sesión web del panel", () => {
 
   it.each([
     [401, "INVALID_SESSION"],
-    [403, "ADMIN_ROLE_REQUIRED"],
+    [403, "STAFF_ROLE_REQUIRED"],
   ])("webRefresh devuelve null cuando la sesión ya no vale (%i)", async (status, code) => {
     server.use(
       http.post(`${API}/api/v1/auth/web/refresh`, () => apiError(status, code, "Sin sesión.")),
