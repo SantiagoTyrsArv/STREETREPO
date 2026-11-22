@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, Header, Query, Response, Upl
 
 from app.core.errors import AppError
 from app.core.rate_limiting import too_many_requests
-from app.modules.auth.presentation.dependencies import CurrentUserDep
+from app.modules.auth.presentation.dependencies import CurrentUserDep, forbid_evaluator
 from app.modules.reports.application.create_report import ReportSubmission
 from app.modules.reports.application.get_photo import PhotoNotAvailableError, PhotoViewer
 from app.modules.reports.domain.duplicates import PossibleDuplicateError
@@ -53,6 +53,9 @@ from app.shared.domain.geo import BoundingBox, GeoPoint, InvalidGeometryError
 router = APIRouter(prefix="/reports", tags=["reportes"])
 
 _CREATE_DOC: dict[int | str, dict[str, Any]] = {
+    status.HTTP_403_FORBIDDEN: {
+        "description": "Las cuentas de evaluador no crean reportes (EVALUATOR_CANNOT_REPORT)"
+    },
     status.HTTP_200_OK: {
         "description": "Reintento con un Idempotency-Key ya usado: el reporte existente",
         "model": ReportResponse,
@@ -133,7 +136,8 @@ def _create_report_errors() -> Iterator[None]:
     "",
     response_model=ReportResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(limit_reports_per_ip)],
+    # El rol se revisa antes del límite: un evaluador rechazado no gasta cupo.
+    dependencies=[Depends(forbid_evaluator), Depends(limit_reports_per_ip)],
     responses=_CREATE_DOC,
 )
 def create_report(

@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from app.modules.auth.application.create_staff import CreateStaffAccount
 from app.modules.auth.application.errors import (
     AccountLockedError,
     InsufficientRoleError,
@@ -178,7 +179,7 @@ class Auth:
         self,
         email: str = "ana@example.test",
         password: str = PASSWORD,
-        required_role: UserRole | None = None,
+        allowed_roles: frozenset[UserRole] | None = None,
     ) -> str:
         use_case = Login(
             self.users,
@@ -189,13 +190,13 @@ class Auth:
             attempts=self.attempts,
             lockout=DEFAULT_LOCKOUT_POLICY,
         )
-        return use_case.execute(email, password, required_role).refresh_token
+        return use_case.execute(email, password, allowed_roles).refresh_token
 
-    def refresh(self, token: str, required_role: UserRole | None = None) -> str:
+    def refresh(self, token: str, allowed_roles: frozenset[UserRole] | None = None) -> str:
         use_case = RefreshSession(
             self.users, self.refresh_tokens, self.sessions, self.clock, self.transaction
         )
-        return use_case.execute(token, required_role).refresh_token
+        return use_case.execute(token, allowed_roles).refresh_token
 
     def make_admin(self, user: User) -> None:
         self.users.by_id[user.id] = replace(user, role=UserRole.ADMIN)
@@ -471,7 +472,9 @@ def test_logout_is_idempotent(auth: Auth) -> None:
     assert auth.transaction.commits == 0
 
 
-# --- Variante web: solo administradores (decisión 42) -------------------------
+# --- Variante web: personal del panel (decisión 42) ---------------------------
+
+STAFF = frozenset({UserRole.ADMIN, UserRole.EVALUATOR})
 
 
 def test_login_with_required_role_rejects_citizen_without_session(auth: Auth) -> None:
@@ -479,7 +482,7 @@ def test_login_with_required_role_rejects_citizen_without_session(auth: Auth) ->
     commits = auth.transaction.commits
 
     with pytest.raises(InsufficientRoleError):
-        auth.login(required_role=UserRole.ADMIN)
+        auth.login(allowed_roles=STAFF)
 
     assert auth.refresh_tokens.active() == []
     assert auth.transaction.commits == commits
@@ -488,7 +491,7 @@ def test_login_with_required_role_rejects_citizen_without_session(auth: Auth) ->
 def test_login_with_required_role_admits_the_role(auth: Auth) -> None:
     auth.make_admin(auth.register())
 
-    token = auth.login(required_role=UserRole.ADMIN)
+    token = auth.login(allowed_roles=STAFF)
 
     assert auth.refresh_tokens.get_by_hash(hash_refresh_token(token)) is not None
 
@@ -497,7 +500,7 @@ def test_login_role_mismatch_is_not_a_failed_attempt(auth: Auth) -> None:
     auth.register()
     for _ in range(10):
         with pytest.raises(InsufficientRoleError):
-            auth.login(required_role=UserRole.ADMIN)
+            auth.login(allowed_roles=STAFF)
 
     assert auth.attempts.get(login_attempt_key("ana@example.test")) is None
     assert auth.login()
@@ -507,7 +510,7 @@ def test_login_with_required_role_and_wrong_password_is_invalid(auth: Auth) -> N
     auth.register()
 
     with pytest.raises(InvalidCredentialsError):
-        auth.login(password=WRONG, required_role=UserRole.ADMIN)
+        auth.login(password=WRONG, allowed_roles=STAFF)
 
 
 def test_refresh_with_required_role_rejects_citizen(auth: Auth) -> None:
@@ -515,7 +518,7 @@ def test_refresh_with_required_role_rejects_citizen(auth: Auth) -> None:
     token = auth.login()
 
     with pytest.raises(InsufficientRoleError):
-        auth.refresh(token, required_role=UserRole.ADMIN)
+        auth.refresh(token, allowed_roles=STAFF)
 
     # La sesión del token se revoca: no se emite otra ni sigue viva la anterior.
     assert auth.refresh_tokens.active() == []
@@ -523,6 +526,62 @@ def test_refresh_with_required_role_rejects_citizen(auth: Auth) -> None:
 
 def test_refresh_with_required_role_admits_the_role(auth: Auth) -> None:
     auth.make_admin(auth.register())
-    token = auth.login(required_role=UserRole.ADMIN)
+    token = auth.login(allowed_roles=STAFF)
 
-    assert auth.refresh(token, required_role=UserRole.ADMIN) != token
+    assert auth.refresh(token, allowed_roles=STAFF) != token
+
+
+def test_login_with_allowed_roles_admits_an_evaluator(auth: Auth) -> None:
+    user = auth.register()
+    auth.users.by_id[user.id] = replace(user, role=UserRole.EVALUATOR)
+
+    token = auth.login(allowed_roles=STAFF)
+
+    assert auth.refresh_tokens.get_by_hash(hash_refresh_token(token)) is not None
+
+
+def test_login_with_allowed_roles_rejects_a_role_outside_the_set(auth: Auth) -> None:
+    auth.make_admin(auth.register())
+
+    with pytest.raises(InsufficientRoleError):
+        auth.login(allowed_roles=frozenset({UserRole.EVALUATOR}))
+
+
+def test_refresh_with_allowed_roles_admits_an_evaluator(auth: Auth) -> None:
+    user = auth.register()
+    auth.users.by_id[user.id] = replace(user, role=UserRole.EVALUATOR)
+    token = auth.login(allowed_roles=STAFF)
+
+    assert auth.refresh(token, allowed_roles=STAFF) != token
+
+
+# --- Cuentas del personal ----------------------------------------------------
+
+
+@pytest.mark.parametrize("role", [UserRole.ADMIN, UserRole.EVALUATOR])
+def test_create_staff_account_stores_the_role_and_returns_the_id(
+    auth: Auth, role: UserRole
+) -> None:
+    use_case = CreateStaffAccount(auth.users, auth.hasher, auth.transaction)
+
+    user_id = use_case.execute(" Eva ", "Eva@Example.TEST", PASSWORD, role)
+
+    user = auth.users.by_id[user_id]
+    assert (user.name, user.email, user.role) == ("Eva", "eva@example.test", role)
+    assert auth.transaction.commits == 1
+
+
+def test_create_staff_account_rejects_the_citizen_role(auth: Auth) -> None:
+    use_case = CreateStaffAccount(auth.users, auth.hasher, auth.transaction)
+
+    with pytest.raises(ValueError, match="personal"):
+        use_case.execute("Ana", "ana@example.test", PASSWORD, UserRole.CITIZEN)
+
+    assert auth.users.by_id == {}
+
+
+def test_create_staff_account_rejects_a_weak_password(auth: Auth) -> None:
+    use_case = CreateStaffAccount(auth.users, auth.hasher, auth.transaction)
+
+    with pytest.raises(WeakPasswordError):
+        use_case.execute("Eva", "eva@example.test", "corta", UserRole.EVALUATOR)

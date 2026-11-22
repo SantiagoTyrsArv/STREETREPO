@@ -175,3 +175,18 @@ def test_confirmation_with_invalid_latitude_is_422(api: TestClient, conn: Connec
     response = _confirm(api, _report(conn), _token(api), {"longitude": LON, "latitude": 91.0})
 
     assert response.status_code == 422
+
+
+def test_an_evaluator_cannot_confirm_reports(api: TestClient, conn: Connection) -> None:
+    report_id = _report(conn)
+    token = _token(api)
+    conn.execute(text("UPDATE usuario SET rol = 'evaluador' WHERE correo = 'vecina@example.com'"))
+
+    response = _confirm(api, report_id, token)
+
+    assert response.status_code == 403
+    assert response.json()["code"] == "EVALUATOR_CANNOT_REPORT"
+    rows = conn.execute(
+        text("SELECT count(*) FROM confirmacion WHERE id_reporte = :r"), {"r": report_id}
+    ).scalar_one()
+    assert rows == 0

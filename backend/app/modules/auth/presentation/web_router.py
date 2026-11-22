@@ -1,6 +1,7 @@
 """Rutas de sesión del panel web: /api/v1/auth/web (HU-10, decisión 42).
 
-Solo entran administradores. El refresco nunca viaja en el cuerpo: va en la cookie
+Solo entra el personal (administradores y evaluadores). El refresco nunca viaja en el
+cuerpo: va en la cookie
 ``sr_refresh``. La variante de la app móvil (``/auth/login``, ``/refresh``, ``/logout``)
 no cambia.
 """
@@ -47,18 +48,20 @@ router = APIRouter(
     responses={
         status.HTTP_403_FORBIDDEN: {
             "description": "Falta X-CSRF-Protection: 1 o el Origin no es el del panel "
-            "(CSRF_CHECK_FAILED), o la cuenta no es de administrador (ADMIN_ROLE_REQUIRED)"
+            "(CSRF_CHECK_FAILED), o la cuenta no es de administrador ni de evaluador "
+            "(STAFF_ROLE_REQUIRED)"
         }
     },
 )
 
+_STAFF_ROLES = frozenset({UserRole.ADMIN, UserRole.EVALUATOR})
 SessionIssuerDep = Annotated[SessionIssuer, Depends(get_session_issuer)]
 RefreshCookie = Annotated[str | None, Cookie(alias=REFRESH_COOKIE_NAME)]
 
 
 def _role_required(headers: dict[str, str] | None = None) -> AppError:
     return AppError(
-        "ADMIN_ROLE_REQUIRED",
+        "STAFF_ROLE_REQUIRED",
         "Esta cuenta no tiene acceso al panel.",
         status.HTTP_403_FORBIDDEN,
         headers=headers,
@@ -104,7 +107,7 @@ def web_login(
         lockout=DEFAULT_LOCKOUT_POLICY,
     )
     try:
-        tokens = use_case.execute(body.email, body.password, required_role=UserRole.ADMIN)
+        tokens = use_case.execute(body.email, body.password, allowed_roles=_STAFF_ROLES)
     except AccountLockedError as exc:
         raise too_many_requests(
             "TOO_MANY_LOGIN_ATTEMPTS",
@@ -145,7 +148,7 @@ def web_refresh(
     try:
         if not refresh_token:
             raise InvalidRefreshTokenError("Sin cookie de sesión")
-        tokens = use_case.execute(refresh_token, required_role=UserRole.ADMIN)
+        tokens = use_case.execute(refresh_token, allowed_roles=_STAFF_ROLES)
     except InvalidRefreshTokenError as exc:
         raise AppError(
             "INVALID_SESSION",

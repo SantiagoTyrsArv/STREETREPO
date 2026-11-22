@@ -3,11 +3,11 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
 from app.core.errors import AppError
 from app.core.rate_limiting import too_many_requests
-from app.modules.auth.presentation.dependencies import CurrentUserDep
+from app.modules.auth.presentation.dependencies import CurrentUserDep, forbid_evaluator
 from app.modules.confirmations.domain.errors import (
     AlreadyConfirmedError,
     ConfirmationTooFarError,
@@ -28,7 +28,8 @@ router = APIRouter(prefix="/reports", tags=["confirmaciones"])
 
 _DOC: dict[int | str, dict[str, Any]] = {
     status.HTTP_403_FORBIDDEN: {
-        "description": "Quien confirma está a más de 50 m del daño (CONFIRMATION_TOO_FAR)"
+        "description": "Quien confirma está a más de 50 m del daño (CONFIRMATION_TOO_FAR) o es "
+        "una cuenta de evaluador (EVALUATOR_CANNOT_REPORT)"
     },
     status.HTTP_404_NOT_FOUND: {"description": "El reporte no existe (REPORT_NOT_FOUND)"},
     status.HTTP_409_CONFLICT: {
@@ -45,6 +46,7 @@ _DOC: dict[int | str, dict[str, Any]] = {
     "/{report_id}/confirmations",
     response_model=ConfirmationResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(forbid_evaluator)],
     responses=_DOC,
 )
 def confirm_report(
