@@ -153,7 +153,9 @@ def test_confirmation_by_a_deleted_user_still_counts(api: TestClient, conn: Conn
     confirmer_token = _token(api, "vecino@example.com")
     assert (
         api.post(
-            f"{REPORTS}/{report_id}/confirmations", headers=bearer(confirmer_token)
+            f"{REPORTS}/{report_id}/confirmations",
+            json={"longitude": LON, "latitude": LAT},
+            headers=bearer(confirmer_token),
         ).status_code
         == 201
     )

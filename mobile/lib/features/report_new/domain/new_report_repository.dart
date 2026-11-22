@@ -14,6 +14,8 @@ abstract interface class NewReportRepository {
     required bool createAnyway,
   });
 
-  /// Confirma un reporte ajeno (HU-16) y devuelve el total de confirmaciones.
-  Future<int> confirm(String reportId);
+  /// Confirma un reporte ajeno (HU-16) desde [fix], la ubicación actual del ciudadano, y
+  /// devuelve el total de confirmaciones. El servidor solo la acepta a 50 m o menos del daño
+  /// (propuesta 112).
+  Future<int> confirm(String reportId, GeoFix fix);
 }

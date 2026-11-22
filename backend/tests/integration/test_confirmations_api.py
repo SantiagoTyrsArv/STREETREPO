@@ -1,4 +1,4 @@
-"""POST /api/v1/reports/{id}/confirmations por HTTP contra PostGIS real (HU-16, propuesta 48)."""
+"""POST /api/v1/reports/{id}/confirmations contra PostGIS real (HU-16, propuestas 48 y 112)."""
 
 import uuid
 
@@ -21,6 +21,12 @@ pytestmark = [pytest.mark.integration, requires_db]
 
 REPORTS = f"{API_V1_PREFIX}/reports"
 LON, LAT = -80.0, 0.0
+# Unos 4 m al nordeste del reporte: quien confirma está frente al daño.
+NEAR = {"longitude": LON + 0.00003, "latitude": LAT + 0.00002}
+# 0,0006° de latitud son unos 66 m: fuera del radio de 50 m.
+FAR = {"longitude": LON, "latitude": LAT + 0.0006}
+# 0,0004° de latitud son unos 44 m: dentro del radio.
+EDGE = {"longitude": LON, "latitude": LAT + 0.0004}
 
 
 def _token(api: TestClient, email: str = "vecina@example.com") -> str:
@@ -46,8 +52,24 @@ def _report(conn: Connection, status: str = "evaluado") -> uuid.UUID:
     return report_id
 
 
-def _confirm(api: TestClient, report_id: uuid.UUID, token: str) -> Response:
-    return api.post(f"{REPORTS}/{report_id}/confirmations", headers=bearer(token))
+def _confirm(
+    api: TestClient,
+    report_id: uuid.UUID,
+    token: str,
+    where: dict[str, float] | None = None,
+) -> Response:
+    return api.post(
+        f"{REPORTS}/{report_id}/confirmations",
+        json=NEAR if where is None else where,
+        headers=bearer(token),
+    )
+
+
+def _stored_distance(conn: Connection, report_id: uuid.UUID) -> float | None:
+    value = conn.execute(
+        text("SELECT distancia_m FROM confirmacion WHERE id_reporte = :r"), {"r": report_id}
+    ).scalar_one_or_none()
+    return None if value is None else float(value)
 
 
 def test_a_citizen_confirms_another_citizens_report(api: TestClient, conn: Connection) -> None:
@@ -105,6 +127,51 @@ def test_unknown_report_gets_404(api: TestClient) -> None:
 
 
 def test_confirmation_without_token_is_401(api: TestClient, conn: Connection) -> None:
-    response = api.post(f"{REPORTS}/{_report(conn)}/confirmations")
+    response = api.post(f"{REPORTS}/{_report(conn)}/confirmations", json=NEAR)
 
     assert response.status_code == 401
+
+
+def test_confirmation_saves_the_distance_to_the_damage(api: TestClient, conn: Connection) -> None:
+    report_id = _report(conn)
+
+    assert _confirm(api, report_id, _token(api)).status_code == 201
+
+    distance = _stored_distance(conn, report_id)
+    assert distance is not None
+    assert 3.0 < distance < 5.0
+
+
+def test_confirmation_within_the_radius_is_accepted(api: TestClient, conn: Connection) -> None:
+    report_id = _report(conn)
+
+    response = _confirm(api, report_id, _token(api), EDGE)
+
+    assert response.status_code == 201
+
+
+def test_confirmation_from_far_away_is_403_and_saves_nothing(
+    api: TestClient, conn: Connection
+) -> None:
+    report_id = _report(conn)
+
+    response = _confirm(api, report_id, _token(api), FAR)
+
+    assert response.status_code == 403
+    body = response.json()
+    assert body["code"] == "CONFIRMATION_TOO_FAR"
+    # Solo el radio, nunca la distancia exacta (propuesta 43).
+    assert body["details"] == {"max_distance_m": 50.0}
+    assert _stored_distance(conn, report_id) is None
+
+
+def test_confirmation_without_location_is_422(api: TestClient, conn: Connection) -> None:
+    response = api.post(f"{REPORTS}/{_report(conn)}/confirmations", headers=bearer(_token(api)))
+
+    assert response.status_code == 422
+
+
+def test_confirmation_with_invalid_latitude_is_422(api: TestClient, conn: Connection) -> None:
+    response = _confirm(api, _report(conn), _token(api), {"longitude": LON, "latitude": 91.0})
+
+    assert response.status_code == 422

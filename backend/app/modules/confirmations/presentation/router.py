@@ -10,17 +10,26 @@ from app.core.rate_limiting import too_many_requests
 from app.modules.auth.presentation.dependencies import CurrentUserDep
 from app.modules.confirmations.domain.errors import (
     AlreadyConfirmedError,
+    ConfirmationTooFarError,
     OwnReportConfirmationError,
     ReportNotActiveError,
     ReportNotFoundError,
 )
 from app.modules.confirmations.presentation.dependencies import ConfirmReportDep
-from app.modules.confirmations.presentation.schemas import ConfirmationResponse
+from app.modules.confirmations.presentation.schemas import (
+    ConfirmationRequest,
+    ConfirmationResponse,
+)
 from app.shared.application.rate_limit import RateLimitExceededError
+from app.shared.domain.geo import GeoPoint
+from app.shared.domain.geo_parameters import CONFIRMATION_RADIUS_M
 
 router = APIRouter(prefix="/reports", tags=["confirmaciones"])
 
 _DOC: dict[int | str, dict[str, Any]] = {
+    status.HTTP_403_FORBIDDEN: {
+        "description": "Quien confirma está a más de 50 m del daño (CONFIRMATION_TOO_FAR)"
+    },
     status.HTTP_404_NOT_FOUND: {"description": "El reporte no existe (REPORT_NOT_FOUND)"},
     status.HTTP_409_CONFLICT: {
         "description": "Reparado (REPORT_NOT_ACTIVE), propio (CONFIRMATION_OWN_REPORT) o ya "
@@ -39,14 +48,20 @@ _DOC: dict[int | str, dict[str, Any]] = {
     responses=_DOC,
 )
 def confirm_report(
-    report_id: uuid.UUID, user: CurrentUserDep, use_case: ConfirmReportDep
+    report_id: uuid.UUID,
+    body: ConfirmationRequest,
+    user: CurrentUserDep,
+    use_case: ConfirmReportDep,
 ) -> ConfirmationResponse:
     """Confirma un reporte activo de otro ciudadano, en lugar de crear uno repetido.
 
-    No cambia la urgencia U; cuenta como evidencia y para el desempate (guía 2.2).
+    Pide la ubicación actual de quien confirma: solo se acepta a 50 m o menos del daño
+    (propuesta 112). No cambia la urgencia U; cuenta como evidencia y para el desempate
+    (guía 2.2).
     """
+    location = GeoPoint(longitude=body.longitude, latitude=body.latitude)
     try:
-        total = use_case.execute(report_id, user.id)
+        total = use_case.execute(report_id, user.id, location)
     except ReportNotFoundError as exc:
         raise AppError(
             "REPORT_NOT_FOUND", "No encontramos ese reporte.", status.HTTP_404_NOT_FOUND
@@ -62,6 +77,16 @@ def confirm_report(
             "CONFIRMATION_OWN_REPORT",
             "No puedes confirmar tu propio reporte.",
             status.HTTP_409_CONFLICT,
+        ) from exc
+    except ConfirmationTooFarError as exc:
+        # Sin la distancia exacta: con ella se podría ubicar el reporte con más precisión
+        # que la vista pública (propuesta 43).
+        raise AppError(
+            "CONFIRMATION_TOO_FAR",
+            "Para confirmar este daño tienes que estar cerca de él. Acércate y vuelve a "
+            "intentarlo.",
+            status.HTTP_403_FORBIDDEN,
+            details={"max_distance_m": CONFIRMATION_RADIUS_M},
         ) from exc
     except AlreadyConfirmedError as exc:
         raise AppError(

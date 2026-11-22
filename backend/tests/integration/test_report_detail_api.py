@@ -16,6 +16,9 @@ from tests.integration.conftest import (
 )
 from tests.integration.test_reports_api import FORM, _photo
 
+# Quien confirma está en el mismo punto del reporte (propuesta 112).
+HERE = {"longitude": float(FORM["longitude"]), "latitude": float(FORM["latitude"])}
+
 pytestmark = [pytest.mark.integration, requires_db]
 
 REPORTS = f"{API_V1_PREFIX}/reports"
@@ -70,7 +73,9 @@ def test_confirmer_sees_limited_view_and_notes_are_hidden(
     _prioritize_with_note(conn, report_id)
     confirmer = _token(api, "vecino@example.com")
     assert (
-        api.post(f"{REPORTS}/{report_id}/confirmations", headers=bearer(confirmer)).status_code
+        api.post(
+            f"{REPORTS}/{report_id}/confirmations", json=HERE, headers=bearer(confirmer)
+        ).status_code
         == 201
     )
 
@@ -93,7 +98,10 @@ def test_admin_who_confirmed_gets_the_full_view_as_staff(api: TestClient, conn: 
     )
     admin = str(login_user(api, email="funcionario@example.com")["access_token"])
     assert (
-        api.post(f"{REPORTS}/{report_id}/confirmations", headers=bearer(admin)).status_code == 201
+        api.post(
+            f"{REPORTS}/{report_id}/confirmations", json=HERE, headers=bearer(admin)
+        ).status_code
+        == 201
     )
 
     body = _detail(api, report_id, admin).json()

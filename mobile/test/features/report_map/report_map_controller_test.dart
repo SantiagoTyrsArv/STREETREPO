@@ -10,9 +10,12 @@ import 'package:street_repo/features/auth/data/token_store.dart';
 import 'package:street_repo/features/my_reports/application/my_reports_controller.dart';
 import 'package:street_repo/features/report_map/application/report_map_controller.dart';
 import 'package:street_repo/features/report_map/domain/map_report.dart';
+import 'package:street_repo/features/report_new/application/report_draft_controller.dart';
 import 'package:street_repo/features/report_new/application/submit_report_controller.dart';
+import 'package:street_repo/features/report_new/domain/device_services.dart';
 
 import '../../support/fake_auth_repository.dart';
+import '../../support/fake_device_services.dart';
 import '../../support/fake_my_reports_repository.dart';
 import '../../support/fake_new_report_repository.dart';
 import '../../support/fake_report_map_repository.dart';
@@ -25,6 +28,7 @@ void main() {
   late FakeReportMapRepository map;
   late FakeNewReportRepository reports;
   late FakeMyReportsRepository mine;
+  late FakeLocationService location;
   late ProviderContainer c;
 
   ReportMapController controller() => c.read(reportMapProvider.notifier);
@@ -35,6 +39,7 @@ void main() {
     map = FakeReportMapRepository()..reports = [mapReport()];
     reports = FakeNewReportRepository();
     mine = FakeMyReportsRepository();
+    location = FakeLocationService();
     c = ProviderContainer.test(
       overrides: [
         tokenStoreProvider.overrideWithValue(store),
@@ -42,6 +47,7 @@ void main() {
         reportMapRepositoryProvider.overrideWithValue(map),
         newReportRepositoryProvider.overrideWithValue(reports),
         myReportsRepositoryProvider.overrideWithValue(mine),
+        locationServiceProvider.overrideWithValue(location),
       ],
     );
     await c.read(sessionControllerProvider.future);
@@ -144,6 +150,8 @@ void main() {
       await controller().confirm(state().reports.single);
 
       expect(reports.confirmCalls, ['m1']);
+      // Va con la ubicación actual del celular (propuesta 112).
+      expect(reports.confirmFixes, [pastoFix]);
       final report = state().reports.single;
       expect((report.confirmedByMe, report.confirmations), (true, 4));
       expect((state().confirming, state().confirmedNotice), (false, true));
@@ -196,6 +204,77 @@ void main() {
       expect(state().confirmError, 'Este reporte ya fue reparado.');
       expect(state().reports.single.confirmedByMe, isFalse);
       expect(state().confirming, isFalse);
+    });
+
+    test('sin permiso de ubicación lo pide y, si lo niega, explica por qué', () async {
+      await controller().showArea(_area);
+      location
+        ..state = LocationPermissionState.denied
+        ..stateAfterRequest = LocationPermissionState.denied;
+
+      await controller().confirm(state().reports.single);
+
+      expect(reports.confirmCalls, isEmpty);
+      expect(state().confirmError, confirmLocationDeniedMessage);
+      expect(state().confirming, isFalse);
+    });
+
+    test('si concede el permiso al pedirlo, confirma', () async {
+      await controller().showArea(_area);
+      location.state = LocationPermissionState.denied;
+
+      await controller().confirm(state().reports.single);
+
+      expect(reports.confirmCalls, ['m1']);
+    });
+
+    test('con el permiso negado para siempre no lo vuelve a pedir', () async {
+      await controller().showArea(_area);
+      location
+        ..state = LocationPermissionState.deniedForever
+        ..stateAfterRequest = LocationPermissionState.granted;
+
+      await controller().confirm(state().reports.single);
+
+      expect(reports.confirmCalls, isEmpty);
+      expect(state().confirmError, confirmLocationDeniedMessage);
+    });
+
+    test('con el GPS apagado pide encenderlo', () async {
+      await controller().showArea(_area);
+      location.state = LocationPermissionState.serviceDisabled;
+
+      await controller().confirm(state().reports.single);
+
+      expect(reports.confirmCalls, isEmpty);
+      expect(state().confirmError, confirmLocationOffMessage);
+    });
+
+    test('sin posición del GPS no confirma y lo dice', () async {
+      await controller().showArea(_area);
+      location.fixes = [];
+
+      await controller().confirm(state().reports.single);
+
+      expect(reports.confirmCalls, isEmpty);
+      expect(state().confirmError, confirmLocationUnavailableMessage);
+      expect(state().confirming, isFalse);
+    });
+
+    test('lejos del daño muestra el mensaje del servidor', () async {
+      await controller().showArea(_area);
+      reports.onConfirm = [
+        () async => throw const ApiError(
+          status: 403,
+          code: 'CONFIRMATION_TOO_FAR',
+          message: 'Para confirmar este daño tienes que estar cerca de él.',
+        ),
+      ];
+
+      await controller().confirm(state().reports.single);
+
+      expect(state().confirmError, 'Para confirmar este daño tienes que estar cerca de él.');
+      expect(state().reports.single.confirmedByMe, isFalse);
     });
 
     test('sin red muestra el mensaje de conexión', () async {

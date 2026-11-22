@@ -5,7 +5,10 @@ import '../../../core/network/api_error.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../auth/application/session_controller.dart';
 import '../../my_reports/application/my_reports_controller.dart';
+import '../../report_new/application/report_draft_controller.dart';
 import '../../report_new/application/submit_report_controller.dart';
+import '../../report_new/domain/device_services.dart';
+import '../../report_new/domain/report_draft.dart';
 import '../data/http_report_map_repository.dart';
 import '../domain/map_report.dart';
 import '../domain/report_map_repository.dart';
@@ -13,6 +16,14 @@ import '../domain/report_map_repository.dart';
 final reportMapRepositoryProvider = Provider<ReportMapRepository>(
   (ref) => HttpReportMapRepository(ref.watch(apiClientProvider)),
 );
+
+/// Mensajes de la ficha cuando no hay ubicación para confirmar (propuesta 112).
+const confirmLocationDeniedMessage =
+    'Para confirmar un daño necesitamos tu ubicación: así sabemos que estás frente a él. '
+    'Actívala en los permisos de la app.';
+const confirmLocationOffMessage = 'Enciende el GPS del celular para confirmar este daño.';
+const confirmLocationUnavailableMessage =
+    'No pudimos obtener tu ubicación. Ve a un lugar abierto e inténtalo de nuevo.';
 
 class ReportMapState {
   const ReportMapState({
@@ -122,12 +133,21 @@ class ReportMapController extends Notifier<ReportMapState> {
 
   void noticeShown() => state = state.copyWith(confirmedNotice: false);
 
-  /// Confirma un reporte ajeno desde su ficha. No cambia U: es evidencia (guía 2.2).
+  /// Confirma un reporte ajeno desde su ficha. No cambia U: es evidencia (guía 2.2). Envía la
+  /// ubicación actual: el servidor solo acepta a quien está frente al daño (propuesta 112).
   Future<void> confirm(MapReport report) async {
     if (state.confirming || !report.canConfirm) return;
     state = state.copyWith(confirming: true, confirmError: () => null);
+    final GeoFix fix;
     try {
-      final total = await ref.read(newReportRepositoryProvider).confirm(report.id);
+      fix = await _currentFix();
+    } on _NoLocation catch (e) {
+      if (ref.mounted) state = state.copyWith(confirming: false, confirmError: () => e.message);
+      return;
+    }
+    if (!ref.mounted) return;
+    try {
+      final total = await ref.read(newReportRepositoryProvider).confirm(report.id, fix);
       if (!ref.mounted) return;
       _replace(report.confirmed(total), notice: true);
       // El reporte confirmado pasa a aparecer en «Mis reportes».
@@ -142,6 +162,28 @@ class ReportMapController extends Notifier<ReportMapState> {
       }
     } on ApiFailure catch (e) {
       if (ref.mounted) state = state.copyWith(confirming: false, confirmError: () => e.message);
+    }
+  }
+
+  /// Pide el permiso si aún se puede y devuelve la posición actual; si no hay, lanza
+  /// [_NoLocation] con el mensaje para la ficha.
+  Future<GeoFix> _currentFix() async {
+    final location = ref.read(locationServiceProvider);
+    var permission = await location.permission();
+    if (permission == LocationPermissionState.denied) permission = await location.request();
+    switch (permission) {
+      case LocationPermissionState.granted:
+        break;
+      case LocationPermissionState.denied:
+      case LocationPermissionState.deniedForever:
+        throw const _NoLocation(confirmLocationDeniedMessage);
+      case LocationPermissionState.serviceDisabled:
+        throw const _NoLocation(confirmLocationOffMessage);
+    }
+    try {
+      return await location.currentFix();
+    } on LocationUnavailable {
+      throw const _NoLocation(confirmLocationUnavailableMessage);
     }
   }
 
@@ -177,4 +219,10 @@ class ReportMapController extends Notifier<ReportMapState> {
       state = state.copyWith(loading: false, failure: () => failure);
     }
   }
+}
+
+class _NoLocation implements Exception {
+  const _NoLocation(this.message);
+
+  final String message;
 }

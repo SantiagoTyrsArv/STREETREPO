@@ -219,6 +219,8 @@ void main() {
 
       expect(outcome, isA<Confirmed>().having((o) => o.confirmations, 'total', 4));
       expect(repository.confirmCalls, ['r1']);
+      // Se confirma desde donde se tomó la ubicación del reporte nuevo (propuesta 112).
+      expect(repository.confirmFixes, [pastoFix]);
       expect(c.read(reportDraftProvider).photo, isNull);
     });
 

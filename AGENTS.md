@@ -84,6 +84,7 @@ Entidades y columnas añadidas por propuestas **aprobadas** (ya reflejadas en el
 - `token_refresco` (propuesta 9)
 - `solicitud_supresion` (propuesta 10)
 - `reporte.clave_idempotencia` con restricción única (id_usuario, clave_idempotencia) (propuesta 11)
+- `confirmacion.distancia_m` (propuesta 112; NULL en las confirmaciones anteriores a la migración 0008)
 
 > Si necesitas una entidad o columna que no esté en los diagramas, aplica el protocolo 0.3.
 
@@ -128,6 +129,7 @@ d ≥ 500 m        → P = 0
 | Radio de *map-matching* a la vía | 30 m |
 | Radio de proximidad con P = 10 | 100 m |
 | Radio máximo de proximidad (P) | 500 m |
+| Radio para confirmar un reporte (propuesta 112) | 50 m |
 
 Deben ser **constantes de configuración con nombre**, no números dentro de las consultas. Viven en `backend/app/shared/domain/geo_parameters.py`.
 
@@ -150,6 +152,8 @@ Deben ser **constantes de configuración con nombre**, no números dentro de las
 ### 2.5 Deduplicación
 
 Al crear un reporte, buscar reportes activos dentro de 25 m (`ST_DWithin`). Si existen, mostrar la pantalla **Posible duplicado** y ofrecer **confirmar el existente** en lugar de crear uno nuevo. El ciudadano puede decidir crear uno nuevo de todos modos.
+
+**Confirmar exige estar cerca del daño (propuesta 112):** la confirmación lleva la ubicación actual del ciudadano y el servidor solo la acepta a 50 m o menos de la ubicación exacta del reporte (403 `CONFIRMATION_TOO_FAR` si no). El radio es mayor que el de deduplicación por la precisión del GPS. Falsear el GPS sigue siendo posible: esto encarece el abuso, no lo impide.
 
 ### 2.6 Historias de usuario (Pila del Producto de la tesis)
 
@@ -606,7 +610,7 @@ Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si al
 
 **Estado (2026-11-11), punto de reanudación:** fases 1 a 6 cerradas e integradas en `main` (etiquetas `v0.1.0` a `v0.6.0`), con la CI en verde. **Lo siguiente** lo decide el responsable: completar la app Flutter (fase 7: mapa de reportes, edición de perfil, supresión y los estados que faltan), el objetivo 4 de la tesis (comparación con el panel de referencia, HU-09) o el endurecimiento (fase 8). Para las capturas del objetivo 3: levantar el stack, crear un administrador y cargar `seed-demo` (README, sección «Panel administrativo»); las capturas se presentan como demostración de funcionamiento, no como resultados de campo. Al empezar o terminar cada tarea se actualizan la bitácora y el estado del *issue* en Linear.
 
-**Estado (2026-11-22), fase 7 cerrada (`v0.7.0`, decisión 111):** el perfil de la app permite editar los datos y pedir la supresión con constancia (cumple la condición de la decisión 71), existe `GET /api/v1/reports` por área visible con vista pública y la app tiene la pestaña Mapa con ficha del reporte y «Confirmar este daño» (decisiones 91 a 96). El responsable lo probó en su celular el 2026-11-22 (lista en `mobile/README.md`). **Pendiente de decisión:** la propuesta 112 (las confirmaciones remotas no prueban que el daño exista). **Lo siguiente:** el objetivo 4 de la tesis (comparación con el panel de referencia, HU-09) y luego el endurecimiento (fase 8).
+**Estado (2026-11-22), fase 7 cerrada (`v0.7.0`, decisión 111):** el perfil de la app permite editar los datos y pedir la supresión con constancia (cumple la condición de la decisión 71), existe `GET /api/v1/reports` por área visible con vista pública y la app tiene la pestaña Mapa con ficha del reporte y «Confirmar este daño» (decisiones 91 a 96). El responsable lo probó en su celular el 2026-11-22 (lista en `mobile/README.md`). **Propuesta 112 aprobada** (confirmar solo a 50 m o menos del daño): integrada en `main` y precisada en la tesis (fila 113); falta probarla en el celular y añadir `confirmacion.distancia_m` al ER de Lucid (el conector solo tiene lectura). **Lo siguiente:** el objetivo 4 de la tesis (comparación con el panel de referencia, HU-09) y luego el endurecimiento (fase 8).
 
 **Estado (2026-11-19), punto de reanudación — página de presentación y descarga (`landing/`, decisión 99, Linear ARE-46):** diseño en `docs/superpowers/specs/2026-11-19-landing-descarga-apk-design.md` y plan en `docs/superpowers/plans/2026-11-19-landing-descarga-apk.md` (9 tareas, ejecución directa). **Hechas e integradas en `main`:** tarea 1 (andamiaje, tokens, fuentes y CI), 3 (marca: símbolo «SR» en blanco con la vía y el Galeras, elegido por el responsable), 5 (motor de secuencias), 6 (capítulos, *scroll* y textos; los textos esperan la revisión del responsable), 7 (teléfono 3D con capturas reales tomadas en el emulador; fila 106), 8 (panel, descarga con «Próximamente», «Saltar a la descarga» y pie; fila 105) y 4 (escenas: el responsable aprobó una toma de Seedance por escena y formato; secuencias WebP de 16 fps con `scripts/build-sequences.ts`, escritorio 19 MB y móvil 23 MB; fila 107); desplegada en https://streetrepo.vercel.app/ (importada por el responsable). Además, fondo vivo y microinteracciones (fila 108, diseño y plan `2026-11-19-landing-fondo-vivo`). **Pendientes:** tarea 2 (`vercel.json` con cabeceras de seguridad y caché larga de `/media/`); tarea 9 (presupuesto de medios, Lighthouse, prueba en el celular, documentación); y la revisión final de la rama completa. El registro de avance de la ejecución está en `.superpowers/sdd/2026-11-19-landing-descarga-apk/progress.md` (local, fuera de git); las decisiones, en las filas 99 a 108 de la bitácora. La cuenta de Higgsfield del conector de Claude Code tiene 3 créditos.
 

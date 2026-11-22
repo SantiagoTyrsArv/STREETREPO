@@ -45,6 +45,9 @@ class FakeNewReportRepository implements NewReportRepository {
   final List<CreateCall> createCalls = [];
   final List<String> confirmCalls = [];
 
+  /// Ubicación enviada con cada confirmación (propuesta 112).
+  final List<GeoFix> confirmFixes = [];
+
   static T _next<T>(List<T> queue) => queue.length == 1 ? queue.first : queue.removeAt(0);
 
   @override
@@ -64,8 +67,9 @@ class FakeNewReportRepository implements NewReportRepository {
   }
 
   @override
-  Future<int> confirm(String reportId) {
+  Future<int> confirm(String reportId, GeoFix fix) {
     confirmCalls.add(reportId);
+    confirmFixes.add(fix);
     return _next(onConfirm)();
   }
 }
