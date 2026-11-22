@@ -11,6 +11,8 @@ from app.core.config import Settings
 from app.modules.admin.domain.demo import NotEnoughOsmDataError
 from app.modules.reports.domain.photos import PhotoKeys
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
+from app.modules.validation.application.import_zones import ImportZonesResult
+from app.modules.validation.domain.zones import InvalidZonesError
 
 
 def test_osm_import_rejects_invalid_bbox(capsys: pytest.CaptureFixture[str]) -> None:
@@ -121,3 +123,52 @@ def test_cli_seed_demo_without_osm_data_fails_with_a_hint(
 
     assert main(["seed-demo"]) == 1
     assert "osm-import" in capsys.readouterr().err
+
+
+def test_zones_import_prints_the_totals(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    received: list[object] = []
+
+    class _UseCase:
+        def execute(self, geojson: object) -> ImportZonesResult:
+            received.append(geojson)
+            return ImportZonesResult(zones=2, reports_assigned=9)
+
+    file = tmp_path / "zonas.geojson"
+    file.write_text('{"type": "FeatureCollection", "features": []}', encoding="utf-8")
+    monkeypatch.setattr("app.cli.create_session", nullcontext)
+    monkeypatch.setattr("app.cli._build_import_zones", lambda _session: _UseCase())
+
+    assert main(["zones-import", str(file)]) == 0
+    assert "Zonas cargadas: 2 · reportes asignados: 9" in capsys.readouterr().out
+    assert received == [{"type": "FeatureCollection", "features": []}]
+
+
+def test_zones_import_exits_1_with_the_message_when_zones_are_invalid(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    class _UseCase:
+        def execute(self, geojson: object) -> object:
+            raise InvalidZonesError("La zona «Centro» no es un polígono")
+
+    file = tmp_path / "zonas.geojson"
+    file.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr("app.cli.create_session", nullcontext)
+    monkeypatch.setattr("app.cli._build_import_zones", lambda _session: _UseCase())
+
+    assert main(["zones-import", str(file)]) == 1
+    assert "La zona «Centro» no es un polígono" in capsys.readouterr().err
+
+
+def test_zones_import_exits_1_when_the_file_is_missing_or_not_json(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    monkeypatch.setattr("app.cli.create_session", nullcontext)
+    bad = tmp_path / "malo.geojson"
+    bad.write_text("{no es json", encoding="utf-8")
+
+    assert main(["zones-import", str(tmp_path / "no-existe.geojson")]) == 1
+    assert "No se pudo leer" in capsys.readouterr().err
+    assert main(["zones-import", str(bad)]) == 1
+    assert "JSON" in capsys.readouterr().err

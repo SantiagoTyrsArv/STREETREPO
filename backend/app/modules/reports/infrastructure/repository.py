@@ -12,7 +12,7 @@ from app.modules.reports.domain.ports import DuplicateIdempotencyKeyError
 from app.modules.reports.domain.severity import Severity
 from app.modules.reports.domain.status import ReportStatus
 from app.modules.reports.infrastructure.models import EvidenceModel, ReportModel
-from app.modules.roads.infrastructure.models import RoadModel
+from app.modules.roads.infrastructure.models import RoadModel, ZoneModel
 from app.shared.domain.geo import GeoPoint
 from app.shared.infrastructure.wkt import point_wkt
 
@@ -39,9 +39,13 @@ class SqlReportRepository:
         ).scalar_one_or_none()
 
     def add(self, report: NewReport) -> uuid.UUID:
+        location = func.ST_GeomFromText(point_wkt(report.location), SRID_WGS84)
+        # Zona de validación (objetivo 4) que cubre el punto; NULL si ninguna.
+        zone_id = select(ZoneModel.id).where(func.ST_Covers(ZoneModel.geom, location)).limit(1)
         model = ReportModel(
             user_id=report.user_id,
-            location=func.ST_GeomFromText(point_wkt(report.location), SRID_WGS84),
+            location=location,
+            zone_id=zone_id.scalar_subquery(),
             severity=int(report.severity),
             description=report.description,
             status=ReportStatus.REGISTERED,

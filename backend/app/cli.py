@@ -4,6 +4,7 @@ osm-import [--bbox sur,oeste,norte,este]   Carga vías y servicios críticos de 
 create-admin --name NOMBRE --email CORREO  Crea un administrador (pide la contraseña sin eco).
 purge-orphan-photos                       Borra las fotos que ninguna evidencia referencia.
 seed-demo [--remove]                      Carga (o borra) los datos de demostración del panel.
+zones-import RUTA                         Carga las zonas de validación desde un GeoJSON.
 """
 
 import argparse
@@ -11,6 +12,7 @@ import getpass
 import json
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -37,6 +39,9 @@ from app.modules.reports.infrastructure.status_history import SqlStatusHistoryRe
 from app.modules.roads.infrastructure.repository import SqlRoadRepository
 from app.modules.users.domain.ports import EmailAlreadyRegisteredError
 from app.modules.users.infrastructure.repository import SqlUserRepository
+from app.modules.validation.application.import_zones import ImportZones
+from app.modules.validation.domain.zones import InvalidZonesError
+from app.modules.validation.infrastructure.zone_repository import SqlZoneRepository
 from app.shared.application.clock import SystemClock
 from app.shared.domain.geo import BoundingBox, InvalidGeometryError
 
@@ -142,6 +147,29 @@ def _seed_demo(*, remove: bool) -> int:
     return 0
 
 
+def _build_import_zones(session: Session) -> ImportZones:
+    return ImportZones(SqlZoneRepository(session), session)
+
+
+def _zones_import(path: Path) -> int:
+    try:
+        geojson = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        print(f"No se pudo leer el archivo de zonas: {exc.strerror or exc}", file=sys.stderr)
+        return 1
+    except ValueError:
+        print("El archivo de zonas no es un JSON válido.", file=sys.stderr)
+        return 1
+    with create_session() as session:
+        try:
+            result = _build_import_zones(session).execute(geojson)
+        except InvalidZonesError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+    print(f"Zonas cargadas: {result.zones} · reportes asignados: {result.reports_assigned}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -154,6 +182,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     demo = commands.add_parser("seed-demo", help="Cargar los datos de demostración del panel")
     demo.add_argument("--remove", action="store_true", help="Borrar los datos de demostración")
 
+    zones = commands.add_parser(
+        "zones-import",
+        help="Cargar las zonas de validación desde un GeoJSON",
+        description=(
+            "Carga zonas (Polygon con name y concentration alta|baja). Las zonas con el mismo "
+            "nombre se actualizan; las que están en la base y no vienen en el archivo no se "
+            "tocan. Luego recalcula la zona de todos los reportes."
+        ),
+    )
+    zones.add_argument("path", metavar="RUTA", type=Path, help="Archivo GeoJSON de zonas")
+
     args = parser.parse_args(argv)
     configure_logging(get_settings().log_level)
     if args.command == "osm-import":
@@ -164,6 +203,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _purge_orphan_photos()
     if args.command == "seed-demo":
         return _seed_demo(remove=args.remove)
+    if args.command == "zones-import":
+        return _zones_import(args.path)
     return 2  # pragma: no cover - argparse ya valida el comando
 
 
