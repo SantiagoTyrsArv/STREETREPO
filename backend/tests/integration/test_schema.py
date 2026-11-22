@@ -46,13 +46,23 @@ ER_TABLES = {
     "via": {
         "id_via", "osm_id", "nombre", "jerarquia_vial", "factor_flujo", "geom", "highway_osm",
     },
-    "zona": {"id_zona", "nombre", "geom"},
+    "zona": {"id_zona", "nombre", "geom", "concentracion"},
     "token_refresco": {
         "id_token", "id_usuario", "hash_token", "emitido", "expira", "revocado", "reemplazado_por",
     },
     "solicitud_supresion": {
         "id_solicitud", "id_usuario", "estado", "fecha_solicitud", "fecha_atencion",
     },
+    "ronda_evaluacion": {
+        "id_ronda", "nombre", "estado", "tamano_muestra", "semilla", "id_config", "id_usuario",
+        "fecha_apertura", "fecha_cierre",
+    },
+    "ronda_reporte": {"id_ronda", "id_reporte", "id_zona", "puntaje_u", "orden_motor"},
+    "orden_evaluador": {"id_ronda", "id_usuario", "id_reporte", "posicion", "fecha_envio"},
+    "aviso_duplicado": {
+        "id_aviso", "id_usuario", "id_zona", "fecha", "decision", "id_reporte_resultante",
+    },
+    "aviso_duplicado_candidato": {"id_aviso", "id_reporte", "distancia_m"},
 }  # fmt: skip
 
 
@@ -361,3 +371,224 @@ def test_idempotency_key_is_optional(conn: Connection) -> None:
 
     conn.execute(_INSERT_WITH_KEY, {"u": user_id, "k": None})
     conn.execute(_INSERT_WITH_KEY, {"u": user_id, "k": None})
+
+
+# --- Objetivo 4: zonas, rondas de evaluación y avisos de duplicado ----------------------
+
+_POLYGON_WKT = "POLYGON((-77.3 1.2, -77.2 1.2, -77.2 1.3, -77.3 1.3, -77.3 1.2))"
+
+
+def _insert_zone(
+    conn: Connection, name: str = "Zona de prueba", concentration: str = "alta"
+) -> int:
+    return conn.execute(
+        text(
+            "INSERT INTO zona (nombre, geom, concentracion) "
+            "VALUES (:name, ST_GeomFromText(:wkt, 4326), :concentration) RETURNING id_zona"
+        ),
+        {"name": name, "wkt": _POLYGON_WKT, "concentration": concentration},
+    ).scalar_one()
+
+
+def _insert_round(conn: Connection, user_id: uuid.UUID, state: str = "abierta") -> uuid.UUID:
+    config_id = conn.execute(text("SELECT id_config FROM configuracion_pesos LIMIT 1")).scalar_one()
+    return conn.execute(
+        text(
+            "INSERT INTO ronda_evaluacion (nombre, estado, tamano_muestra, semilla, id_config, "
+            "id_usuario) VALUES ('Ronda', :state, 10, 42, :config, :user) RETURNING id_ronda"
+        ),
+        {"state": state, "config": config_id, "user": user_id},
+    ).scalar_one()
+
+
+def _insert_round_report(
+    conn: Connection, round_id: uuid.UUID, report_id: uuid.UUID, zone_id: int, order: int
+) -> None:
+    conn.execute(
+        text(
+            "INSERT INTO ronda_reporte (id_ronda, id_reporte, id_zona, puntaje_u, orden_motor) "
+            "VALUES (:round, :report, :zone, 7.50, :order)"
+        ),
+        {"round": round_id, "report": report_id, "zone": zone_id, "order": order},
+    )
+
+
+def test_zone_concentration_is_required_and_valid(conn: Connection) -> None:
+    with pytest.raises(IntegrityError, match="concentracion"):
+        conn.execute(
+            text(
+                "INSERT INTO zona (nombre, geom) "
+                "VALUES ('Sin concentración', ST_GeomFromText(:wkt, 4326))"
+            ),
+            {"wkt": _POLYGON_WKT},
+        )
+
+
+def test_zone_name_is_unique(conn: Connection) -> None:
+    _insert_zone(conn, "Repetida")
+
+    with pytest.raises(IntegrityError, match="uq_zona_nombre"):
+        _insert_zone(conn, "Repetida", "baja")
+
+
+def test_only_one_open_round(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    _insert_round(conn, user_id)
+
+    with pytest.raises(IntegrityError, match="uq_ronda_abierta"):
+        _insert_round(conn, user_id)
+
+
+def test_many_closed_rounds_are_allowed(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    _insert_round(conn, user_id, "cerrada")
+    _insert_round(conn, user_id, "cerrada")
+    _insert_round(conn, user_id)
+
+
+def test_round_sample_size_must_be_positive(conn: Connection) -> None:
+    user_id = insert_user(conn)
+
+    with pytest.raises(IntegrityError, match="ck_ronda_evaluacion_tamano_positivo"):
+        conn.execute(
+            text(
+                "INSERT INTO ronda_evaluacion (nombre, tamano_muestra, semilla, id_config, "
+                "id_usuario) VALUES ('Ronda', 0, 1, "
+                "(SELECT id_config FROM configuracion_pesos LIMIT 1), :user)"
+            ),
+            {"user": user_id},
+        )
+
+
+def test_round_report_order_is_unique_per_zone(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    zone_id = _insert_zone(conn)
+    round_id = _insert_round(conn, user_id)
+    first = insert_report(conn, user_id, PASTO_LON, PASTO_LAT)
+    second = insert_report(conn, user_id, PASTO_LON + 0.01, PASTO_LAT)
+    _insert_round_report(conn, round_id, first, zone_id, 1)
+
+    with pytest.raises(IntegrityError, match="uq_ronda_reporte_zona_orden"):
+        _insert_round_report(conn, round_id, second, zone_id, 1)
+
+
+def test_report_in_round_cannot_be_deleted(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    zone_id = _insert_zone(conn)
+    round_id = _insert_round(conn, user_id)
+    report_id = insert_report(conn, user_id, PASTO_LON, PASTO_LAT)
+    _insert_round_report(conn, round_id, report_id, zone_id, 1)
+
+    with pytest.raises(IntegrityError, match="ronda_reporte_id_reporte_fkey"):
+        conn.execute(text("DELETE FROM reporte WHERE id_reporte = :r"), {"r": report_id})
+
+
+def test_evaluator_order_requires_the_report_to_be_in_the_round(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    round_id = _insert_round(conn, user_id)
+    outside = insert_report(conn, user_id, PASTO_LON, PASTO_LAT)
+
+    with pytest.raises(IntegrityError, match="orden_evaluador_id_ronda_id_reporte_fkey"):
+        conn.execute(
+            text(
+                "INSERT INTO orden_evaluador (id_ronda, id_usuario, id_reporte, posicion) "
+                "VALUES (:round, :user, :report, 1)"
+            ),
+            {"round": round_id, "user": user_id, "report": outside},
+        )
+
+
+def test_evaluator_order_is_unique_per_report_and_evaluator(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    zone_id = _insert_zone(conn)
+    round_id = _insert_round(conn, user_id)
+    report_id = insert_report(conn, user_id, PASTO_LON, PASTO_LAT)
+    _insert_round_report(conn, round_id, report_id, zone_id, 1)
+    params = {"round": round_id, "user": user_id, "report": report_id}
+    insert = text(
+        "INSERT INTO orden_evaluador (id_ronda, id_usuario, id_reporte, posicion) "
+        "VALUES (:round, :user, :report, 1)"
+    )
+    conn.execute(insert, params)
+
+    with pytest.raises(IntegrityError, match="orden_evaluador_pkey"):
+        conn.execute(insert, params)
+
+
+def test_deleting_round_cascades_to_its_reports_and_orders(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    zone_id = _insert_zone(conn)
+    round_id = _insert_round(conn, user_id)
+    report_id = insert_report(conn, user_id, PASTO_LON, PASTO_LAT)
+    _insert_round_report(conn, round_id, report_id, zone_id, 1)
+    conn.execute(
+        text(
+            "INSERT INTO orden_evaluador (id_ronda, id_usuario, id_reporte, posicion) "
+            "VALUES (:round, :user, :report, 1)"
+        ),
+        {"round": round_id, "user": user_id, "report": report_id},
+    )
+
+    conn.execute(text("DELETE FROM ronda_evaluacion WHERE id_ronda = :r"), {"r": round_id})
+
+    for table in ("ronda_reporte", "orden_evaluador"):
+        remaining = conn.execute(text(f"SELECT count(*) FROM {table}")).scalar_one()  # noqa: S608
+        assert remaining == 0, table
+
+
+def test_duplicate_warning_defaults_to_pending_and_cascades_candidates(conn: Connection) -> None:
+    user_id = insert_user(conn)
+    report_id = insert_report(conn, user_id, PASTO_LON, PASTO_LAT)
+    warning_id = conn.execute(
+        text("INSERT INTO aviso_duplicado (id_usuario) VALUES (:u) RETURNING id_aviso"),
+        {"u": user_id},
+    ).scalar_one()
+    conn.execute(
+        text(
+            "INSERT INTO aviso_duplicado_candidato (id_aviso, id_reporte, distancia_m) "
+            "VALUES (:w, :r, 12.50)"
+        ),
+        {"w": warning_id, "r": report_id},
+    )
+
+    decision = conn.execute(
+        text("SELECT decision FROM aviso_duplicado WHERE id_aviso = :w"), {"w": warning_id}
+    ).scalar_one()
+    conn.execute(text("DELETE FROM reporte WHERE id_reporte = :r"), {"r": report_id})
+    candidates = conn.execute(text("SELECT count(*) FROM aviso_duplicado_candidato")).scalar_one()
+
+    assert decision == "pendiente"
+    assert candidates == 0
+
+
+def test_duplicate_warning_keeps_its_row_when_the_resulting_report_is_deleted(
+    conn: Connection,
+) -> None:
+    user_id = insert_user(conn)
+    report_id = insert_report(conn, user_id, PASTO_LON, PASTO_LAT)
+    warning_id = conn.execute(
+        text(
+            "INSERT INTO aviso_duplicado (id_usuario, decision, id_reporte_resultante) "
+            "VALUES (:u, 'creo_igual', :r) RETURNING id_aviso"
+        ),
+        {"u": user_id, "r": report_id},
+    ).scalar_one()
+
+    conn.execute(text("DELETE FROM reporte WHERE id_reporte = :r"), {"r": report_id})
+
+    result = conn.execute(
+        text("SELECT id_reporte_resultante FROM aviso_duplicado WHERE id_aviso = :w"),
+        {"w": warning_id},
+    ).scalar_one()
+    assert result is None
+
+
+def test_evaluator_role_exists(conn: Connection) -> None:
+    user_id = insert_user(conn)
+
+    conn.execute(text("UPDATE usuario SET rol = 'evaluador' WHERE id_usuario = :u"), {"u": user_id})
+
+    role = conn.execute(
+        text("SELECT rol FROM usuario WHERE id_usuario = :u"), {"u": user_id}
+    ).scalar_one()
+    assert role == "evaluador"

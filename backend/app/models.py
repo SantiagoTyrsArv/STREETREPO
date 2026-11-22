@@ -15,16 +15,28 @@ from app.modules.reports.infrastructure.models import (
 )
 from app.modules.roads.infrastructure.models import RoadModel, ZoneModel
 from app.modules.users.infrastructure.models import DataDeletionRequestModel, UserModel
+from app.modules.validation.infrastructure.models import (
+    DuplicateWarningCandidateModel,
+    DuplicateWarningModel,
+    EvaluationRoundModel,
+    EvaluatorOrderModel,
+    RoundReportModel,
+)
 
 __all__ = [
     "ConfirmationModel",
     "CriticalServiceModel",
     "DataDeletionRequestModel",
+    "DuplicateWarningCandidateModel",
+    "DuplicateWarningModel",
+    "EvaluationRoundModel",
+    "EvaluatorOrderModel",
     "EvidenceModel",
     "PriorityEvaluationModel",
     "RefreshTokenModel",
     "ReportModel",
     "RoadModel",
+    "RoundReportModel",
     "StatusHistoryModel",
     "UserModel",
     "WeightConfigModel",
