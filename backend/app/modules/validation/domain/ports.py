@@ -5,6 +5,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from app.modules.validation.domain.blind import (
+    BlindCard,
+    BlindZone,
+    EvaluatorZone,
+    OpenRoundRef,
+)
 from app.modules.validation.domain.rounds import (
     RoundCandidate,
     RoundEntry,
@@ -74,4 +80,44 @@ class RoundRepository(Protocol):
 
     def list_rounds(self, limit: int, offset: int) -> list[RoundSummary]:
         """Rondas de la más reciente a la más antigua."""
+        ...
+
+
+class BlindEvaluationRepository(Protocol):
+    """Lecturas y escrituras de la evaluación a ciegas. Ninguna lectura devuelve datos del
+    motor (U, factores, orden del motor) ni de otros evaluadores."""
+
+    def find_open_round(self, *, lock: bool = False) -> OpenRoundRef | None:
+        """La ronda abierta; con ``lock`` la fila queda bloqueada (compartida) hasta el fin
+        de la transacción, para que no se cierre mientras se guarda un orden."""
+        ...
+
+    def list_zones(self, round_id: uuid.UUID, evaluator_id: uuid.UUID) -> list[EvaluatorZone]:
+        """Zonas de la ronda por nombre, con sus reportes y si el evaluador ya envió."""
+        ...
+
+    def get_zone(self, round_id: uuid.UUID, zone_id: int) -> BlindZone | None:
+        """La zona si forma parte de la ronda; ``None`` si no."""
+        ...
+
+    def zone_report_ids(self, round_id: uuid.UUID, zone_id: int) -> list[uuid.UUID]: ...
+
+    def zone_cards(self, round_id: uuid.UUID, zone_id: int) -> list[BlindCard]:
+        """Tarjetas de la zona con los servicios críticos a ``PROXIMITY_MAX_RADIUS_M``."""
+        ...
+
+    def has_submitted(self, round_id: uuid.UUID, evaluator_id: uuid.UUID, zone_id: int) -> bool: ...
+
+    def save_order(
+        self, round_id: uuid.UUID, evaluator_id: uuid.UUID, report_ids: Sequence[uuid.UUID]
+    ) -> None:
+        """Guarda las posiciones 1..n en el orden dado; no confirma.
+
+        Lanza ``OrderAlreadySubmittedError`` si otra petición guardó el mismo orden antes.
+        """
+        ...
+
+    def photo_key(self, round_id: uuid.UUID, report_id: uuid.UUID) -> str | None:
+        """Clave de la foto más reciente si el reporte está en la ronda; ``None`` si no
+        está o no tiene foto."""
         ...
