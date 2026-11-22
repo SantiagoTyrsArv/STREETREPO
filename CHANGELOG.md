@@ -4,6 +4,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+## [0.7.0] - 2026-11-22
+
+Fase 7: la app ciudadana completa el perfil (conocer, actualizar y suprimir los datos, Ley 1581)
+y el mapa de reportes con «Confirmar este daño», probados en el celular del responsable el
+2026-11-22 (decisión 111). Incluye lo construido después de `v0.6.0`, también la página de
+presentación, que sigue en construcción.
+
 ### Añadido
 - `GET /api/v1/reports?bbox=…`: reportes del área visible para el mapa de la app, con la vista
   pública (sin autor, descripción ni foto; ubicación redondeada), filtro por estado, tope de 200 y

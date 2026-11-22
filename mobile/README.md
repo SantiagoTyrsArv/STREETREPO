@@ -98,15 +98,15 @@ de las pruebas del 2026-10-21 y del 2026-11-08 (decisiones 65 y 74 de la bitáco
   reenviar el puerto antes de «Reintentar».
 - [x] Cerrar sesión: vuelve a la Bienvenida.
 
-Pendiente de probar en el celular (fase 7, decisiones 92 y 95 de la bitácora):
+Fase 7, probado en el celular el 2026-11-22 (decisiones 92, 95 y 111 de la bitácora):
 
-- [ ] Perfil → «Conocer y actualizar mis datos»: cambiar el nombre (sin contraseña) y el correo
+- [x] Perfil → «Conocer y actualizar mis datos»: cambiar el nombre (sin contraseña) y el correo
   (pide la contraseña actual).
-- [ ] Perfil → «Solicitar supresión de mis datos» con una cuenta de prueba: muestra la constancia,
+- [x] Perfil → «Solicitar supresión de mis datos» con una cuenta de prueba: muestra la constancia,
   la cuenta ya no puede ingresar y el correo queda libre para registrarse de nuevo.
-- [ ] Mapa: aparecen las teselas, la atribución de OpenStreetMap y los reportes de la zona; los
+- [x] Mapa: aparecen las teselas, la atribución de OpenStreetMap y los reportes de la zona; los
   filtros por estado cambian los marcadores.
-- [ ] Mapa: tocar un reporte de otra cuenta y «Confirmar este daño»; después aparece en Mis
+- [x] Mapa: tocar un reporte de otra cuenta y «Confirmar este daño»; después aparece en Mis
   reportes con «Lo confirmaste».
-- [ ] Mapa sin red (`adb reverse --remove tcp:8000`): avisa «Sin conexión» y «Reintentar» vuelve a
+- [x] Mapa sin red (`adb reverse --remove tcp:8000`): avisa «Sin conexión» y «Reintentar» vuelve a
   cargar al restablecer el reenvío.

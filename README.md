@@ -3,10 +3,11 @@
 Sistema Ciudadano de Reporte y Priorización de Daños en la Infraestructura Vial de Pasto, Nariño.
 Proyecto de grado · Ingeniería de Software · Universidad Cooperativa de Colombia, Campus Pasto.
 
-> **Estado:** fases 1 a 6 del MVP cerradas (versión `v0.6.0`): API, base de datos georreferenciada,
+> **Estado:** fases 1 a 7 del MVP cerradas (versión `v0.7.0`): API, base de datos georreferenciada,
 > carga OSM, motor de priorización, autenticación, derechos del titular, reportes con foto y
-> deduplicación a 25 m, app ciudadana con el flujo crítico (decisión 49) y panel administrativo
-> (priorización, detalle y estado, pesos del modelo). Lo siguiente es completar la app (fase 7).
+> deduplicación a 25 m, panel administrativo (priorización, detalle y estado, pesos del modelo) y
+> app ciudadana con el flujo crítico, el mapa de reportes y el perfil con edición y supresión de
+> datos. Lo siguiente es el objetivo 4 de la tesis (HU-09) y el endurecimiento (fase 8).
 > Historial de versiones en [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Componentes
