@@ -195,10 +195,13 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
   ella). El punto debe estar dentro del área de servicio y cada usuario tiene un cupo de consultas por
   hora. `POST /api/v1/reports` responde **409** `REPORT_DUPLICATE_NEARBY` con esa lista, salvo que
   llegue `create_anyway=true`. Cada candidato lleva `is_mine` (propuesta 48).
-- Confirmar (HU-16): `POST /api/v1/reports/{id}/confirmations` responde **201** con el total de
-  confirmaciones; **409** si el reporte está reparado (`REPORT_NOT_ACTIVE`), es propio
-  (`CONFIRMATION_OWN_REPORT`) o ya se confirmó (`CONFIRMATION_ALREADY_EXISTS`); **404** si no existe.
-  No cambia U.
+- Confirmar (HU-16): `POST /api/v1/reports/{id}/confirmations` con el cuerpo
+  `{"longitude": …, "latitude": …}` (la ubicación actual de quien confirma) responde **201** con el
+  total de confirmaciones; **403** `CONFIRMATION_TOO_FAR` si está a más de 50 m del daño
+  (propuesta 112; la respuesta da el radio, no la distancia); **409** si el reporte está reparado
+  (`REPORT_NOT_ACTIVE`), es propio (`CONFIRMATION_OWN_REPORT`) o ya se confirmó
+  (`CONFIRMATION_ALREADY_EXISTS`); **404** si no existe. Guarda la distancia en
+  `confirmacion.distancia_m`. No cambia U.
 - Mapa de reportes de la app: `GET /api/v1/reports?bbox=min_lon,min_lat,max_lon,max_lat` (con
   sesión; `status` y `limit` opcionales, máximo 200) lista los reportes del área visible, del más
   reciente al más antiguo, con la **vista pública**: sin autor, descripción ni foto y con la

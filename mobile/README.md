@@ -110,3 +110,11 @@ Fase 7, probado en el celular el 2026-11-22 (decisiones 92, 95 y 111 de la bitá
   reportes con «Lo confirmaste».
 - [x] Mapa sin red (`adb reverse --remove tcp:8000`): avisa «Sin conexión» y «Reintentar» vuelve a
   cargar al restablecer el reenvío.
+
+Pendiente de probar en el celular (propuesta 112, decisión 113 de la bitácora):
+
+- [ ] Mapa: «Confirmar este daño» sobre un reporte a más de 50 m de donde estás: la ficha dice que
+  tienes que estar cerca y no queda confirmado.
+- [ ] Mapa: confirmar un reporte a menos de 50 m (o en «Posible duplicado» al reportar en el mismo
+  lugar): queda confirmado.
+- [ ] Mapa: con el permiso de ubicación negado, «Confirmar este daño» explica por qué lo necesita.

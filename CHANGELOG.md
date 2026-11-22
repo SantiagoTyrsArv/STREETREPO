@@ -4,6 +4,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Cambiado
+- Confirmar un reporte (HU-16) exige la ubicación actual de quien confirma, y solo se acepta a
+  50 m o menos del daño: **403** `CONFIRMATION_TOO_FAR` si está más lejos. La distancia se guarda en
+  `confirmacion.distancia_m` (migración 0008). La app la envía desde la ficha del mapa (pide el
+  permiso de ubicación si hace falta) y desde «Posible duplicado» (propuesta 112).
+
 ## [0.7.0] - 2026-11-22
 
 Fase 7: la app ciudadana completa el perfil (conocer, actualizar y suprimir los datos, Ley 1581)
