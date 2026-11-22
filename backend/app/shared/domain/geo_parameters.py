@@ -20,3 +20,7 @@ PROXIMITY_FULL_SCORE_RADIUS_M: Final = 100.0
 
 # A partir de esta distancia a un servicio crítico la proximidad P vale 0 (guía 2.2).
 PROXIMITY_MAX_RADIUS_M: Final = 500.0
+
+# Solo se confirma un reporte desde este radio: quien confirma debe estar frente al daño.
+# Es más amplio que la deduplicación por la precisión del GPS (propuesta 112).
+CONFIRMATION_RADIUS_M: Final = 50.0

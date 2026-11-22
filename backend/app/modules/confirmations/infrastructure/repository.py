@@ -1,6 +1,7 @@
 import uuid
+from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -8,9 +9,27 @@ from app.modules.confirmations.domain.errors import AlreadyConfirmedError
 from app.modules.confirmations.domain.ports import ConfirmationTarget
 from app.modules.confirmations.infrastructure.models import ConfirmationModel
 from app.modules.reports.domain.status import ReportStatus
-from app.modules.reports.infrastructure.models import ReportModel
+from app.shared.domain.geo import GeoPoint
 
 UNIQUE_CONFIRMATION_CONSTRAINT = "uq_confirmacion_reporte_usuario"
+
+# Distancia a la ubicación exacta del reporte (no a la pública redondeada), en centímetros
+# como el resto de distancias guardadas (guía 2.2).
+_TARGET_SQL = text(
+    """
+    SELECT r.id_usuario,
+           r.estado::text AS estado,
+           ROUND(
+               ST_Distance(
+                   r.ubicacion::geography,
+                   ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography
+               )::numeric,
+               2
+           ) AS distancia_m
+    FROM reporte r
+    WHERE r.id_reporte = :report_id
+    """
+)
 
 
 def _violated_constraint(exc: IntegrityError) -> str | None:
@@ -25,16 +44,25 @@ class SqlConfirmationRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def find_target(self, report_id: uuid.UUID) -> ConfirmationTarget | None:
+    def find_target(self, report_id: uuid.UUID, location: GeoPoint) -> ConfirmationTarget | None:
         row = self._session.execute(
-            select(ReportModel.user_id, ReportModel.status).where(ReportModel.id == report_id)
+            _TARGET_SQL,
+            {"report_id": report_id, "lon": location.longitude, "lat": location.latitude},
         ).one_or_none()
         if row is None:
             return None
-        return ConfirmationTarget(owner_id=row.user_id, status=ReportStatus(row.status))
+        return ConfirmationTarget(
+            owner_id=row.id_usuario,
+            status=ReportStatus(row.estado),
+            distance_m=float(row.distancia_m),
+        )
 
-    def add(self, report_id: uuid.UUID, user_id: uuid.UUID) -> None:
-        self._session.add(ConfirmationModel(report_id=report_id, user_id=user_id))
+    def add(self, report_id: uuid.UUID, user_id: uuid.UUID, distance_m: float) -> None:
+        self._session.add(
+            ConfirmationModel(
+                report_id=report_id, user_id=user_id, distance_m=Decimal(str(distance_m))
+            )
+        )
         try:
             self._session.flush()
         except IntegrityError as exc:

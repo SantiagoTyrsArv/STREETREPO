@@ -26,7 +26,7 @@ ER_TABLES = {
         "severidad", "descripcion", "estado", "puntaje_prioridad", "fecha_creacion",
         "clave_idempotencia",
     },
-    "confirmacion": {"id_confirmacion", "id_reporte", "id_usuario", "fecha"},
+    "confirmacion": {"id_confirmacion", "id_reporte", "id_usuario", "fecha", "distancia_m"},
     "evidencia": {
         "id_evidencia", "id_reporte", "url_foto", "formato", "tamano_bytes", "fecha_subida",
     },
