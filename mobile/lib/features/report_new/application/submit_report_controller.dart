@@ -76,10 +76,13 @@ class SubmitReportController extends Notifier<SubmitState> {
   /// El ciudadano vio los posibles duplicados y decide crear el suyo.
   Future<SubmitOutcome> createAnyway() => _run((_) => _create(createAnyway: true));
 
-  /// Confirma [report] en lugar de crear otro (HU-16).
+  /// Confirma [report] en lugar de crear otro (HU-16), desde la ubicación que se acaba de
+  /// tomar para el reporte nuevo: el ciudadano está frente al daño (propuesta 112).
   Future<SubmitOutcome> confirm(NearbyReport report) => _run((_) async {
+    final fix = ref.read(reportDraftProvider).fix;
+    if (fix == null) throw StateError('El borrador no tiene ubicación');
     try {
-      return Confirmed(report, await _repository.confirm(report.id));
+      return Confirmed(report, await _repository.confirm(report.id, fix));
     } on ApiError catch (e) {
       // Ya lo había confirmado (p. ej. una respuesta perdida): se considera hecho.
       if (e.code == 'CONFIRMATION_ALREADY_EXISTS') return Confirmed(report, report.confirmations);

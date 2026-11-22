@@ -13,9 +13,11 @@ import 'package:street_repo/features/my_reports/application/my_reports_controlle
 import 'package:street_repo/features/my_reports/domain/report_detail.dart';
 import 'package:street_repo/features/report_map/application/report_map_controller.dart';
 import 'package:street_repo/features/report_map/presentation/report_map_screen.dart';
+import 'package:street_repo/features/report_new/application/report_draft_controller.dart';
 import 'package:street_repo/features/report_new/application/submit_report_controller.dart';
 
 import '../../../support/fake_auth_repository.dart';
+import '../../../support/fake_device_services.dart';
 import '../../../support/fake_my_reports_repository.dart';
 import '../../../support/fake_new_report_repository.dart';
 import '../../../support/fake_report_map_repository.dart';
@@ -55,6 +57,7 @@ void main() {
           myReportsRepositoryProvider.overrideWithValue(mine),
           newReportRepositoryProvider.overrideWithValue(reports),
           reportMapRepositoryProvider.overrideWithValue(map),
+          locationServiceProvider.overrideWithValue(FakeLocationService()),
           mapTileLayerProvider.overrideWithValue(const SizedBox.shrink()),
         ],
         child: const StreetRepoApp(),

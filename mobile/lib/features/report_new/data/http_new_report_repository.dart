@@ -65,8 +65,13 @@ class HttpNewReportRepository implements NewReportRepository {
   });
 
   @override
-  Future<int> confirm(String reportId) => _call(() async {
-    final json = _json(await _dio.post<Object?>('/reports/$reportId/confirmations'));
+  Future<int> confirm(String reportId, GeoFix fix) => _call(() async {
+    final json = _json(
+      await _dio.post<Object?>(
+        '/reports/$reportId/confirmations',
+        data: {'longitude': fix.longitude, 'latitude': fix.latitude},
+      ),
+    );
     return _field<int>(json, 'confirmations');
   });
 

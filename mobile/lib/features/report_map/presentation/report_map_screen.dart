@@ -536,6 +536,12 @@ class _ReportCard extends StatelessWidget {
                       loading: confirming,
                       onPressed: onConfirm,
                     ),
+                    const SizedBox(height: 6),
+                    // Propuesta 112: el servidor rechaza a quien está lejos del daño.
+                    const Text(
+                      'Solo puedes confirmarlo si estás a menos de 50 m del daño.',
+                      style: TextStyle(fontSize: 12, color: AppTokens.textSecondary),
+                    ),
                   ],
                   if (report.canOpenDetail) ...[
                     const SizedBox(height: 12),

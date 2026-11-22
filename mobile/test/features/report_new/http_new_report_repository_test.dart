@@ -102,14 +102,19 @@ void main() {
     expect(fields.containsKey('description'), isFalse);
   });
 
-  test('confirm devuelve el total', () async {
+  test('confirm envía la ubicación actual y devuelve el total', () async {
     adapter.reply(
       'POST',
       '/reports/r1/confirmations',
       const FakeResponse(201, body: {'report_id': 'r1', 'confirmations': 4}),
     );
 
-    expect(await repository.confirm('r1'), 4);
+    expect(await repository.confirm('r1', pastoFix), 4);
+    // Solo las coordenadas: el servidor mide la distancia al daño (propuesta 112).
+    expect(adapter.requests.single.data, {
+      'longitude': pastoFix.longitude,
+      'latitude': pastoFix.latitude,
+    });
   });
 
   test('los errores de la API llegan como ApiError con su código', () async {
