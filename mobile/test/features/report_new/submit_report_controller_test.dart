@@ -6,6 +6,7 @@ import 'package:street_repo/features/auth/application/auth_providers.dart';
 import 'package:street_repo/features/auth/application/session_controller.dart';
 import 'package:street_repo/features/auth/data/token_store.dart';
 import 'package:street_repo/features/auth/domain/session.dart';
+import 'package:street_repo/features/report_new/domain/nearby_report.dart';
 import 'package:street_repo/features/report_new/application/report_draft_controller.dart';
 import 'package:street_repo/features/report_new/application/submit_report_controller.dart';
 import 'package:street_repo/features/report_new/domain/submit_outcome.dart';
@@ -151,7 +152,7 @@ void main() {
     test('los candidatos cercanos detienen el envío', () async {
       final c = await withDraft();
       repository.onNearby = [
-        () async => [nearbyReport()],
+        () async => NearbyResult(candidates: [nearbyReport()]),
       ];
 
       final outcome = await submitter(c).submit();
@@ -197,10 +198,76 @@ void main() {
       );
     });
 
+    test('el aviso de nearby viaja al crear de todos modos', () async {
+      final c = await withDraft();
+      repository.onNearby = [
+        () async => NearbyResult(candidates: [nearbyReport()], warningId: 'w1'),
+      ];
+
+      final outcome = await submitter(c).submit();
+      expect(outcome, isA<PossibleDuplicates>().having((o) => o.warningId, 'aviso', 'w1'));
+      await submitter(c).createAnyway();
+
+      expect(repository.createCalls.single.duplicateWarningId, 'w1');
+    });
+
+    test('el aviso viaja al confirmar desde «Posible duplicado»', () async {
+      final c = await withDraft();
+      repository.onNearby = [
+        () async => NearbyResult(candidates: [nearbyReport()], warningId: 'w1'),
+      ];
+      await submitter(c).submit();
+
+      await submitter(c).confirm(nearbyReport());
+
+      expect(repository.confirmWarningIds, ['w1']);
+    });
+
+    test('el aviso del 409 también viaja al crear de todos modos', () async {
+      final c = await withDraft();
+      repository.onCreate = [
+        () async => throw apiError(
+          409,
+          'REPORT_DUPLICATE_NEARBY',
+          details: {'radius_m': 25, 'items': <Object>[], 'duplicate_warning_id': 'w9'},
+        ),
+        () async => createdReport,
+      ];
+
+      final outcome = await submitter(c).submit();
+      expect(outcome, isA<PossibleDuplicates>().having((o) => o.warningId, 'aviso', 'w9'));
+      await submitter(c).createAnyway();
+
+      expect(repository.createCalls.last.duplicateWarningId, 'w9');
+    });
+
+    test('sin aviso (respuesta antigua) todo sigue funcionando', () async {
+      final c = await withDraft();
+      repository.onNearby = [
+        () async => NearbyResult(candidates: [nearbyReport()]),
+      ];
+      await submitter(c).submit();
+
+      expect(await submitter(c).createAnyway(), isA<Sent>());
+      expect(repository.createCalls.single.duplicateWarningId, isNull);
+    });
+
+    test('una ubicación nueva descarta el aviso anterior', () async {
+      final c = await withDraft();
+      repository.onNearby = [
+        () async => NearbyResult(candidates: [nearbyReport()], warningId: 'w1'),
+      ];
+      await submitter(c).submit();
+
+      c.read(reportDraftProvider.notifier).discardLocation();
+
+      expect(c.read(reportDraftProvider).duplicateWarningId, isNull);
+    });
+
     test('«Crear de todos modos» envía create_anyway con la misma clave', () async {
       final c = await withDraft();
       repository.onNearby = [
-        () async => [nearbyReport()],
+        () async => NearbyResult(candidates: [nearbyReport()]),
       ];
       await submitter(c).submit();
 

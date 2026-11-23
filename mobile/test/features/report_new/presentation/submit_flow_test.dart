@@ -11,6 +11,7 @@ import 'package:street_repo/core/routing/app_router.dart';
 import 'package:street_repo/features/auth/application/auth_providers.dart';
 import 'package:street_repo/features/auth/data/token_store.dart';
 import 'package:street_repo/features/my_reports/application/my_reports_controller.dart';
+import 'package:street_repo/features/report_new/domain/nearby_report.dart';
 import 'package:street_repo/features/report_new/application/report_draft_controller.dart';
 import 'package:street_repo/features/report_new/application/submit_report_controller.dart';
 
@@ -175,7 +176,7 @@ void main() {
   group('posible duplicado', () {
     testWidgets('el reporte propio dice «Tu reporte» y no se puede confirmar', (tester) async {
       repository.onNearby = [
-        () async => [nearbyReport(isMine: true)],
+        () async => NearbyResult(candidates: [nearbyReport(isMine: true)]),
       ];
       await openStep2(tester);
       await chooseMediumAndSend(tester);
@@ -190,7 +191,7 @@ void main() {
       final reply = Completer<int>();
       repository
         ..onNearby = [
-          () async => [nearbyReport()],
+          () async => NearbyResult(candidates: [nearbyReport()]),
         ]
         ..onConfirm = [() => reply.future];
       await openStep2(tester);
@@ -220,7 +221,7 @@ void main() {
 
     testWidgets('«Es otro daño» crea el reporte de todos modos', (tester) async {
       repository.onNearby = [
-        () async => [nearbyReport()],
+        () async => NearbyResult(candidates: [nearbyReport()]),
       ];
       await openStep2(tester);
       await chooseMediumAndSend(tester);
@@ -244,7 +245,12 @@ void main() {
 
     testWidgets('Posible duplicado con dos candidatos', (tester) async {
       repository.onNearby = [
-        () async => [nearbyReport(), nearbyReport(id: 'r2', distance: 20, isMine: true)],
+        () async => NearbyResult(
+          candidates: [
+            nearbyReport(),
+            nearbyReport(id: 'r2', distance: 20, isMine: true),
+          ],
+        ),
       ];
       await openStep2(tester, textScale: 2);
       await chooseMediumAndSend(tester);

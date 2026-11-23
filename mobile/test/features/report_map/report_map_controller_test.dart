@@ -152,6 +152,8 @@ void main() {
       expect(reports.confirmCalls, ['m1']);
       // Va con la ubicación actual del celular (propuesta 112).
       expect(reports.confirmFixes, [pastoFix]);
+      // Desde el mapa no hubo aviso de «Posible duplicado» (objetivo 4).
+      expect(reports.confirmWarningIds, [null]);
       final report = state().reports.single;
       expect((report.confirmedByMe, report.confirmations), (true, 4));
       expect((state().confirming, state().confirmedNotice), (false, true));

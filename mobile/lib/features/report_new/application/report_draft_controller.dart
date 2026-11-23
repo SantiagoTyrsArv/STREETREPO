@@ -104,6 +104,9 @@ class ReportDraftController extends Notifier<ReportDraft> {
   /// Olvida la clave del envío: el siguiente se trata como un reporte nuevo.
   void clearIdempotencyKey() => state = state.withoutIdempotencyKey();
 
+  /// Guarda el aviso de «Posible duplicado» que se le mostró al ciudadano.
+  void setDuplicateWarning(String? warningId) => state = state.withDuplicateWarning(warningId);
+
   void discardLocation() => state = state.withoutFix();
 
   void discardPhoto() => state = state.withoutPhoto();

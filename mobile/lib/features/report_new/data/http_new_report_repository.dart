@@ -15,14 +15,17 @@ class HttpNewReportRepository implements NewReportRepository {
   final Dio _dio;
 
   @override
-  Future<List<NearbyReport>> nearby(GeoFix fix) => _call(() async {
+  Future<NearbyResult> nearby(GeoFix fix) => _call(() async {
     final json = _json(
       await _dio.get<Object?>(
         '/reports/nearby',
         queryParameters: {'longitude': fix.longitude, 'latitude': fix.latitude},
       ),
     );
-    return parseNearbyItems(json['items']);
+    return NearbyResult(
+      candidates: parseNearbyItems(json['items']),
+      warningId: parseWarningId(json),
+    );
   });
 
   @override
@@ -30,6 +33,7 @@ class HttpNewReportRepository implements NewReportRepository {
     ReportDraft draft, {
     required String idempotencyKey,
     required bool createAnyway,
+    String? duplicateWarningId,
   }) => _call(() async {
     final photo = draft.photo;
     final fix = draft.fix;
@@ -49,6 +53,7 @@ class HttpNewReportRepository implements NewReportRepository {
       'severity': severity.toApi(),
       if (draft.description.trim().isNotEmpty) 'description': draft.description.trim(),
       'create_anyway': createAnyway.toString(),
+      'duplicate_warning_id': ?duplicateWarningId,
     });
     final json = _json(
       await _dio.post<Object?>(
@@ -65,11 +70,15 @@ class HttpNewReportRepository implements NewReportRepository {
   });
 
   @override
-  Future<int> confirm(String reportId, GeoFix fix) => _call(() async {
+  Future<int> confirm(String reportId, GeoFix fix, {String? duplicateWarningId}) => _call(() async {
     final json = _json(
       await _dio.post<Object?>(
         '/reports/$reportId/confirmations',
-        data: {'longitude': fix.longitude, 'latitude': fix.latitude},
+        data: {
+          'longitude': fix.longitude,
+          'latitude': fix.latitude,
+          'duplicate_warning_id': ?duplicateWarningId,
+        },
       ),
     );
     return _field<int>(json, 'confirmations');
@@ -112,6 +121,13 @@ List<NearbyReport> parseNearbyItems(Object? items) {
       else
         throw const FormatException('Candidato inválido'),
   ];
+}
+
+/// `duplicate_warning_id` de `nearby` o de `details` del 409; `null` si no viene o no es texto
+/// (una API anterior no lo envía).
+String? parseWarningId(Map<String, dynamic> json) {
+  final value = json['duplicate_warning_id'];
+  return value is String ? value : null;
 }
 
 T _field<T>(Map<String, dynamic> json, String key) {

@@ -61,6 +61,7 @@ class ReportDraft {
     this.severity,
     this.description = '',
     this.idempotencyKey,
+    this.duplicateWarningId,
   });
 
   static const empty = ReportDraft();
@@ -70,6 +71,10 @@ class ReportDraft {
   final Severity? severity;
   final String description;
   final String? idempotencyKey;
+
+  /// Aviso de «Posible duplicado» que vio el ciudadano (objetivo 4). Es del punto
+  /// consultado: una foto o una ubicación nuevas lo anulan.
+  final String? duplicateWarningId;
 
   /// Paso 1 completo: hay foto y una ubicación con la precisión exigida.
   bool get hasEvidence => photo != null && (fix?.isPreciseEnough ?? false);
@@ -100,6 +105,16 @@ class ReportDraft {
     severity: severity,
     description: description,
     idempotencyKey: key,
+    duplicateWarningId: duplicateWarningId,
+  );
+
+  ReportDraft withDuplicateWarning(String? warningId) => ReportDraft(
+    photo: photo,
+    fix: fix,
+    severity: severity,
+    description: description,
+    idempotencyKey: idempotencyKey,
+    duplicateWarningId: warningId,
   );
 
   ReportDraft withoutIdempotencyKey() => _changed();
@@ -114,5 +129,7 @@ class ReportDraft {
     fix: fix ?? this.fix,
     severity: severity ?? this.severity,
     description: description ?? this.description,
+    // El aviso es del punto: solo sobrevive si la ubicación no cambia.
+    duplicateWarningId: fix == null ? duplicateWarningId : null,
   );
 }

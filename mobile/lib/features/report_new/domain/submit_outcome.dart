@@ -21,9 +21,12 @@ final class Confirmed extends SubmitOutcome {
 
 /// Hay reportes activos a 25 m: el ciudadano decide si confirmar uno o crear el suyo.
 final class PossibleDuplicates extends SubmitOutcome {
-  const PossibleDuplicates(this.candidates);
+  const PossibleDuplicates(this.candidates, {this.warningId});
 
   final List<NearbyReport> candidates;
+
+  /// Aviso que registró el servidor al mostrarlos (objetivo 4); `null` con una API anterior.
+  final String? warningId;
 }
 
 final class OutsideServiceArea extends SubmitOutcome {
