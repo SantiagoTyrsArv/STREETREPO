@@ -33,7 +33,6 @@ export const COPY = {
       prueba: "Pruébalo",
       panel: "Gestionar",
       reparado: "Reparado",
-      video: "Video",
       descarga: "Descarga",
     },
   },
@@ -148,14 +147,6 @@ export const COPY = {
       "Toca «Instalar» y abre Street Repo.",
     ],
     checksumLabel: "Suma SHA-256",
-  },
-  video: {
-    kicker: "En video",
-    title: "Street Repo en 60 segundos.",
-    open: "Ver el video",
-    play: "Reproducir video",
-    close: "Cerrar video",
-    aiLabel: "Recreación generada con IA",
   },
   footer: {
     project:

@@ -7,7 +7,6 @@ export const CHAPTER_IDS = [
   "prueba",
   "panel",
   "reparado",
-  "video",
   "descarga",
 ] as const;
 

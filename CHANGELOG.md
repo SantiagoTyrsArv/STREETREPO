@@ -42,6 +42,11 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - Panel: `@dnd-kit/core` 6.3.1, `@dnd-kit/sortable` 10.0.0 y `@dnd-kit/utilities` 3.2.2 para
   ordenar las tarjetas de la vista a ciegas.
 
+
+### Retirado
+- Página de presentación: el espacio del video promocional (botón «Ver el video», sección y
+  configuración de YouTube). Ya no habrá video.
+
 ## [0.7.0] - 2026-11-22
 
 Fase 7: la app ciudadana completa el perfil (conocer, actualizar y suprimir los datos, Ley 1581)

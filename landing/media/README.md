@@ -110,16 +110,3 @@ node scripts/build-sequences.ts reparado  media/originals/scenes/video/reparado-
   tamaño nativo de los videos). `key.webp` es el primer cuadro de escritorio.
 - Peso: escritorio 19 MB y móvil 23 MB en total (presupuesto del diseño: ≤ 45 MB y ≤ 25 MB). A
   24 fps el móvil pesaba 33 MB.
-
-## Video promocional (YouTube)
-
-Oculto mientras `VIDEO` sea `null` en `src/config/video.ts`. Para publicarlo:
-
-1. Subir el video a YouTube (público o no listado) y copiar su ID (lo que va después de `v=`).
-2. Guardar una portada 16:9 en `public/media/video/poster.webp` (WebP, ~1600 × 900, < 200 KB).
-3. Completar `VIDEO` con `youtubeId`, `title`, `poster: "/media/video/poster.webp"` y
-   `aiGenerated: true` si es una recreación generada con IA (muestra «Recreación generada con IA»).
-
-La página carga YouTube solo cuando la persona toca reproducir, desde `youtube-nocookie.com`. El
-`vercel.json` de seguridad (tarea 2 de la página) debe permitir ese dominio en `frame-src`. Si el
-video se genera con IA, preparar sus prompts en un `.md` para generarlo en claude.ai (Higgsfield).

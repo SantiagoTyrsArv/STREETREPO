@@ -59,10 +59,9 @@ describe("ChapterNav", () => {
     expect(screen.getByRole("link", { name: "Uno" })).not.toHaveAttribute("aria-current");
   });
 
-  it("en la página no aparece el video mientras no exista", () => {
+  it("cada enlace de la barra lleva a una sección de la página", () => {
     render(<App />);
     const nav = screen.getByRole("navigation", { name: "Capítulos" });
-    expect(nav.querySelector('a[href="#video"]')).toBeNull();
     expect(nav.querySelector('a[href="#prueba"]')).not.toBeNull();
     for (const a of nav.querySelectorAll("a")) {
       const id = a.getAttribute("href")?.slice(1) ?? "";

@@ -41,8 +41,6 @@ interface SequenceChapterProps {
   level?: "h1" | "h2";
   /** Contenido sobre el antetítulo (la apertura muestra el logotipo). */
   before?: ReactNode;
-  /** Contenido al final del texto (la apertura muestra «Ver el video» si existe). */
-  after?: ReactNode;
   /** Texto visible desde la carga (portada), con una entrada propia en lugar del *scroll*. */
   introText?: boolean;
   /** Capa sobre la escena (la máscara de la portada y su indicador), recibe el progreso. */
@@ -56,7 +54,6 @@ export function SequenceChapter({
   children,
   level = "h2",
   before,
-  after,
   introText = false,
   overlay,
   revealAfter = 0,
@@ -145,7 +142,6 @@ export function SequenceChapter({
           still={still || introText}
         />
         {children?.(progress, still)}
-        {after}
         {chapter.lens && !still ? <TitleLens section={ref} /> : null}
       </div>
     </section>
