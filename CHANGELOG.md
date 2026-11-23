@@ -4,11 +4,28 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Añadido
+- Objetivo 4 de la tesis (HU-09), backend: zonas de validación desde GeoJSON (`zones-import`,
+  `GET /api/v1/admin/zones`), cuentas de evaluador (`create-evaluator`), rondas de evaluación con
+  reportes congelados (`/api/v1/admin/evaluation-rounds`), vista a ciegas y envío del orden del
+  evaluador (`/api/v1/evaluation/current`), métricas de acuerdo (rho, tau, W de Kendall,
+  coincidencia ±1 y prueba entre zonas, propuesta 114) y la ficha comparativa en CSV (`ficha`,
+  `resumen`, `reportes` y `avisos`). Migración 0009 (ADR 0008).
+- Registro de los avisos de «Posible duplicado» y de la decisión del ciudadano:
+  `duplicate_warning_id` en `GET /api/v1/reports/nearby` y en el 409 de `POST /api/v1/reports`, y
+  campo opcional del mismo nombre al crear con `create_anyway` y al confirmar.
+
 ### Cambiado
+- El inicio de sesión del panel acepta administradores y evaluadores; a un ciudadano le responde
+  `STAFF_ROLE_REQUIRED`. Un evaluador no puede crear ni confirmar reportes
+  (`EVALUATOR_CANNOT_REPORT`).
 - Confirmar un reporte (HU-16) exige la ubicación actual de quien confirma, y solo se acepta a
   50 m o menos del daño: **403** `CONFIRMATION_TOO_FAR` si está más lejos. La distancia se guarda en
   `confirmacion.distancia_m` (migración 0008). La app la envía desde la ficha del mapa (pide el
   permiso de ubicación si hace falta) y desde «Posible duplicado» (propuesta 112).
+
+### Dependencias
+- `scipy` 1.18.1 (y `scipy-stubs`) para las pruebas estadísticas del objetivo 4.
 
 ## [0.7.0] - 2026-11-22
 
