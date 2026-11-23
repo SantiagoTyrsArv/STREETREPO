@@ -1,6 +1,6 @@
 # Página de presentación: escenas por pantalla y portada prerenderizada
 
-Fecha: 2026-11-23 · Estado: diseño para aprobación (revisado por un constructor; sus 4 preguntas se resolvieron en 4.1, 4.3 y 5) · Rama sugerida: `feat/landing-escenas-por-pantalla`
+Fecha: 2026-11-23 · Estado: **aprobado por el responsable el 2026-11-23** (revisado por un constructor; sus 4 preguntas se resolvieron en 4.1, 4.3 y 5) · Rama sugerida: `feat/landing-escenas-por-pantalla`
 Fuentes: pedido del responsable (2026-11-23), propuesta de la fila 124 de la bitácora (prerenderizar
 la portada, aprobada), diseños `2026-11-19-landing-descarga-apk-design.md` y
 `2026-11-20-landing-textos-reportar-video-design.md`.
@@ -87,10 +87,14 @@ de 3,1 s con 4G lento y CPU ×4; la meta del diseño es < 2,5 s.
   o en `key.webp` y el texto se muestra igual. El texto nunca espera al video.
 
 ### 4.3 Alto de los capítulos
-Cada capítulo de escena mide `100svh` y su contenido se ajusta para caber en un celular de
-360×640. La calculadora «Pruébalo» y la Descarga usan `min-height: 100svh` y pueden crecer más de
-una pantalla en celulares pequeños; por eso **no** son puntos de imán. La meta de «unas 9
-pantallas» es aproximada (decisión del asistente).
+Cada capítulo mide una pantalla (`100svh`) y su contenido se ajusta para caber en ella.
+**«Pruébalo» se compacta para caber en una pantalla** (decisión del responsable: ajustarla al imán
+en lugar de quitarla). Medida el 2026-11-23 en 412×915: 1.101 px (introducción 184 + panel 615 +
+márgenes). Se reducen los márgenes, las opciones de severidad van en una fila y el bloque del
+resultado se compacta, hasta caber en 412×915 y en escritorio. En celulares con menos de ~700 px de
+alto útil puede pasarse un poco: ahí el imán la acomoda por su borde superior y el resto se recorre
+con scroll normal. La Descarga ya cabe (661 px en 412×915). Todos los capítulos, incluidas
+«Pruébalo» y la Descarga, son puntos de imán. La meta de «unas 9 pantallas» es aproximada.
 
 ### 4.4 Imán
 - Imán de **proximidad** con el paquete de snap de Lenis (`lenis/snap`, ya incluido en `lenis`
