@@ -24,3 +24,10 @@ npm run build        # compilación estática en dist/
 
 Los colores y la tipografía viven solo en `src/styles/tokens.css`. `src/lib/contrast.test.ts`
 comprueba que cada combinación de texto cumpla WCAG AA (contraste ≥ 4,5:1).
+
+## Despliegue
+
+Vercel publica `landing/` en https://streetrepo.vercel.app/ (raíz del proyecto `landing`,
+framework Vite, salida `dist`). Crea una vista previa por cada rama subida. `vercel.json` añade
+las cabeceras de seguridad (CSP sin orígenes externos, HSTS, `nosniff`, `Referrer-Policy` y
+`Permissions-Policy`) y guarda en caché por un año `/assets/` (nombres con hash) y `/media/`.
