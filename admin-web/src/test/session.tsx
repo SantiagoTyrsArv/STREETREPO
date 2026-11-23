@@ -12,7 +12,7 @@ export function fakeApi(overrides: Partial<ApiClient> = {}): ApiClient {
 export function fakeSession(overrides: Partial<Session> = {}): Session {
   return {
     status: "signed-in",
-    user: { name: "Ana Funcionaria" },
+    user: { name: "Ana Funcionaria", role: "administrador" },
     notice: null,
     signIn: vi.fn(async () => {}),
     signOut: vi.fn(async () => {}),

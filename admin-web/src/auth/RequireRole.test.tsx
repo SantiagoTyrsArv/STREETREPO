@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { StrictMode } from "react";
@@ -7,7 +7,12 @@ import { describe, expect, it, vi } from "vitest";
 import { AppRoutes } from "../app/router";
 import { API, apiError, server } from "../test/server";
 import { fakeSession, WithSession } from "../test/session";
-import { SessionProvider, useSession } from "./SessionProvider";
+import {
+  NOT_STAFF_MESSAGE,
+  SessionProvider,
+  useSession,
+  type SessionUser,
+} from "./SessionProvider";
 
 // Estas pruebas son de rutas y sesión; las pantallas tienen las suyas.
 vi.mock("../features/prioritization/PrioritizationPage", () => ({
@@ -17,6 +22,30 @@ vi.mock("../features/prioritization/PrioritizationPage", () => ({
 vi.mock("../features/weights/WeightsPage", () => ({
   WeightsPage: () => <h1>Pesos del modelo de priorización</h1>,
 }));
+
+vi.mock("../features/comparison/ComparisonPage", () => ({
+  ComparisonPage: () => <h1>Comparación con el panel de referencia</h1>,
+}));
+
+vi.mock("../features/evaluation/EvaluationPage", () => ({
+  EvaluationPage: () => <h1>Mis evaluaciones</h1>,
+}));
+
+vi.mock("../features/evaluation/EvaluationZonePage", () => ({
+  EvaluationZonePage: () => <h1>Ordenar la zona</h1>,
+}));
+
+const EVALUATOR: SessionUser = { name: "Eva Evaluadora", role: "evaluador" };
+
+function renderAs(path: string, user: SessionUser = EVALUATOR) {
+  render(
+    <WithSession session={fakeSession({ user })}>
+      <MemoryRouter initialEntries={[path]}>
+        <AppRoutes />
+      </MemoryRouter>
+    </WithSession>,
+  );
+}
 
 const TOKENS = { access_token: "acceso", token_type: "bearer", expires_in: 900 };
 const ME = { id: "u-1", name: "Ana Funcionaria", email: "ana@pasto.gov.co", role: "administrador" };
@@ -185,6 +214,84 @@ describe("rutas protegidas", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Tu sesión terminó. Inicia sesión de nuevo.",
     );
+    expect(screen.getByRole("heading", { name: "Ingreso de funcionarios" })).toBeInTheDocument();
+  });
+});
+
+describe("rutas por rol", () => {
+  it.each(["/priorizacion", "/pesos", "/comparacion", "/"])(
+    "un evaluador que entra a %s es llevado a Mis evaluaciones",
+    (path) => {
+      renderAs(path);
+
+      expect(screen.getByRole("heading", { name: "Mis evaluaciones" })).toBeInTheDocument();
+    },
+  );
+
+  it("con sesión de evaluador, el inicio de sesión lleva a Mis evaluaciones", () => {
+    renderAs("/ingresar");
+
+    expect(screen.getByRole("heading", { name: "Mis evaluaciones" })).toBeInTheDocument();
+  });
+
+  it("un evaluador abre la zona que va a ordenar", () => {
+    renderAs("/evaluacion/zonas/3");
+
+    expect(screen.getByRole("heading", { name: "Ordenar la zona" })).toBeInTheDocument();
+  });
+
+  it.each(["/evaluacion", "/evaluacion/zonas/3"])(
+    "un administrador que entra a %s es llevado a Priorización",
+    (path) => {
+      renderAs(path, { name: "Ana Funcionaria", role: "administrador" });
+
+      expect(screen.getByRole("heading", { name: "Priorización de reportes" })).toBeInTheDocument();
+    },
+  );
+
+  it("el administrador ve Comparación en el menú", () => {
+    renderAs("/comparacion", { name: "Ana Funcionaria", role: "administrador" });
+
+    const menu = screen.getByRole("navigation", { name: "Secciones del panel" });
+    expect(
+      within(menu)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Priorización", "Pesos del modelo", "Comparación"]);
+    expect(screen.getByRole("link", { name: "Comparación" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("el menú del evaluador no muestra Priorización, Pesos ni Comparación", () => {
+    renderAs("/evaluacion");
+
+    const menu = screen.getByRole("navigation", { name: "Secciones del panel" });
+    expect(
+      within(menu)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Mis evaluaciones"]);
+    expect(screen.getByText("Panel de referencia")).toBeInTheDocument();
+    expect(screen.queryByText("Sec. de Infraestructura")).toBeNull();
+  });
+
+  it("una cuenta que no es del personal no queda con sesión en el panel", async () => {
+    const logoutCalls = vi.fn();
+    server.use(
+      http.post(`${API}/api/v1/auth/web/refresh`, () => HttpResponse.json(TOKENS)),
+      http.get(`${API}/api/v1/me`, () => HttpResponse.json({ ...ME, role: "ciudadano" })),
+      http.post(`${API}/api/v1/auth/web/logout`, () => {
+        logoutCalls();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    renderApp("/priorizacion");
+
+    expect(await screen.findByText(NOT_STAFF_MESSAGE)).toHaveAttribute("role", "status");
+    expect(logoutCalls).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("heading", { name: "Ingreso de funcionarios" })).toBeInTheDocument();
   });
 });

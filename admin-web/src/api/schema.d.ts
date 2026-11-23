@@ -289,7 +289,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Reports In Area
+         * @description Reportes del área visible para el mapa de la app, del más reciente al más antiguo.
+         *
+         *     Vista pública: sin autor, descripción ni foto, y con la ubicación redondeada a 4
+         *     decimales. El área se compara con esa ubicación pública, no con la exacta. Si
+         *     ``truncated`` es true, el área tiene más reportes que ``limit``.
+         */
+        get: operations["list_reports_in_area_api_v1_reports_get"];
         put?: never;
         /**
          * Create Report
@@ -298,8 +306,9 @@ export interface paths {
          *     La foto se recodifica sin metadatos (EXIF, GPS). El reporte queda «evaluado» con
          *     su urgencia U; si no hay vía OSM a 30 m, se marca para revisar la vía.
          *
-         *     Si hay reportes activos a 25 m responde 409 con ellos, salvo que llegue
-         *     ``create_anyway=true``.
+         *     Si hay reportes activos a 25 m responde 409 con ellos y un ``duplicate_warning_id``,
+         *     salvo que llegue ``create_anyway=true``; si llega con ese id, el aviso queda como
+         *     «creó igual» con el reporte nuevo.
          */
         post: operations["create_report_api_v1_reports_post"];
         delete?: never;
@@ -321,6 +330,8 @@ export interface paths {
          *
          *     No incluye el autor ni la ubicación exacta de los reportes ajenos: la ubicación va
          *     redondeada a 4 decimales y la distancia se mide desde ella (propuesta 43).
+         *
+         *     Si hay resultados, registra el aviso (objetivo 4) y devuelve su ``duplicate_warning_id``.
          */
         get: operations["find_nearby_reports_api_v1_reports_nearby_get"];
         put?: never;
@@ -409,7 +420,9 @@ export interface paths {
          * Confirm Report
          * @description Confirma un reporte activo de otro ciudadano, en lugar de crear uno repetido.
          *
-         *     No cambia la urgencia U; cuenta como evidencia y para el desempate (guía 2.2).
+         *     Pide la ubicación actual de quien confirma: solo se acepta a 50 m o menos del daño
+         *     (propuesta 112). No cambia la urgencia U; cuenta como evidencia y para el desempate
+         *     (guía 2.2).
          */
         post: operations["confirm_report_api_v1_reports__report_id__confirmations_post"];
         delete?: never;
@@ -569,6 +582,286 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Zones
+         * @description Zonas del piloto con sus reportes activos (todo salvo Reparado) y totales.
+         */
+        get: operations["list_zones_api_v1_admin_zones_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evaluation-rounds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Rounds
+         * @description Rondas de la más reciente a la más antigua.
+         */
+        get: operations["list_rounds_api_v1_admin_evaluation_rounds_get"];
+        put?: never;
+        /**
+         * Open Round
+         * @description Congela la muestra de reportes activos de cada zona con su U y el orden del motor.
+         */
+        post: operations["open_round_api_v1_admin_evaluation_rounds_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evaluation-rounds/{round_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Round
+         * @description Avance de la ronda: reportes por zona y quién ya envió su orden («Evaluador k»).
+         */
+        get: operations["get_round_api_v1_admin_evaluation_rounds__round_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evaluation-rounds/{round_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Round
+         * @description Cierra la ronda: ya no recibe órdenes de evaluadores.
+         */
+        post: operations["close_round_api_v1_admin_evaluation_rounds__round_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evaluation-rounds/{round_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Round Results
+         * @description Métricas de acuerdo por zona, prueba entre zonas y deduplicación de la ronda cerrada.
+         *
+         *     Los evaluadores aparecen como «Evaluador k», nunca por nombre ni correo.
+         */
+        get: operations["get_round_results_api_v1_admin_evaluation_rounds__round_id__results_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evaluation-rounds/{round_id}/export/ficha.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ficha comparativa: una fila por reporte (ronda cerrada) */
+        get: operations["export_api_v1_admin_evaluation_rounds__round_id__export_ficha_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evaluation-rounds/{round_id}/export/resumen.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resumen por zona y prueba entre zonas (ronda cerrada) */
+        get: operations["export_api_v1_admin_evaluation_rounds__round_id__export_resumen_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evaluation-rounds/{round_id}/export/reportes.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reportes de las zonas para la revisión manual de duplicados
+         * @description Se sirve aunque la ronda siga abierta: es para la revisión manual.
+         */
+        get: operations["export_review_reports_api_v1_admin_evaluation_rounds__round_id__export_reportes_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/evaluation-rounds/{round_id}/export/avisos.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Avisos de duplicado de las zonas para la revisión manual
+         * @description Se sirve aunque la ronda siga abierta: es para la revisión manual.
+         */
+        get: operations["export_review_warnings_api_v1_admin_evaluation_rounds__round_id__export_avisos_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evaluation/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Current Round
+         * @description La ronda abierta con sus zonas y si el evaluador ya envió el orden de cada una.
+         */
+        get: operations["get_current_round_api_v1_evaluation_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evaluation/current/zones/{zone_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Zone Cards
+         * @description Tarjetas a ciegas de la zona, en un orden inicial aleatorio propio del evaluador.
+         */
+        get: operations["get_zone_cards_api_v1_evaluation_current_zones__zone_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evaluation/current/reports/{report_id}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Blind Photo
+         * @description Foto (hasta 1600 px) de un reporte de la ronda abierta.
+         */
+        get: operations["get_blind_photo_api_v1_evaluation_current_reports__report_id__photo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evaluation/current/reports/{report_id}/photo/thumbnail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Blind Photo Thumbnail
+         * @description Miniatura (hasta 400 px) de la foto de un reporte de la ronda abierta.
+         */
+        get: operations["get_blind_photo_thumbnail_api_v1_evaluation_current_reports__report_id__photo_thumbnail_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evaluation/current/zones/{zone_id}/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Submit Order
+         * @description Guarda el orden del evaluador para la zona (posición 1 = la más urgente). Una sola vez.
+         */
+        put: operations["submit_order_api_v1_evaluation_current_zones__zone_id__order_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -629,6 +922,59 @@ export interface components {
             /** History */
             history: components["schemas"]["AdminHistoryEntryResponse"][];
         };
+        /**
+         * BetweenZonesResponse
+         * @description Prueba entre zonas; ``computable`` es false con ``reason`` cuando no se pudo hacer.
+         */
+        BetweenZonesResponse: {
+            /** Computable */
+            computable: boolean;
+            /** Test */
+            test?: string | null;
+            /** Statistic */
+            statistic?: number | null;
+            /** P Value */
+            p_value?: number | null;
+            /** Significant */
+            significant?: boolean | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** BlindCardResponse */
+        BlindCardResponse: {
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
+            /** Description */
+            description: string | null;
+            /** Road Name */
+            road_name: string | null;
+            severity: components["schemas"]["SeverityLevel"];
+            location: components["schemas"]["LocationResponse"];
+            /** Nearby Services */
+            nearby_services: components["schemas"]["ServicePointResponse"][];
+        };
+        /** BlindRoundResponse */
+        BlindRoundResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** BlindZoneResponse */
+        BlindZoneResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** N Reports */
+            n_reports: number;
+        };
         /** Body_create_report_api_v1_reports_post */
         Body_create_report_api_v1_reports_post: {
             /**
@@ -649,6 +995,29 @@ export interface components {
              * @default false
              */
             create_anyway: boolean;
+            /**
+             * Duplicate Warning Id
+             * @description Aviso del 409 o de /nearby que el ciudadano vio; opcional
+             */
+            duplicate_warning_id?: string | null;
+        };
+        /**
+         * Concentration
+         * @description Concentración de reportes de una zona de validación.
+         * @enum {string}
+         */
+        Concentration: "alta" | "baja";
+        /**
+         * ConfirmationRequest
+         * @description Dónde está quien confirma: debe estar a 50 m o menos del daño (propuesta 112).
+         */
+        ConfirmationRequest: {
+            /** Longitude */
+            longitude: number;
+            /** Latitude */
+            latitude: number;
+            /** Duplicate Warning Id */
+            duplicate_warning_id?: string | null;
         };
         /** ConfirmationResponse */
         ConfirmationResponse: {
@@ -728,6 +1097,25 @@ export interface components {
              */
             confirmed_at: string;
         };
+        /** CorrelationResponse */
+        CorrelationResponse: {
+            /** Coefficient */
+            coefficient: number;
+            /** P Value */
+            p_value: number;
+        };
+        /**
+         * CriticalServiceType
+         * @description Tipo de servicio crítico. Valores del ENUM ``tipo`` del diagrama ER.
+         * @enum {string}
+         */
+        CriticalServiceType: "hospital" | "escuela";
+        /** CurrentRoundResponse */
+        CurrentRoundResponse: {
+            round: components["schemas"]["BlindRoundResponse"];
+            /** Zones */
+            zones: components["schemas"]["EvaluatorZoneResponse"][];
+        };
         /**
          * DataDeletionRequestBody
          * @description La supresión es irreversible: se confirma con la contraseña actual.
@@ -754,6 +1142,23 @@ export interface components {
             requested_at: string;
             /** Attended At */
             attended_at: string | null;
+        };
+        /** DedupResponse */
+        DedupResponse: {
+            /** Reports */
+            reports: number;
+            /** Reports Confirmed */
+            reports_confirmed: number;
+            /** Confirmations */
+            confirmations: number;
+            /** Warnings Total */
+            warnings_total: number;
+            /** Warnings Confirmed */
+            warnings_confirmed: number;
+            /** Warnings Created Anyway */
+            warnings_created_anyway: number;
+            /** Warnings Pending */
+            warnings_pending: number;
         };
         /**
          * DeletionRequestStatus
@@ -818,6 +1223,24 @@ export interface components {
              */
             calculated_at: string;
         };
+        /** EvaluatorAgreementResponse */
+        EvaluatorAgreementResponse: {
+            /** Evaluator */
+            evaluator: string;
+            spearman: components["schemas"]["CorrelationResponse"] | null;
+            kendall: components["schemas"]["CorrelationResponse"] | null;
+        };
+        /** EvaluatorZoneResponse */
+        EvaluatorZoneResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** N Reports */
+            n_reports: number;
+            /** Submitted */
+            submitted: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -829,7 +1252,7 @@ export interface components {
             status: string;
             /**
              * Version
-             * @default 0.5.0
+             * @default 0.7.0
              */
             version: string;
         };
@@ -847,6 +1270,15 @@ export interface components {
             /** Points */
             points: components["schemas"]["HeatPointResponse"][];
         };
+        /** KendallWResponse */
+        KendallWResponse: {
+            /** W */
+            w: number;
+            /** Chi2 */
+            chi2: number;
+            /** P Value */
+            p_value: number;
+        };
         /** LocationResponse */
         LocationResponse: {
             /** Longitude */
@@ -863,6 +1295,46 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /**
+         * MapReportResponse
+         * @description Reporte en el mapa de la app: vista pública, sin autor, descripción ni foto.
+         */
+        MapReportResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            location: components["schemas"]["LocationResponse"];
+            status: components["schemas"]["ReportStatus"];
+            severity: components["schemas"]["SeverityLevel"];
+            /** Address */
+            address: string;
+            /** Confirmations */
+            confirmations: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Is Mine */
+            is_mine: boolean;
+            /** Confirmed By Me */
+            confirmed_by_me: boolean;
+        };
+        /**
+         * MapReportsResponse
+         * @description Reportes del área visible, del más reciente al más antiguo. ``truncated`` indica que
+         *     el área tiene más reportes que ``limit``.
+         */
+        MapReportsResponse: {
+            /** Items */
+            items: components["schemas"]["MapReportResponse"][];
+            /** Limit */
+            limit: number;
+            /** Truncated */
+            truncated: boolean;
         };
         /** MyReportsResponse */
         MyReportsResponse: {
@@ -887,6 +1359,8 @@ export interface components {
             radius_m: number;
             /** Items */
             items: components["schemas"]["DuplicateCandidateResponse"][];
+            /** Duplicate Warning Id */
+            duplicate_warning_id?: string | null;
         };
         /** NearestServiceResponse */
         NearestServiceResponse: {
@@ -896,6 +1370,20 @@ export interface components {
             service_type: string;
             /** Distance M */
             distance_m: number;
+        };
+        /** OpenRoundRequest */
+        OpenRoundRequest: {
+            /** Name */
+            name: string;
+            /** Sample Size */
+            sample_size: number;
+        };
+        /** OrderSubmittedResponse */
+        OrderSubmittedResponse: {
+            /** Zone Id */
+            zone_id: number;
+            /** Submitted */
+            submitted: boolean;
         };
         /**
          * OwnReportDetail
@@ -1070,12 +1558,108 @@ export interface components {
          * @enum {string}
          */
         ReportStatus: "registrado" | "evaluado" | "priorizado" | "reparado";
+        /** ResultReportResponse */
+        ResultReportResponse: {
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
+            /** Urgency Score */
+            urgency_score: number;
+            /** Motor Order */
+            motor_order: number;
+            /** Panel Order */
+            panel_order: number | null;
+            /** Disagreement */
+            disagreement: number | null;
+            /** Within One */
+            within_one: boolean | null;
+        };
         /** RoadResponse */
         RoadResponse: {
             /** Name */
             name: string | null;
             /** Highway */
             highway: string;
+        };
+        /** RoundCreatedResponse */
+        RoundCreatedResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** RoundProgressResponse */
+        RoundProgressResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            status: components["schemas"]["RoundStatus"];
+            /** Sample Size */
+            sample_size: number;
+            /**
+             * Opened At
+             * Format: date-time
+             */
+            opened_at: string;
+            /** Closed At */
+            closed_at: string | null;
+            /** Zones */
+            zones: components["schemas"]["ZoneProgressResponse"][];
+        };
+        /** RoundResultsResponse */
+        RoundResultsResponse: {
+            round: components["schemas"]["RoundSummaryResponse"];
+            /** Zones */
+            zones: components["schemas"]["ZoneResultResponse"][];
+            between: components["schemas"]["BetweenZonesResponse"];
+        };
+        /**
+         * RoundStatus
+         * @enum {string}
+         */
+        RoundStatus: "abierta" | "cerrada";
+        /** RoundSummaryResponse */
+        RoundSummaryResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            status: components["schemas"]["RoundStatus"];
+            /** Sample Size */
+            sample_size: number;
+            /**
+             * Opened At
+             * Format: date-time
+             */
+            opened_at: string;
+            /** Closed At */
+            closed_at: string | null;
+        };
+        /** RoundsResponse */
+        RoundsResponse: {
+            /** Items */
+            items: components["schemas"]["RoundSummaryResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** ServicePointResponse */
+        ServicePointResponse: {
+            /** Name */
+            name: string | null;
+            type: components["schemas"]["CriticalServiceType"];
+            location: components["schemas"]["LocationResponse"];
         };
         /**
          * SeverityLevel
@@ -1102,6 +1686,11 @@ export interface components {
             changed_at: string;
             /** Note */
             note: string | null;
+        };
+        /** SubmitOrderRequest */
+        SubmitOrderRequest: {
+            /** Report Ids */
+            report_ids: string[];
         };
         /**
          * SummaryResponse
@@ -1174,7 +1763,7 @@ export interface components {
          * @description Rol del usuario. Los valores coinciden con el ENUM ``rol`` del diagrama ER.
          * @enum {string}
          */
-        UserRole: "ciudadano" | "administrador";
+        UserRole: "ciudadano" | "administrador" | "evaluador";
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1255,6 +1844,73 @@ export interface components {
             w_flow: number | string;
             /** W Proximity */
             w_proximity: number | string;
+        };
+        /** ZoneAgreementResponse */
+        ZoneAgreementResponse: {
+            /** N Evaluators */
+            n_evaluators: number;
+            spearman: components["schemas"]["CorrelationResponse"] | null;
+            kendall: components["schemas"]["CorrelationResponse"] | null;
+            kendall_w: components["schemas"]["KendallWResponse"] | null;
+            /** Within One Pct */
+            within_one_pct: number;
+            /** Per Evaluator */
+            per_evaluator: components["schemas"]["EvaluatorAgreementResponse"][];
+        };
+        /** ZoneCardsResponse */
+        ZoneCardsResponse: {
+            zone: components["schemas"]["BlindZoneResponse"];
+            /** Cards */
+            cards: components["schemas"]["BlindCardResponse"][];
+            /** Submitted */
+            submitted: boolean;
+        };
+        /** ZoneProgressResponse */
+        ZoneProgressResponse: {
+            /** Zone Id */
+            zone_id: number;
+            /** Name */
+            name: string;
+            concentration: components["schemas"]["Concentration"];
+            /** N Reports */
+            n_reports: number;
+            /** Submitted By */
+            submitted_by: string[];
+        };
+        /** ZoneResponse */
+        ZoneResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            concentration: components["schemas"]["Concentration"];
+            /** Active Reports */
+            active_reports: number;
+            /** Total Reports */
+            total_reports: number;
+            /** Geometry */
+            geometry: {
+                [key: string]: unknown;
+            };
+        };
+        /** ZoneResultResponse */
+        ZoneResultResponse: {
+            /** Zone Id */
+            zone_id: number;
+            /** Name */
+            name: string;
+            concentration: components["schemas"]["Concentration"];
+            /** N Reports */
+            n_reports: number;
+            agreement: components["schemas"]["ZoneAgreementResponse"] | null;
+            dedup: components["schemas"]["DedupResponse"];
+            /** Reports */
+            reports: components["schemas"]["ResultReportResponse"][];
+        };
+        /** ZonesResponse */
+        ZonesResponse: {
+            /** Items */
+            items: components["schemas"]["ZoneResponse"][];
         };
     };
     responses: never;
@@ -1783,6 +2439,46 @@ export interface operations {
             };
         };
     };
+    list_reports_in_area_api_v1_reports_get: {
+        parameters: {
+            query: {
+                /** @description min_lon,min_lat,max_lon,max_lat en grados WGS 84 */
+                bbox: string;
+                /** @description Solo los de este estado */
+                status?: components["schemas"]["ReportStatus"] | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MapReportsResponse"];
+                };
+            };
+            /** @description Rectángulo mal formado (INVALID_BBOX) u otro parámetro inválido */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Demasiadas consultas; ver Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     create_report_api_v1_reports_post: {
         parameters: {
             query?: never;
@@ -1816,6 +2512,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ReportResponse"];
                 };
+            };
+            /** @description Las cuentas de evaluador no crean reportes (EVALUATOR_CANNOT_REPORT) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Hay reportes activos a 25 m (REPORT_DUPLICATE_NEARBY); reenviar con create_anyway=true para crearlo de todos modos */
             409: {
@@ -2014,7 +2717,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmationRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             201: {
@@ -2024,6 +2731,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ConfirmationResponse"];
                 };
+            };
+            /** @description Quien confirma está a más de 50 m del daño (CONFIRMATION_TOO_FAR) o es una cuenta de evaluador (EVALUATOR_CANNOT_REPORT) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description El reporte no existe (REPORT_NOT_FOUND) */
             404: {
@@ -2321,6 +3035,578 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    list_zones_api_v1_admin_zones_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZonesResponse"];
+                };
+            };
+        };
+    };
+    list_rounds_api_v1_admin_evaluation_rounds_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_round_api_v1_admin_evaluation_rounds_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenRoundRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundCreatedResponse"];
+                };
+            };
+            /** @description Ya hay una ronda abierta (EVALUATION_ROUND_ALREADY_OPEN) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Sin zonas (EVALUATION_NO_ZONES), una zona con pocos reportes (EVALUATION_ZONE_TOO_SMALL) o pesos sin configurar (WEIGHTS_NOT_CONFIGURED) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_round_api_v1_admin_evaluation_rounds__round_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundProgressResponse"];
+                };
+            };
+            /** @description La ronda no existe (EVALUATION_ROUND_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_round_api_v1_admin_evaluation_rounds__round_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundSummaryResponse"];
+                };
+            };
+            /** @description La ronda no existe (EVALUATION_ROUND_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description La ronda ya estaba cerrada (EVALUATION_ROUND_CLOSED) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_round_results_api_v1_admin_evaluation_rounds__round_id__results_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoundResultsResponse"];
+                };
+            };
+            /** @description La ronda no existe (EVALUATION_ROUND_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description La ronda sigue abierta (EVALUATION_ROUND_STILL_OPEN) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_api_v1_admin_evaluation_rounds__round_id__export_ficha_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV con el orden del motor, del panel y de cada evaluador */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                };
+            };
+            /** @description La ronda no existe (EVALUATION_ROUND_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description La ronda sigue abierta (EVALUATION_ROUND_STILL_OPEN) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_api_v1_admin_evaluation_rounds__round_id__export_resumen_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV con las métricas y la deduplicación por zona */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                };
+            };
+            /** @description La ronda no existe (EVALUATION_ROUND_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description La ronda sigue abierta (EVALUATION_ROUND_STILL_OPEN) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_review_reports_api_v1_admin_evaluation_rounds__round_id__export_reportes_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV de los reportes de cada zona con el enlace a la foto */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                };
+            };
+            /** @description La ronda no existe (EVALUATION_ROUND_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_review_warnings_api_v1_admin_evaluation_rounds__round_id__export_avisos_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                round_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV de los avisos con sus candidatos y la decisión del ciudadano */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                };
+            };
+            /** @description La ronda no existe (EVALUATION_ROUND_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_current_round_api_v1_evaluation_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentRoundResponse"];
+                };
+            };
+            /** @description No hay una ronda abierta (EVALUATION_NO_OPEN_ROUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_zone_cards_api_v1_evaluation_current_zones__zone_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                zone_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneCardsResponse"];
+                };
+            };
+            /** @description No hay ronda abierta (EVALUATION_NO_OPEN_ROUND) o la zona no está en ella (EVALUATION_ZONE_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_blind_photo_api_v1_evaluation_current_reports__report_id__photo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Foto en JPEG */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                };
+            };
+            /** @description No hay ronda abierta, el reporte no está en ella o no tiene foto (PHOTO_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_blind_photo_thumbnail_api_v1_evaluation_current_reports__report_id__photo_thumbnail_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Foto en JPEG */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                };
+            };
+            /** @description No hay ronda abierta, el reporte no está en ella o no tiene foto (PHOTO_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_order_api_v1_evaluation_current_zones__zone_id__order_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                zone_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSubmittedResponse"];
+                };
+            };
+            /** @description No hay ronda abierta (EVALUATION_NO_OPEN_ROUND) o la zona no está en ella (EVALUATION_ZONE_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Ya envió el orden de esta zona (EVALUATION_ORDER_ALREADY_SUBMITTED) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description La lista no es exactamente el conjunto de reportes de la zona, repite alguno o está vacía (EVALUATION_ORDER_INVALID) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
