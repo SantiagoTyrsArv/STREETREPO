@@ -194,3 +194,32 @@ def test_the_file_name_is_a_slug_of_the_round_name() -> None:
     assert export_filename("Piloto 1 — Pasto", "ficha") == "ronda-piloto-1-pasto-ficha.csv"
     assert export_filename("Ñuñoa: árbol", "avisos") == "ronda-nunoa-arbol-avisos.csv"
     assert export_filename("¿¡!?", "resumen") == "ronda-resumen.csv"
+
+
+def test_text_that_a_spreadsheet_would_run_as_a_formula_is_neutralized() -> None:
+    # Los nombres de vía vienen de OSM: un «=HYPERLINK(...)» no debe ejecutarse al abrir el CSV.
+    report_id = uuid.uuid4()
+    rows = _rows(
+        reportes_csv(
+            [
+                ReviewReport(
+                    report_id=report_id,
+                    zone_name="+Zona",
+                    created_at=NOW,
+                    road_name='=HYPERLINK("http://example.invalid")',
+                    status=ReportStatus.EVALUATED,
+                    confirmations=0,
+                )
+            ]
+        )
+    )
+
+    assert rows[0]["via"] == '\'=HYPERLINK("http://example.invalid")'
+    assert rows[0]["zona"] == "'+Zona"
+
+
+def test_negative_numbers_are_not_treated_as_formulas() -> None:
+    rows = _rows(resumen_csv(_results()))
+
+    # Zona 2 invierte el orden del motor: rho negativo, sin apóstrofo delante.
+    assert rows[1]["rho"].startswith("-")

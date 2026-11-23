@@ -67,6 +67,18 @@ _SUMMARY_COLUMNS: Final = (
 )
 
 
+# Una celda de texto que empieza así la ejecuta la hoja de cálculo como fórmula (OWASP, inyección
+# en CSV). Solo se aplica a textos: los números negativos se escriben tal cual.
+_FORMULA_PREFIXES: Final = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _text(value: str | None) -> str:
+    """Texto que no viene del sistema (nombres de zona o de vía de OSM), sin riesgo de fórmula."""
+    if not value:
+        return ""
+    return f"'{value}" if value.startswith(_FORMULA_PREFIXES) else value
+
+
 def _number(value: float | Decimal | None) -> str:
     """Punto decimal y sin ceros sobrantes; vacío si no hay valor."""
     if value is None:
@@ -99,7 +111,7 @@ def _ficha_rows(result: ZoneResult, numbers: Mapping[uuid.UUID, int], k: int) ->
         rows.append(
             [
                 str(entry.report_id),
-                zone.name,
+                _text(zone.name),
                 zone.concentration.value,
                 _number(entry.urgency_score),
                 str(entry.motor_order),
@@ -152,7 +164,7 @@ def _agreement_columns(agreement: ZoneAgreement | None) -> list[str]:
 def _summary_row(result: ZoneResult) -> list[str]:
     dedup = result.dedup
     return [
-        result.zone.name,
+        _text(result.zone.name),
         result.zone.concentration.value,
         str(len(result.zone.entries)),
         *_agreement_columns(result.agreement),
@@ -202,9 +214,9 @@ def reportes_csv(reports: Sequence[ReviewReport]) -> bytes:
         (
             (
                 str(r.report_id),
-                r.zone_name,
+                _text(r.zone_name),
                 r.created_at.isoformat(),
-                r.road_name or "",
+                _text(r.road_name),
                 r.status.value,
                 str(r.confirmations),
                 PHOTO_PATH.format(report_id=r.report_id),
@@ -221,7 +233,7 @@ def avisos_csv(warnings: Sequence[ReviewWarning]) -> bytes:
         (
             (
                 str(w.warning_id),
-                w.zone_name,
+                _text(w.zone_name),
                 w.shown_at.isoformat(),
                 _DECISION_LABELS[w.decision],
                 "" if w.resulting_report_id is None else str(w.resulting_report_id),
