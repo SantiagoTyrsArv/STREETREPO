@@ -39,6 +39,33 @@ curl http://localhost:8000/ready     # comprueba PostgreSQL + PostGIS
 
 El servicio `migrate` aplica las migraciones de Alembic antes de arrancar la API.
 
+## Despliegue con HTTPS (HU-17)
+
+`infra/docker-compose.prod.yml` se suma al Compose base y añade **Caddy** como proxy inverso
+(tesis 4.2). Caddy obtiene y renueva los certificados de Let's Encrypt, redirige HTTP a HTTPS,
+añade HSTS y rechaza con 413 las peticiones de más de 11 MB en la API (1 MB en el panel). Solo
+Caddy publica puertos (80 y 443): la base, la API y el panel quedan en la red interna. La API
+corre con `APP_ENV=prod` y solo acepta `X-Forwarded-For` de la dirección fija de Caddy.
+
+Requisitos: un servidor con Docker, los puertos 80 y 443 abiertos y dos nombres DNS (p. ej.
+`api.<dominio>` y `panel.<dominio>`) apuntando a él.
+
+```bash
+cp .env.example .env
+# Completar: POSTGRES_PASSWORD, JWT_SECRET_KEY, PRIVACY_POLICY_URL (https),
+# API_DOMAIN, PANEL_DOMAIN, ACME_EMAIL,
+# ADMIN_API_BASE_URL=https://<API_DOMAIN> y CORS_ORIGINS=https://<PANEL_DOMAIN>
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml --env-file .env up -d --build
+curl https://<API_DOMAIN>/ready
+```
+
+Después: cargar OSM (`osm-import`), crear el administrador (`create-admin`) con
+`docker compose … exec api python -m app.cli …`, y compilar la app con
+`--dart-define=API_BASE_URL=https://<API_DOMAIN>` (`mobile/README.md`).
+
+Para probarlo en local sin dominio: `API_DOMAIN=api.localhost` y `PANEL_DOMAIN=panel.localhost`;
+Caddy usa entonces su propia autoridad de certificados (`curl -k`).
+
 ## Panel administrativo
 
 El mismo `docker compose … up --build` levanta el panel en **http://localhost:8080** (servicio
