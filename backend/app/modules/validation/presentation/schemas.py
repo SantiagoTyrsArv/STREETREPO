@@ -313,6 +313,8 @@ class ResultReportResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     report_id: uuid.UUID
+    # Solo para el administrador: identifica el reporte en el ranking comparado.
+    road_name: str | None
     urgency_score: float
     motor_order: int
     # null si nadie envió el orden de la zona.
@@ -388,6 +390,7 @@ class ZoneResultResponse(BaseModel):
             reports.append(
                 ResultReportResponse(
                     report_id=entry.report_id,
+                    road_name=zone.road_names.get(entry.report_id),
                     urgency_score=float(entry.urgency_score),
                     motor_order=entry.motor_order,
                     panel_order=panel,
