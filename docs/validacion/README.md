@@ -1,5 +1,7 @@
 # Zonas del estudio de validación (objetivo 4)
 
+Para el paso a paso de la prueba piloto, ver la [guía de la prueba piloto](guia-prueba-piloto.md).
+
 Las zonas se cargan con:
 
 ```bash
