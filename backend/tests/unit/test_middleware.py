@@ -63,6 +63,14 @@ def test_cors_wraps_errors_and_exposes_the_request_id(client: TestClient) -> Non
     assert response.headers["x-content-type-options"] == "nosniff"
 
 
+def test_cors_exposes_the_download_file_name(client: TestClient) -> None:
+    # El panel descarga los CSV con fetch y necesita leer el nombre del archivo.
+    response = client.get("/no-existe", headers={"Origin": PANEL_ORIGIN})
+
+    exposed = response.headers["access-control-expose-headers"].lower()
+    assert "content-disposition" in exposed
+
+
 def test_preflight_is_answered_for_the_panel(client: TestClient) -> None:
     response = client.options(
         "/api/v1/me",
