@@ -26,6 +26,15 @@ class NearbyReport {
   final bool isMine;
 }
 
+/// Respuesta de `GET /reports/nearby`: los candidatos y el aviso que el servidor registró al
+/// mostrarlos (objetivo 4). [warningId] es `null` sin candidatos o con una API anterior.
+class NearbyResult {
+  const NearbyResult({required this.candidates, this.warningId});
+
+  final List<NearbyReport> candidates;
+  final String? warningId;
+}
+
 /// Reporte recién creado, tal como lo devolvió el servidor.
 class CreatedReport {
   const CreatedReport({required this.id, required this.status, required this.address});

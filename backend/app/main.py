@@ -73,7 +73,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             CORRELATION_HEADER,
             CSRF_HEADER,
         ],
-        expose_headers=[CORRELATION_HEADER],
+        # Content-Disposition: el panel descarga los CSV con fetch y lee el nombre del archivo.
+        expose_headers=[CORRELATION_HEADER, "Content-Disposition"],
     )
 
     register_error_handlers(app)

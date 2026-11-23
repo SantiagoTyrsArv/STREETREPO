@@ -1,0 +1,316 @@
+/* Comparación con el panel de referencia (objetivo 4): colores solo de los tokens */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.tabs__tab {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tabs__tab[aria-selected="true"] {
+  border-bottom-color: var(--color-amber);
+  color: var(--color-ink);
+}
+
+.zones,
+.rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.zones__map .base-map {
+  height: 420px;
+}
+
+/* Polígonos de Leaflet (SVG): la clase llega por `style.className` */
+.zone-shape {
+  stroke-width: 2;
+  fill-opacity: 0.25;
+}
+
+.zone-shape--alta {
+  stroke: var(--color-heat-high);
+  fill: var(--color-heat-high);
+}
+
+.zone-shape--baja {
+  stroke: var(--color-status-evaluado);
+  fill: var(--color-status-evaluado);
+}
+
+.zone-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.zone-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zone-legend__swatch {
+  width: 14px;
+  height: 14px;
+  border: 2px solid;
+  border-radius: 3px;
+}
+
+.zone-legend__swatch--alta {
+  border-color: var(--color-heat-high);
+  background: var(--color-error-bg);
+}
+
+.zone-legend__swatch--baja {
+  border-color: var(--color-status-evaluado);
+  background: var(--color-status-evaluado-bg);
+}
+
+/* Tarjetas y tablas como en el Figma «Panel · Comparación con el panel de referencia» */
+.validation-title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.data-table {
+  width: calc(100% - 40px);
+  margin: 0 20px 20px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid var(--color-track);
+  text-align: left;
+}
+
+.data-table th {
+  padding: 6px 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.data-table td {
+  padding: 11px 8px;
+}
+
+.data-table__number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.open-round__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 20px 20px;
+}
+
+.open-round__intro,
+.field__hint {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.open-round__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.close-round {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+  padding: 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-paper);
+}
+
+.close-round__title {
+  font-weight: 700;
+}
+
+.close-round__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Relleno de las tarjetas de la comparación (Figma: 20 px) */
+.zones .card__header,
+.rounds .card__header {
+  padding: 20px 20px 10px;
+}
+
+/* Resultados (Figma 18:2: cifras, zonas muestreadas y ranking comparado) */
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.result-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-exports {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.result-exports .page__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.result-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.result-figure {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+}
+
+.result-figure__value {
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.result-figure__label {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.result-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+}
+
+.result-card .data-table {
+  width: 100%;
+  margin: 10px 0 0;
+}
+
+.result-card .card__note {
+  margin: 10px -20px -20px;
+}
+
+.result-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.metrics dt {
+  color: var(--color-text-secondary);
+}
+
+.metrics dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.metric__p {
+  margin-left: 8px;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+/* Etiquetas del Figma: neutra para «Igual», ámbar para un cambio de posición */
+.result-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--color-disabled-bg);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.result-chip--shift {
+  background: var(--color-status-priorizado-bg);
+  color: var(--color-status-priorizado);
+}
+
+.segmented {
+  display: flex;
+  gap: 4px;
+}
+
+.segmented__option {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-field-border);
+  border-radius: var(--radius-chip);
+  background: var(--color-surface);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented__option[aria-pressed="true"] {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.result-note {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.result-verdict {
+  margin-top: 10px;
+  font-weight: 700;
+}

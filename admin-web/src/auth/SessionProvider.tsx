@@ -11,15 +11,18 @@ import {
 import { createApiClient, type ApiClient } from "../api/client";
 import type { components } from "../api/schema";
 import { config } from "../config";
+import { isStaffRole, type StaffRole } from "./roles";
 import { webLogin, webLogout, webRefresh, type WebTokens } from "./session";
 
 type UserResponse = components["schemas"]["UserResponse"];
 
 export type SessionStatus = "checking" | "signed-in" | "signed-out";
 
+export type SessionUser = { name: string; role: StaffRole };
+
 export type Session = {
   status: SessionStatus;
-  user: { name: string } | null;
+  user: SessionUser | null;
   /** Aviso para el inicio de sesión cuando la sesión terminó sin que la persona la cerrara. */
   notice: string | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -28,6 +31,7 @@ export type Session = {
 };
 
 export const SESSION_ENDED_MESSAGE = "Tu sesión terminó. Inicia sesión de nuevo.";
+export const NOT_STAFF_MESSAGE = "Esta cuenta no tiene acceso al panel.";
 const ME_PATH = "/api/v1/me";
 /** El acceso se renueva antes de vencer, al 80 % de su vida. */
 const REFRESH_AT_FRACTION = 0.8;
@@ -49,7 +53,7 @@ type Props = {
   onSessionCleared?: () => void;
 };
 
-type State = { status: SessionStatus; user: { name: string } | null; notice: string | null };
+type State = { status: SessionStatus; user: SessionUser | null; notice: string | null };
 
 export function SessionProvider({ children, onSessionCleared }: Props) {
   const [state, setState] = useState<State>({ status: "checking", user: null, notice: null });
@@ -131,8 +135,18 @@ export function SessionProvider({ children, onSessionCleared }: Props) {
 
   const loadUser = useCallback(async () => {
     const me = await api.get<UserResponse>(ME_PATH);
-    setState({ status: "signed-in", user: { name: me.name }, notice: null });
-  }, [api]);
+    // El servidor solo da sesión web al personal; si aun así llega otro rol, no se entra.
+    if (!isStaffRole(me.role)) {
+      try {
+        await webLogout();
+      } catch {
+        // Aunque el servidor no responda, este navegador olvida el acceso.
+      }
+      clearSession(NOT_STAFF_MESSAGE);
+      return;
+    }
+    setState({ status: "signed-in", user: { name: me.name, role: me.role }, notice: null });
+  }, [api, clearSession]);
 
   // Al cargar la página, la cookie de refresco recupera la sesión.
   useEffect(() => {

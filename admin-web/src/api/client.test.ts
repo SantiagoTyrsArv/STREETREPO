@@ -180,10 +180,73 @@ describe("cliente de la API", () => {
     expect(search).toBe("?limit=20");
   });
 
+  it("post envía el cuerpo en JSON y devuelve la respuesta", async () => {
+    let received: { method: string; type: string | null; body: unknown } | null = null;
+    server.use(
+      http.post(`${API}/api/v1/admin/evaluation-rounds`, async ({ request }) => {
+        received = {
+          method: request.method,
+          type: request.headers.get("Content-Type"),
+          body: await request.json(),
+        };
+        return HttpResponse.json({ id: "r-1" }, { status: 201 });
+      }),
+    );
+
+    const created = await makeClient().post("/api/v1/admin/evaluation-rounds", { name: "Piloto" });
+
+    expect(created).toEqual({ id: "r-1" });
+    expect(received).toEqual({
+      method: "POST",
+      type: "application/json",
+      body: { name: "Piloto" },
+    });
+  });
+
+  it("post sin cuerpo no envía Content-Type", async () => {
+    let type: string | null = "sin leer";
+    server.use(
+      http.post(`${API}/api/v1/admin/evaluation-rounds/r-1/close`, ({ request }) => {
+        type = request.headers.get("Content-Type");
+        return HttpResponse.json({ id: "r-1" });
+      }),
+    );
+
+    await makeClient().post("/api/v1/admin/evaluation-rounds/r-1/close");
+
+    expect(type).toBeNull();
+  });
+
   it("una respuesta 204 no devuelve cuerpo", async () => {
     server.use(http.put(`${API}/api/v1/things/1`, () => new HttpResponse(null, { status: 204 })));
 
     await expect(makeClient().put("/api/v1/things/1", {})).resolves.toBeUndefined();
+  });
+
+  it("getFile devuelve el archivo con el nombre que da el servidor", async () => {
+    server.use(
+      http.get(`${API}/api/v1/admin/evaluation-rounds/r-1/export/ficha.csv`, () =>
+        HttpResponse.text("\ufeffid_reporte\n", {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": 'attachment; filename="ronda-piloto-1-ficha.csv"',
+          },
+        }),
+      ),
+    );
+
+    const file = await makeClient().getFile("/api/v1/admin/evaluation-rounds/r-1/export/ficha.csv");
+
+    expect(file.filename).toBe("ronda-piloto-1-ficha.csv");
+    expect(file.blob.size).toBeGreaterThan(0);
+  });
+
+  it("getFile sin Content-Disposition no inventa un nombre", async () => {
+    server.use(http.get(`${API}/api/v1/things/1.csv`, () => HttpResponse.text("a\n")));
+
+    const file = await makeClient().getFile("/api/v1/things/1.csv");
+
+    expect(file.filename).toBeNull();
   });
 
   it("getBlob devuelve los bytes de la imagen", async () => {

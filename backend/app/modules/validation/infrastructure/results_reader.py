@@ -29,9 +29,11 @@ from app.modules.validation.infrastructure.round_repository import SqlRoundRepos
 _ENTRIES = text(
     """
     SELECT rr.id_zona, z.nombre, CAST(z.concentracion AS text) AS concentracion,
-           rr.id_reporte, rr.puntaje_u, rr.orden_motor
+           rr.id_reporte, rr.puntaje_u, rr.orden_motor, v.nombre AS via
     FROM ronda_reporte AS rr
     JOIN zona AS z ON z.id_zona = rr.id_zona
+    JOIN reporte AS r ON r.id_reporte = rr.id_reporte
+    LEFT JOIN via AS v ON v.id_via = r.id_via
     WHERE rr.id_ronda = :round_id
     ORDER BY z.nombre, z.id_zona, rr.orden_motor
     """
@@ -155,6 +157,7 @@ class SqlRoundResultsReader:
                 ],
                 evaluator_orders=orders.get(zone_id, {}),
                 dedup=dedup.get(zone_id, _NO_DEDUP),
+                road_names={row.id_reporte: row.via for row in rows},
             )
             for zone_id, rows in entries.items()
         ]

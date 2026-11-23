@@ -44,7 +44,7 @@ export async function webLogin(email: string, password: string): Promise<WebToke
 
 /**
  * Renueva el acceso con la cookie. Devuelve `null` si la sesión ya no vale (401) o la cuenta
- * dejó de ser administradora (403); cualquier otro fallo se lanza para no cerrar la sesión
+ * dejó de ser del personal (403); cualquier otro fallo se lanza para no cerrar la sesión
  * por un problema de red.
  */
 export async function webRefresh(): Promise<WebTokens | null> {

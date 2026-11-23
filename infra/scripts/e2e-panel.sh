@@ -39,9 +39,50 @@ if [[ "$roads" == "0" ]]; then
   cli osm-import
 fi
 
+psql_e2e() {
+  "${COMPOSE[@]}" exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -At'
+}
+
+# Las rondas de ejecuciones anteriores retienen sus reportes (RESTRICT): se borran antes de
+# recargar los datos de demostración. Solo en esta base aparte.
+echo "==> Borrando las rondas de evaluación de ejecuciones anteriores"
+psql_e2e <<<"DELETE FROM ronda_evaluacion;" >/dev/null
+
 echo "==> Datos de demostración recién cargados"
 cli seed-demo --remove
 cli seed-demo
+
+# Dos zonas de prueba (objetivo 4) que parten por la mitad, de oeste a este, los reportes
+# activos con urgencia: cada una queda con más de los 5 que exige una ronda. Son rectángulos
+# de prueba, no las zonas del estudio.
+echo "==> Zonas de prueba del objetivo 4"
+psql_e2e >"$ROOT/.e2e-zonas.geojson" <<'SQL'
+WITH pts AS (
+  SELECT ST_X(ubicacion) AS x, ST_Y(ubicacion) AS y FROM reporte
+  WHERE puntaje_prioridad IS NOT NULL AND estado <> 'reparado'
+),
+ordered AS (SELECT x, row_number() OVER (ORDER BY x) AS rn, count(*) OVER () AS n FROM pts),
+cut AS (
+  SELECT (max(x) FILTER (WHERE rn = n / 2) + min(x) FILTER (WHERE rn = n / 2 + 1)) / 2 AS cx
+  FROM ordered
+),
+box AS (
+  SELECT min(x) - 0.002 AS x0, max(x) + 0.002 AS x1, min(y) - 0.002 AS y0, max(y) + 0.002 AS y1
+  FROM pts
+)
+SELECT json_build_object('type', 'FeatureCollection', 'features', json_build_array(
+  json_build_object('type', 'Feature',
+    'properties', json_build_object('name', 'E2E Oeste', 'concentration', 'alta'),
+    'geometry', ST_AsGeoJSON(ST_MakeEnvelope(x0, y0, cx, y1, 4326))::json),
+  json_build_object('type', 'Feature',
+    'properties', json_build_object('name', 'E2E Este', 'concentration', 'baja'),
+    'geometry', ST_AsGeoJSON(ST_MakeEnvelope(cx, y0, x1, y1, 4326))::json)))
+FROM box, cut;
+SQL
+"${COMPOSE[@]}" exec -T api sh -c 'cat > /tmp/e2e-zonas.geojson' <"$ROOT/.e2e-zonas.geojson"
+rm -f "$ROOT/.e2e-zonas.geojson"
+# En Git Bash (Windows) MSYS convertiría la ruta del contenedor en una de Windows.
+MSYS2_ARG_CONV_EXCL="/tmp/" cli zones-import /tmp/e2e-zonas.geojson
 
 # Cuenta nueva en cada ejecución, con contraseña aleatoria que no se guarda en ningún archivo.
 E2E_ADMIN_EMAIL="e2e-$(date +%s)@example.com"
@@ -49,6 +90,13 @@ E2E_ADMIN_PASSWORD="$(openssl rand -hex 16)"
 printf '%s\n%s\n' "$E2E_ADMIN_PASSWORD" "$E2E_ADMIN_PASSWORD" |
   cli create-admin --name "Funcionaria E2E" --email "$E2E_ADMIN_EMAIL" >/dev/null 2>&1
 export E2E_ADMIN_EMAIL E2E_ADMIN_PASSWORD
+
+# Evaluador del panel de referencia (objetivo 4), con las mismas precauciones.
+E2E_EVALUATOR_EMAIL="e2e-eval-$(date +%s)@example.com"
+E2E_EVALUATOR_PASSWORD="$(openssl rand -hex 16)"
+printf '%s\n%s\n' "$E2E_EVALUATOR_PASSWORD" "$E2E_EVALUATOR_PASSWORD" |
+  cli create-evaluator --name "Evaluadora E2E" --email "$E2E_EVALUATOR_EMAIL" >/dev/null 2>&1
+export E2E_EVALUATOR_EMAIL E2E_EVALUATOR_PASSWORD
 export E2E_BASE_URL="http://localhost:${ADMIN_WEB_PORT}"
 
 cd "$ROOT/admin-web"

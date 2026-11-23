@@ -11,6 +11,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   evaluador (`/api/v1/evaluation/current`), métricas de acuerdo (rho, tau, W de Kendall,
   coincidencia ±1 y prueba entre zonas, propuesta 114) y la ficha comparativa en CSV (`ficha`,
   `resumen`, `reportes` y `avisos`). Migración 0009 (ADR 0008).
+- Objetivo 4, panel y app:
+  - **Panel por rol:** el administrador gana la sección Comparación (Zonas, Rondas y Resultados,
+    con las cuatro descargas en CSV); el evaluador solo ve Mis evaluaciones y la vista a ciegas
+    (arrastrar con `@dnd-kit`, subir y bajar, minimapa y borrador en `sessionStorage`).
+  - **App:** manda el `duplicate_warning_id` al confirmar o al crear de todos modos desde
+    «Posible duplicado».
+  - **API:**
+    - `GET …/results` incluye la vía de cada reporte (`road_name`);
+    - CORS expone `Content-Disposition`.
+  - **Pruebas de punta a punta:** una ronda completa con Playwright.
 - Registro de los avisos de «Posible duplicado» y de la decisión del ciudadano:
   `duplicate_warning_id` en `GET /api/v1/reports/nearby` y en el 409 de `POST /api/v1/reports`, y
   campo opcional del mismo nombre al crear con `create_anyway` y al confirmar.
@@ -26,6 +36,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ### Dependencias
 - `scipy` 1.18.1 (y `scipy-stubs`) para las pruebas estadísticas del objetivo 4.
+- Panel: `@dnd-kit/core` 6.3.1, `@dnd-kit/sortable` 10.0.0 y `@dnd-kit/utilities` 3.2.2 para
+  ordenar las tarjetas de la vista a ciegas.
 
 ## [0.7.0] - 2026-11-22
 

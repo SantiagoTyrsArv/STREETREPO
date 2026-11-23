@@ -74,7 +74,17 @@ infra/scripts/e2e-panel.sh                                                # de p
 `http://localhost:8081` y API en `:8001`), carga OSM la primera vez, rehace los datos de
 demostración, crea una cuenta de administrador de un solo uso y corre los tres flujos (ingresar y
 ver el ranking y el mapa, cambiar un estado y verlo en el historial, guardar pesos y ver la versión
-nueva). Va aparte porque guardar pesos crea versiones que no se borran y recalcula todos los
+nueva). Además prueba una ronda completa del objetivo 4:
+- crea dos zonas de prueba que parten por la mitad los reportes de demostración y una evaluadora
+  de un solo uso;
+- el administrador abre la ronda;
+- la evaluadora ordena una zona arrastrando con el teclado y la envía;
+- el administrador la cierra, ve los resultados y descarga `ficha.csv`.
+
+Antes de recargar los datos de demostración borra las rondas de la ejecución anterior, porque
+retienen sus reportes.
+
+Va aparte porque guardar pesos crea versiones que no se borran y recalcula todos los
 reportes activos; así no toca la base de desarrollo. No corre en la CI: necesita los datos de OSM.
 La primera vez hay que instalar el navegador: `cd admin-web && npx playwright install chromium`.
 
@@ -233,8 +243,22 @@ Decisiones en [ADR 0007](docs/adr/0007-creacion-de-reportes.md).
 
 ## Validación con el panel de referencia (objetivo 4)
 
-Backend listo; el panel web de evaluadores y resultados llega en la entrega 2. Decisiones en
+Completo en el backend, el panel y la app. Decisiones en
 [ADR 0008](docs/adr/0008-validacion-panel-referencia.md).
+
+**En el panel:** el administrador usa **Comparación** (`/comparacion`), con tres pestañas:
+- **Zonas:** el mapa y la tabla de las zonas.
+- **Rondas:** abrir una ronda, ver su avance y cerrarla.
+- **Resultados:** las cifras, las zonas muestreadas, el ranking comparado, el acuerdo por zona, la
+  prueba entre zonas, la deduplicación y las cuatro descargas en CSV.
+
+El evaluador entra al mismo panel y solo ve **Mis evaluaciones** (`/evaluacion`). Ahí ordena cada
+zona a ciegas:
+- arrastrando las tarjetas o con los botones subir y bajar, también con el teclado;
+- con un minimapa de los servicios críticos cercanos;
+- con un borrador que se conserva al recargar, hasta enviar el orden.
+
+**Por la API:**
 
 1. **Zonas:** `python -m app.cli zones-import zonas.geojson` (de 1 a 3 polígonos con nombre y
    concentración `alta` o `baja`; [formato y ejemplo](docs/validacion/README.md)). Asigna su zona a

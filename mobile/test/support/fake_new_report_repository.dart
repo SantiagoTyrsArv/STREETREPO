@@ -27,17 +27,23 @@ const createdReport = CreatedReport(
 
 /// Una llamada a `create`, con lo que se envió.
 class CreateCall {
-  const CreateCall(this.draft, this.idempotencyKey, {required this.createAnyway});
+  const CreateCall(
+    this.draft,
+    this.idempotencyKey, {
+    required this.createAnyway,
+    this.duplicateWarningId,
+  });
 
   final ReportDraft draft;
   final String idempotencyKey;
   final bool createAnyway;
+  final String? duplicateWarningId;
 }
 
 /// Repositorio falso: cada operación responde lo que se le indique y registra las llamadas.
 /// Las respuestas en cola se consumen en orden; la última se repite.
 class FakeNewReportRepository implements NewReportRepository {
-  List<Future<List<NearbyReport>> Function()> onNearby = [() async => []];
+  List<Future<NearbyResult> Function()> onNearby = [() async => const NearbyResult(candidates: [])];
   List<Future<CreatedReport> Function()> onCreate = [() async => createdReport];
   List<Future<int> Function()> onConfirm = [() async => 4];
 
@@ -45,13 +51,16 @@ class FakeNewReportRepository implements NewReportRepository {
   final List<CreateCall> createCalls = [];
   final List<String> confirmCalls = [];
 
+  /// Aviso de duplicado enviado con cada confirmación (`null` desde el mapa).
+  final List<String?> confirmWarningIds = [];
+
   /// Ubicación enviada con cada confirmación (propuesta 112).
   final List<GeoFix> confirmFixes = [];
 
   static T _next<T>(List<T> queue) => queue.length == 1 ? queue.first : queue.removeAt(0);
 
   @override
-  Future<List<NearbyReport>> nearby(GeoFix fix) {
+  Future<NearbyResult> nearby(GeoFix fix) {
     nearbyCalls.add(fix);
     return _next(onNearby)();
   }
@@ -61,14 +70,23 @@ class FakeNewReportRepository implements NewReportRepository {
     ReportDraft draft, {
     required String idempotencyKey,
     required bool createAnyway,
+    String? duplicateWarningId,
   }) {
-    createCalls.add(CreateCall(draft, idempotencyKey, createAnyway: createAnyway));
+    createCalls.add(
+      CreateCall(
+        draft,
+        idempotencyKey,
+        createAnyway: createAnyway,
+        duplicateWarningId: duplicateWarningId,
+      ),
+    );
     return _next(onCreate)();
   }
 
   @override
-  Future<int> confirm(String reportId, GeoFix fix) {
+  Future<int> confirm(String reportId, GeoFix fix, {String? duplicateWarningId}) {
     confirmCalls.add(reportId);
+    confirmWarningIds.add(duplicateWarningId);
     confirmFixes.add(fix);
     return _next(onConfirm)();
   }

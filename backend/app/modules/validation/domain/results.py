@@ -6,7 +6,7 @@ puras de ``agreement``. Los evaluadores solo aparecen como «Evaluador k» (Ley 
 
 import uuid
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 
@@ -53,6 +53,8 @@ class ZoneRoundData:
     entries: Sequence[RoundEntry]
     evaluator_orders: Mapping[uuid.UUID, Mapping[uuid.UUID, int]]
     dedup: DedupSummary
+    # Vía de cada reporte, para que el administrador lo reconozca; None = sin vía asociada.
+    road_names: Mapping[uuid.UUID, str | None] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)

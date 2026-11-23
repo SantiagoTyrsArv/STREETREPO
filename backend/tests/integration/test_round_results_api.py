@@ -141,6 +141,9 @@ def test_results_match_the_agreement_functions_on_the_stored_orders(
         assert body["between"]["p_value"] == pytest.approx(between.p_value)
     assert (zones["Centro"]["n_reports"], zones["Obonuco"]["n_reports"]) == (6, 5)
     assert zones["Centro"]["dedup"]["reports"] == 6
+    # El panel identifica cada reporte por su vía (Figma «Ranking comparado»).
+    assert {r["road_name"] for r in zones["Centro"]["reports"]} == {"Carrera 27"}
+    assert {r["road_name"] for r in zones["Obonuco"]["reports"]} == {None}
 
 
 def test_a_zone_nobody_ordered_has_no_agreement(

@@ -66,23 +66,33 @@ class SubmitReportController extends Notifier<SubmitState> {
       if (firstAttempt && attempt == 0) {
         final fix = ref.read(reportDraftProvider).fix;
         if (fix == null) throw StateError('El borrador no tiene ubicación');
-        final candidates = await _repository.nearby(fix);
-        if (candidates.isNotEmpty) return PossibleDuplicates(candidates);
+        final result = await _repository.nearby(fix);
+        if (result.candidates.isNotEmpty) {
+          return _possibleDuplicates(result.candidates, result.warningId);
+        }
       }
       return _create(createAnyway: false);
     });
   }
 
   /// El ciudadano vio los posibles duplicados y decide crear el suyo.
+  /// Con el aviso que vio, el servidor lo anota como «creó igual».
   Future<SubmitOutcome> createAnyway() => _run((_) => _create(createAnyway: true));
 
   /// Confirma [report] en lugar de crear otro (HU-16), desde la ubicación que se acaba de
-  /// tomar para el reporte nuevo: el ciudadano está frente al daño (propuesta 112).
+  /// tomar para el reporte nuevo: el ciudadano está frente al daño (propuesta 112). Con el
+  /// aviso que vio, el servidor lo anota como «confirmó».
   Future<SubmitOutcome> confirm(NearbyReport report) => _run((_) async {
-    final fix = ref.read(reportDraftProvider).fix;
+    final draft = ref.read(reportDraftProvider);
+    final fix = draft.fix;
     if (fix == null) throw StateError('El borrador no tiene ubicación');
     try {
-      return Confirmed(report, await _repository.confirm(report.id, fix));
+      final total = await _repository.confirm(
+        report.id,
+        fix,
+        duplicateWarningId: draft.duplicateWarningId,
+      );
+      return Confirmed(report, total);
     } on ApiError catch (e) {
       // Ya lo había confirmado (p. ej. una respuesta perdida): se considera hecho.
       if (e.code == 'CONFIRMATION_ALREADY_EXISTS') return Confirmed(report, report.confirmations);
@@ -94,7 +104,21 @@ class SubmitReportController extends Notifier<SubmitState> {
     final draft = ref.read(reportDraftProvider);
     final key = draft.idempotencyKey ?? ref.read(idempotencyKeyFactoryProvider)();
     if (draft.idempotencyKey == null) _draft.setIdempotencyKey(key);
-    return Sent(await _repository.create(draft, idempotencyKey: key, createAnyway: createAnyway));
+    return Sent(
+      await _repository.create(
+        draft,
+        idempotencyKey: key,
+        createAnyway: createAnyway,
+        // El aviso solo se resuelve al crear de todos modos (diseño del objetivo 4, 8.1).
+        duplicateWarningId: createAnyway ? draft.duplicateWarningId : null,
+      ),
+    );
+  }
+
+  /// Guarda el aviso en el borrador para enviarlo con la decisión del ciudadano.
+  SubmitOutcome _possibleDuplicates(List<NearbyReport> candidates, String? warningId) {
+    _draft.setDuplicateWarning(warningId);
+    return PossibleDuplicates(candidates, warningId: warningId);
   }
 
   /// Ejecuta [body] con los reintentos automáticos y deja el resultado en el estado.
@@ -139,7 +163,10 @@ class SubmitReportController extends Notifier<SubmitState> {
         return RateLimited(failure.retryAfter ?? _retryAfterFromDetails(failure.details));
       case ApiError(code: 'REPORT_DUPLICATE_NEARBY'):
         try {
-          return PossibleDuplicates(parseNearbyItems(failure.details['items']));
+          return _possibleDuplicates(
+            parseNearbyItems(failure.details['items']),
+            parseWarningId(failure.details),
+          );
         } on FormatException {
           return SubmitFailed(failure.message, retryable: false);
         }

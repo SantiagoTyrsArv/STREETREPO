@@ -6,13 +6,21 @@ import { SessionContext, type Session } from "../auth/SessionProvider";
 /** Cliente de la API de mentira; cada prueba sustituye lo que usa. */
 export function fakeApi(overrides: Partial<ApiClient> = {}): ApiClient {
   const unexpected = () => Promise.reject(new Error("Llamada a la API no prevista en la prueba"));
-  return { get: unexpected, patch: unexpected, put: unexpected, getBlob: unexpected, ...overrides };
+  return {
+    get: unexpected,
+    patch: unexpected,
+    put: unexpected,
+    post: unexpected,
+    getBlob: unexpected,
+    getFile: unexpected,
+    ...overrides,
+  };
 }
 
 export function fakeSession(overrides: Partial<Session> = {}): Session {
   return {
     status: "signed-in",
-    user: { name: "Ana Funcionaria" },
+    user: { name: "Ana Funcionaria", role: "administrador" },
     notice: null,
     signIn: vi.fn(async () => {}),
     signOut: vi.fn(async () => {}),

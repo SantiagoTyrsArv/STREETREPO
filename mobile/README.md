@@ -118,3 +118,12 @@ Pendiente de probar en el celular (propuesta 112, decisión 113 de la bitácora)
 - [ ] Mapa: confirmar un reporte a menos de 50 m (o en «Posible duplicado» al reportar en el mismo
   lugar): queda confirmado.
 - [ ] Mapa: con el permiso de ubicación negado, «Confirmar este daño» explica por qué lo necesita.
+
+Pendiente de probar en el celular (objetivo 4, aviso de duplicado; ADR 0008). El aviso no se ve en
+la app: se revisa en el panel, en Comparación → Resultados → Deduplicación, o en `avisos.csv`.
+La zona del lugar de la prueba debe estar cargada (`zones-import`).
+
+- [ ] Reportar donde ya hay un reporte activo a menos de 25 m y elegir «Es el mismo daño:
+  confirmarlo»: el aviso de esa zona queda como «Confirmó».
+- [ ] Repetir y elegir «Crear de todos modos»: el aviso queda como «Creó igual», con el reporte nuevo.
+- [ ] Repetir y salir de «Posible duplicado» sin decidir: el aviso queda «Sin decisión».

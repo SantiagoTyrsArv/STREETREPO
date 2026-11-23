@@ -1,15 +1,30 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import iconDb from "../assets/icon-db.svg";
 import iconMap from "../assets/icon-map.svg";
 import iconPin from "../assets/icon-pin.svg";
 import iconSliders from "../assets/icon-sliders.svg";
+import iconUsers from "../assets/icon-users.svg";
+import { HOME_PATHS, type StaffRole } from "../auth/roles";
 import { useSession } from "../auth/SessionProvider";
 import "./layout.css";
 
-const MENU = [
-  { to: "/priorizacion", label: "Priorización", icon: iconMap },
-  { to: "/pesos", label: "Pesos del modelo", icon: iconSliders },
-] as const;
+type MenuItem = { to: string; label: string; icon: string };
+
+/** El evaluador solo ve su propia sección: nada del motor ni de la operación (ADR 0008). */
+const MENUS: Record<StaffRole, readonly MenuItem[]> = {
+  administrador: [
+    { to: HOME_PATHS.administrador, label: "Priorización", icon: iconMap },
+    { to: "/pesos", label: "Pesos del modelo", icon: iconSliders },
+    { to: "/comparacion", label: "Comparación", icon: iconDb },
+  ],
+  evaluador: [{ to: HOME_PATHS.evaluador, label: "Mis evaluaciones", icon: iconUsers }],
+};
+
+const CAPTIONS: Record<StaffRole, string> = {
+  administrador: "Sec. de Infraestructura",
+  evaluador: "Panel de referencia",
+};
 
 const INITIALS_LENGTH = 2;
 
@@ -28,6 +43,7 @@ export function Layout() {
   const { user, signOut } = useSession();
   const [signingOut, setSigningOut] = useState(false);
   const name = user?.name ?? "";
+  const role = user?.role ?? "administrador";
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -48,7 +64,7 @@ export function Layout() {
         </div>
 
         <nav className="sidebar__menu" aria-label="Secciones del panel">
-          {MENU.map((item) => (
+          {MENUS[role].map((item) => (
             <NavLink key={item.to} to={item.to} className="sidebar__link">
               <img src={item.icon} alt="" width={20} height={20} />
               {item.label}
@@ -62,7 +78,7 @@ export function Layout() {
           </span>
           <div className="sidebar__user-text">
             <p className="sidebar__user-name">{name}</p>
-            <p className="sidebar__caption">Sec. de Infraestructura</p>
+            <p className="sidebar__caption">{CAPTIONS[role]}</p>
           </div>
         </div>
         <button

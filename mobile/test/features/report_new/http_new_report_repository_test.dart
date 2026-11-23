@@ -46,11 +46,13 @@ void main() {
         body: {
           'radius_m': 25,
           'items': [_candidate],
+          'duplicate_warning_id': 'w1',
         },
       ),
     );
 
-    final items = await repository.nearby(pastoFix);
+    final result = await repository.nearby(pastoFix);
+    final items = result.candidates;
 
     final query = adapter.requests.single.queryParameters;
     expect(query['latitude'], 1.2136);
@@ -59,6 +61,54 @@ void main() {
     expect(items.single.status, ReportStatus.evaluated);
     expect(items.single.isMine, isFalse);
     expect(items.single.createdAt, DateTime.utc(2026, 10, 15, 15));
+    expect(result.warningId, 'w1');
+  });
+
+  test('nearby sin aviso (respuesta sin candidatos o antigua) no tiene id', () async {
+    adapter.reply(
+      'GET',
+      '/reports/nearby',
+      const FakeResponse(200, body: {'radius_m': 25, 'items': <Object>[]}),
+    );
+
+    final result = await repository.nearby(pastoFix);
+
+    expect(result.candidates, isEmpty);
+    expect(result.warningId, isNull);
+  });
+
+  test('crear de todos modos manda el aviso en el formulario', () async {
+    adapter.reply(
+      'POST',
+      '/reports',
+      const FakeResponse(201, body: {'id': 'nuevo', 'status': 'evaluado', 'address': 'Calle 18'}),
+    );
+
+    await repository.create(
+      draft,
+      idempotencyKey: 'k1',
+      createAnyway: true,
+      duplicateWarningId: 'w1',
+    );
+
+    final fields = Map.fromEntries((adapter.requests.single.data as FormData).fields);
+    expect(fields['duplicate_warning_id'], 'w1');
+  });
+
+  test('confirmar desde el aviso lo manda en el cuerpo', () async {
+    adapter.reply(
+      'POST',
+      '/reports/r1/confirmations',
+      const FakeResponse(201, body: {'report_id': 'r1', 'confirmations': 4}),
+    );
+
+    await repository.confirm('r1', pastoFix, duplicateWarningId: 'w1');
+
+    expect(adapter.requests.single.data, {
+      'longitude': pastoFix.longitude,
+      'latitude': pastoFix.latitude,
+      'duplicate_warning_id': 'w1',
+    });
   });
 
   test('create manda la foto, los datos con punto decimal y la clave', () async {
@@ -100,6 +150,8 @@ void main() {
 
     final fields = Map.fromEntries((adapter.requests.single.data as FormData).fields);
     expect(fields.containsKey('description'), isFalse);
+    // Sin aviso, el campo no viaja.
+    expect(fields.containsKey('duplicate_warning_id'), isFalse);
   });
 
   test('confirm envía la ubicación actual y devuelve el total', () async {
