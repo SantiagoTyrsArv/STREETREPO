@@ -4,7 +4,7 @@ import { LOGIN_PATH, RequireRole } from "../auth/RequireRole";
 import { HOME_PATHS } from "../auth/roles";
 import { useSession } from "../auth/SessionProvider";
 import { LoadingView } from "../components/StateViews";
-import { ComparisonPage } from "../features/comparison/ComparisonPage";
+import { ComparisonPage } from "../features/validation/ComparisonPage";
 import { EvaluationPage } from "../features/evaluation/EvaluationPage";
 import { EvaluationZonePage } from "../features/evaluation/EvaluationZonePage";
 import { PrioritizationPage } from "../features/prioritization/PrioritizationPage";

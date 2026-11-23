@@ -1,0 +1,146 @@
+/* Comparación con el panel de referencia (objetivo 4): colores solo de los tokens */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.tabs__tab {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tabs__tab[aria-selected="true"] {
+  border-bottom-color: var(--color-amber);
+  color: var(--color-ink);
+}
+
+.zones,
+.rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.zones__map .base-map {
+  height: 420px;
+}
+
+/* Polígonos de Leaflet (SVG): la clase llega por `style.className` */
+.zone-shape {
+  stroke-width: 2;
+  fill-opacity: 0.25;
+}
+
+.zone-shape--alta {
+  stroke: var(--color-heat-high);
+  fill: var(--color-heat-high);
+}
+
+.zone-shape--baja {
+  stroke: var(--color-status-evaluado);
+  fill: var(--color-status-evaluado);
+}
+
+.zone-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.zone-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zone-legend__swatch {
+  width: 14px;
+  height: 14px;
+  border: 2px solid;
+  border-radius: 3px;
+}
+
+.zone-legend__swatch--alta {
+  border-color: var(--color-heat-high);
+  background: var(--color-error-bg);
+}
+
+.zone-legend__swatch--baja {
+  border-color: var(--color-status-evaluado);
+  background: var(--color-status-evaluado-bg);
+}
+
+/* Tabla de datos de la comparación */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 18px;
+  border-top: 1px solid var(--color-divider);
+  text-align: left;
+}
+
+.data-table th {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.data-table__number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.open-round__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 18px 18px;
+}
+
+.open-round__intro,
+.field__hint {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.open-round__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.close-round {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+  padding: 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-paper);
+}
+
+.close-round__title {
+  font-weight: 700;
+}
+
+.close-round__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

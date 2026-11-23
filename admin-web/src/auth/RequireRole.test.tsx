@@ -23,7 +23,7 @@ vi.mock("../features/weights/WeightsPage", () => ({
   WeightsPage: () => <h1>Pesos del modelo de priorización</h1>,
 }));
 
-vi.mock("../features/comparison/ComparisonPage", () => ({
+vi.mock("../features/validation/ComparisonPage", () => ({
   ComparisonPage: () => <h1>Comparación con el panel de referencia</h1>,
 }));
 

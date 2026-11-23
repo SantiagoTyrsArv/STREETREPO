@@ -64,6 +64,8 @@ export type ApiClient = {
   get<T>(path: string, query?: QueryParams): Promise<T>;
   patch<T>(path: string, body: unknown): Promise<T>;
   put<T>(path: string, body: unknown): Promise<T>;
+  /** Sin `body` no se envía cuerpo ni `Content-Type` (p. ej. cerrar una ronda). */
+  post<T>(path: string, body?: unknown): Promise<T>;
   getBlob(path: string): Promise<Blob>;
 };
 
@@ -152,6 +154,8 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       json<T>(await send("PATCH", buildUrl(baseUrl, path), body)),
     put: async <T>(path: string, body: unknown) =>
       json<T>(await send("PUT", buildUrl(baseUrl, path), body)),
+    post: async <T>(path: string, body?: unknown) =>
+      json<T>(await send("POST", buildUrl(baseUrl, path), body)),
     getBlob: async (path: string) => (await send("GET", buildUrl(baseUrl, path))).blob(),
   };
 }

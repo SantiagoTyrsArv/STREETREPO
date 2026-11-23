@@ -180,6 +180,43 @@ describe("cliente de la API", () => {
     expect(search).toBe("?limit=20");
   });
 
+  it("post envía el cuerpo en JSON y devuelve la respuesta", async () => {
+    let received: { method: string; type: string | null; body: unknown } | null = null;
+    server.use(
+      http.post(`${API}/api/v1/admin/evaluation-rounds`, async ({ request }) => {
+        received = {
+          method: request.method,
+          type: request.headers.get("Content-Type"),
+          body: await request.json(),
+        };
+        return HttpResponse.json({ id: "r-1" }, { status: 201 });
+      }),
+    );
+
+    const created = await makeClient().post("/api/v1/admin/evaluation-rounds", { name: "Piloto" });
+
+    expect(created).toEqual({ id: "r-1" });
+    expect(received).toEqual({
+      method: "POST",
+      type: "application/json",
+      body: { name: "Piloto" },
+    });
+  });
+
+  it("post sin cuerpo no envía Content-Type", async () => {
+    let type: string | null = "sin leer";
+    server.use(
+      http.post(`${API}/api/v1/admin/evaluation-rounds/r-1/close`, ({ request }) => {
+        type = request.headers.get("Content-Type");
+        return HttpResponse.json({ id: "r-1" });
+      }),
+    );
+
+    await makeClient().post("/api/v1/admin/evaluation-rounds/r-1/close");
+
+    expect(type).toBeNull();
+  });
+
   it("una respuesta 204 no devuelve cuerpo", async () => {
     server.use(http.put(`${API}/api/v1/things/1`, () => new HttpResponse(null, { status: 204 })));
 
