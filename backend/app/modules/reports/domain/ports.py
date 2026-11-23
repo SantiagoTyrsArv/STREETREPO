@@ -1,7 +1,7 @@
 import uuid
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Protocol
+from typing import Literal, Protocol
 
 from app.modules.reports.domain.duplicates import DuplicateCandidate
 from app.modules.reports.domain.entities import ReportDetails
@@ -52,6 +52,40 @@ class NearbyReportFinder(Protocol):
     ) -> Sequence[DuplicateCandidate]:
         """Reportes activos (todo estado salvo reparado) a ``radius_m``, del más cercano
         al más lejano; marca los de ``viewer_id`` con ``is_mine``."""
+        ...
+
+
+# Lo que decidió el ciudadano ante el aviso; el aviso nace «pendiente».
+WarningDecision = Literal["confirmo", "creo_igual"]
+
+
+class DuplicateWarningRecorder(Protocol):
+    """Registro de los avisos de «Posible duplicado» (objetivo 4, HU-09).
+
+    Vive aquí y no en ``validation`` para que ``reports`` no dependa de ese módulo. Ninguno
+    de los dos métodos confirma la transacción: la controla el caso de uso que los llama.
+    """
+
+    def record(
+        self, user_id: uuid.UUID, location: GeoPoint, candidates: Sequence[DuplicateCandidate]
+    ) -> uuid.UUID:
+        """Guarda un aviso ``pendiente`` con sus candidatos y devuelve su id.
+
+        Guarda la zona que cubre ``location``, no el punto (minimización, guía 7.2)."""
+        ...
+
+    def resolve(
+        self,
+        warning_id: uuid.UUID,
+        user_id: uuid.UUID,
+        decision: WarningDecision,
+        report_id: uuid.UUID,
+    ) -> bool:
+        """Anota la decisión si el aviso es de ``user_id`` y sigue ``pendiente``; para
+        ``confirmo``, además ``report_id`` debe estar entre sus candidatos.
+
+        Devuelve False si no aplica, sin error: un aviso inválido nunca rompe la acción
+        del ciudadano."""
         ...
 
 

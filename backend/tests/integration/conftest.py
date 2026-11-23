@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Environment, Settings, get_settings
 from app.core.database import get_engine, get_session
 from app.main import API_V1_PREFIX, create_app
-from app.modules.auth.presentation.dependencies import AdminUserDep
+from app.modules.auth.presentation.dependencies import AdminUserDep, EvaluatorUserDep
 from tests.conftest import TEST_JWT_SECRET
 
 # osm_id de prueba en un rango que OSM no usa (los ids reales no llegan a 2.000 millones):
@@ -113,6 +113,10 @@ def app_with_admin_probe(photo_dir: Path) -> FastAPI:
     @probe.get("/admin/probe")
     def admin_probe(admin: AdminUserDep) -> dict[str, str]:
         return {"rol": admin.role.value}
+
+    @probe.get("/evaluator/probe")
+    def evaluator_probe(evaluator: EvaluatorUserDep) -> dict[str, str]:
+        return {"rol": evaluator.role.value}
 
     app.include_router(probe, prefix=API_V1_PREFIX)
     return app

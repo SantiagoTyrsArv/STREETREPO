@@ -9,6 +9,7 @@ from app.core.dependencies import SessionDep, SettingsDep
 from app.core.rate_limiting import RateLimiterDep
 from app.modules.confirmations.application.confirm_report import ConfirmReport
 from app.modules.confirmations.infrastructure.repository import SqlConfirmationRepository
+from app.modules.validation.infrastructure.warning_repository import SqlDuplicateWarningRecorder
 from app.shared.application.clock import SystemClock
 from app.shared.application.rate_limit import RateLimit
 
@@ -25,6 +26,7 @@ def get_confirm_report(
         ),
         clock=SystemClock(),
         transaction=session,
+        warnings=SqlDuplicateWarningRecorder(session),
     )
 
 

@@ -10,5 +10,6 @@ Una decisión técnica por archivo (`NNNN-titulo.md`). La lista de decisiones y 
 | [0005](0005-limite-de-intentos.md) | Límite de intentos y bloqueo progresivo |
 | [0006](0006-derechos-del-titular.md) | Derechos del titular: actualizar y suprimir |
 | [0007](0007-creacion-de-reportes.md) | Creación de reportes: foto, área de servicio, límites e idempotencia |
+| [0008](0008-validacion-panel-referencia.md) | Validación con el panel de referencia: zonas, rondas, vista a ciegas, métricas y avisos |
 
 El detalle de las propuestas 6–11 (esquema ER) está en [propuestas-esquema-er.md](propuestas-esquema-er.md).

@@ -19,6 +19,7 @@ from app.shared.application.rate_limit import RateLimit, RateLimitExceededError
 from app.shared.domain.geo import GeoPoint
 from app.shared.domain.geo_parameters import CONFIRMATION_RADIUS_M
 from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
+from tests.unit.test_create_report import WARNING_ID, FakeWarnings
 
 AUTHOR = uuid.UUID("00000000-0000-0000-0000-00000000000a")
 CITIZEN = uuid.UUID("00000000-0000-0000-0000-00000000000c")
@@ -76,15 +77,20 @@ def _use_case(
     status: ReportStatus = ReportStatus.EVALUATED,
     limit: RateLimit = GENEROUS,
     distance_m: float = 12.5,
+    warnings: FakeWarnings | None = None,
 ) -> tuple[ConfirmReport, FakeConfirmations, FakeTransaction]:
     confirmations = FakeConfirmations({REPORT: _target(status, distance_m)})
     transaction = FakeTransaction()
+    if warnings is None:
+        warnings = FakeWarnings()
+    warnings.transaction = transaction
     use_case = ConfirmReport(
         confirmations=confirmations,
         rate_limiter=InMemoryRateLimiter(),
         limit_per_user=limit,
         clock=FixedClock(),
         transaction=transaction,
+        warnings=warnings,
     )
     return use_case, confirmations, transaction
 
@@ -179,3 +185,46 @@ def test_own_report_is_reported_before_the_distance() -> None:
 
     with pytest.raises(OwnReportConfirmationError):
         use_case.execute(REPORT, AUTHOR, HERE)
+
+
+# --- Aviso de duplicado (objetivo 4, sección 8.1 del diseño) ---------------------------
+
+
+def test_confirming_from_a_warning_resolves_it_in_the_same_transaction() -> None:
+    warnings = FakeWarnings()
+    use_case, confirmations, transaction = _use_case(warnings=warnings)
+
+    use_case.execute(REPORT, CITIZEN, HERE, duplicate_warning_id=WARNING_ID)
+
+    assert confirmations.rows == {(REPORT, CITIZEN)}
+    # Resuelto antes de la única confirmación de la transacción.
+    assert warnings.resolved == [(WARNING_ID, CITIZEN, "confirmo", REPORT, 0)]
+    assert transaction.commits == 1
+
+
+def test_confirming_without_a_warning_resolves_nothing() -> None:
+    warnings = FakeWarnings()
+    use_case, _, _ = _use_case(warnings=warnings)
+
+    use_case.execute(REPORT, CITIZEN, HERE)
+
+    assert warnings.resolved == []
+
+
+def test_a_warning_that_does_not_apply_does_not_stop_the_confirmation() -> None:
+    warnings = FakeWarnings()
+    warnings.accepts = False
+    use_case, confirmations, transaction = _use_case(warnings=warnings)
+
+    assert use_case.execute(REPORT, CITIZEN, HERE, duplicate_warning_id=WARNING_ID) == 1
+    assert confirmations.rows == {(REPORT, CITIZEN)}
+    assert transaction.commits == 1
+
+
+def test_a_rejected_confirmation_does_not_resolve_the_warning() -> None:
+    warnings = FakeWarnings()
+    use_case, _, _ = _use_case(warnings=warnings)
+
+    with pytest.raises(OwnReportConfirmationError):
+        use_case.execute(REPORT, AUTHOR, HERE, duplicate_warning_id=WARNING_ID)
+    assert warnings.resolved == []

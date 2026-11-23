@@ -6,3 +6,4 @@ class UserRole(StrEnum):
 
     CITIZEN = "ciudadano"
     ADMIN = "administrador"
+    EVALUATOR = "evaluador"

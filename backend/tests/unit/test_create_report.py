@@ -1,8 +1,10 @@
 """Caso de uso CreateReport con dobles en memoria."""
 
 import uuid
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from typing import Literal
 
 import pytest
 
@@ -37,6 +39,7 @@ from app.shared.domain.geo_parameters import DEDUPLICATION_RADIUS_M
 from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
 
 USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+WARNING_ID = uuid.UUID("00000000-0000-0000-0000-0000000000a1")
 PASTO = GeoPoint(longitude=-77.2811, latitude=1.2136)
 BOGOTA = GeoPoint(longitude=-74.0721, latitude=4.7110)
 NOW = datetime(2026, 10, 19, 12, tzinfo=UTC)
@@ -185,6 +188,35 @@ class FakeNearby:
         return self.responses.pop(0) if self.responses else self.default
 
 
+class FakeWarnings:
+    """Registro de avisos de posible duplicado (objetivo 4, sección 8.1 del diseño)."""
+
+    def __init__(self, transaction: "FakeTransaction | None" = None) -> None:
+        self.transaction = transaction
+        self.recorded: list[tuple[uuid.UUID, GeoPoint, tuple[DuplicateCandidate, ...]]] = []
+        # (aviso, usuario, decisión, reporte, confirmaciones de la transacción al resolver)
+        self.resolved: list[tuple[uuid.UUID, uuid.UUID, str, uuid.UUID, int]] = []
+        self.accepts = True
+        self.next_id = WARNING_ID
+
+    def record(
+        self, user_id: uuid.UUID, location: GeoPoint, candidates: Sequence[DuplicateCandidate]
+    ) -> uuid.UUID:
+        self.recorded.append((user_id, location, tuple(candidates)))
+        return self.next_id
+
+    def resolve(
+        self,
+        warning_id: uuid.UUID,
+        user_id: uuid.UUID,
+        decision: Literal["confirmo", "creo_igual"],
+        report_id: uuid.UUID,
+    ) -> bool:
+        commits = self.transaction.commits if self.transaction is not None else 0
+        self.resolved.append((warning_id, user_id, decision, report_id, commits))
+        return self.accepts
+
+
 class FakeLock:
     def __init__(self, events: list[str], on_acquire: object = None) -> None:
         self._events = events
@@ -215,6 +247,7 @@ class Harness:
         self.processor = processor or FakeProcessor()
         self.storage = FakeStorage()
         self.limiter = InMemoryRateLimiter()
+        self.warnings = FakeWarnings(self.transaction)
         self.use_case = CreateReport(
             reports=self.reports,
             nearby=self.nearby,
@@ -230,6 +263,7 @@ class Harness:
             ),
             clock=FixedClock(),
             transaction=self.transaction,
+            warnings=self.warnings,
         )
 
 
@@ -241,6 +275,7 @@ def _submission(
     create_anyway: bool = False,
     severity: Severity = Severity.HIGH,
     description: str | None = "  Hueco profundo  ",
+    warning_id: uuid.UUID | None = None,
 ) -> ReportSubmission:
     return ReportSubmission(
         user_id=USER_ID,
@@ -250,6 +285,7 @@ def _submission(
         idempotency_key=key,
         photo=photo,
         create_anyway=create_anyway,
+        duplicate_warning_id=warning_id,
     )
 
 
@@ -512,3 +548,92 @@ def test_same_key_saved_by_a_concurrent_request_while_waiting_for_the_lock() -> 
     assert result.report.id == winner
     assert harness.storage.files == {}
     assert harness.transaction.commits == 0
+
+
+# --- Registro de avisos de duplicado (objetivo 4, sección 8.1 del diseño) -------------
+
+
+def test_the_409_records_a_warning_and_commits_it_before_answering() -> None:
+    harness = Harness()
+    existing = candidate()
+    harness.nearby.default = [existing]
+
+    with pytest.raises(PossibleDuplicateError) as duplicate:
+        harness.use_case.execute(_submission())
+
+    assert duplicate.value.warning_id == WARNING_ID
+    assert harness.warnings.recorded == [(USER_ID, PASTO, (existing,))]
+    # El aviso debe sobrevivir al 409: se confirma antes de lanzar el error.
+    assert harness.transaction.commits == 1
+    assert harness.reports.saved == {}
+
+
+def test_no_candidates_records_no_warning() -> None:
+    harness = Harness()
+
+    harness.use_case.execute(_submission())
+
+    assert harness.warnings.recorded == []
+
+
+def test_the_check_with_the_lock_held_does_not_record_a_warning() -> None:
+    harness = Harness()
+    harness.nearby.responses = [[], [candidate(distance_m=4.0)]]
+
+    with pytest.raises(PossibleDuplicateError) as duplicate:
+        harness.use_case.execute(_submission())
+
+    assert duplicate.value.warning_id is None
+    assert harness.warnings.recorded == []
+
+
+def test_create_anyway_with_a_warning_resolves_it_in_the_same_transaction() -> None:
+    harness = Harness()
+
+    result = harness.use_case.execute(_submission(create_anyway=True, warning_id=WARNING_ID))
+
+    assert result.created
+    # Se resolvió antes de la única confirmación: misma transacción que el reporte.
+    assert harness.warnings.resolved == [(WARNING_ID, USER_ID, "creo_igual", result.report.id, 0)]
+    assert harness.transaction.commits == 1
+
+
+def test_create_anyway_without_a_warning_resolves_nothing() -> None:
+    harness = Harness()
+
+    harness.use_case.execute(_submission(create_anyway=True))
+
+    assert harness.warnings.resolved == []
+
+
+def test_a_warning_that_does_not_apply_does_not_stop_the_report() -> None:
+    harness = Harness()
+    harness.warnings.accepts = False
+
+    result = harness.use_case.execute(_submission(create_anyway=True, warning_id=WARNING_ID))
+
+    assert result.created
+    assert result.report.id in harness.reports.saved
+
+
+def test_a_warning_id_without_create_anyway_is_ignored() -> None:
+    harness = Harness()
+
+    harness.use_case.execute(_submission(warning_id=WARNING_ID))
+
+    assert harness.warnings.resolved == []
+
+
+def test_an_idempotent_retry_records_and_resolves_nothing() -> None:
+    harness = Harness()
+    key = uuid.uuid4()
+    harness.use_case.execute(_submission(key=key, create_anyway=True, warning_id=WARNING_ID))
+    harness.nearby.default = [candidate(distance_m=0.0)]
+
+    retry = harness.use_case.execute(
+        _submission(key=key, create_anyway=True, warning_id=WARNING_ID)
+    )
+
+    assert not retry.created
+    assert harness.warnings.recorded == []
+    assert len(harness.warnings.resolved) == 1

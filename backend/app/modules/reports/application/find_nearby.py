@@ -6,9 +6,10 @@ from dataclasses import dataclass
 
 from app.modules.reports.domain.duplicates import MAX_DUPLICATE_CANDIDATES, DuplicateCandidate
 from app.modules.reports.domain.new_report import ensure_in_service_area
-from app.modules.reports.domain.ports import NearbyReportFinder
+from app.modules.reports.domain.ports import DuplicateWarningRecorder, NearbyReportFinder
 from app.shared.application.clock import Clock
 from app.shared.application.rate_limit import RateLimit, RateLimiter
+from app.shared.application.transaction import TransactionManager
 from app.shared.domain.geo import BoundingBox, GeoPoint
 from app.shared.domain.geo_parameters import DEDUPLICATION_RADIUS_M
 
@@ -21,27 +22,47 @@ class NearbyPolicy:
 
 class FindPossibleDuplicates:
     """Consulta acotada (propuesta 43): solo dentro del área de servicio y con cupo por
-    usuario, para que no sirva para barrer la ciudad sondeando el borde de los 25 m."""
+    usuario, para que no sirva para barrer la ciudad sondeando el borde de los 25 m.
+
+    Si hay candidatos, registra el aviso mostrado (objetivo 4) y devuelve su id para que
+    la app lo mande al confirmar o al crear de todos modos.
+    """
 
     def __init__(
         self,
+        *,
         nearby: NearbyReportFinder,
         rate_limiter: RateLimiter,
         policy: NearbyPolicy,
         clock: Clock,
+        warnings: DuplicateWarningRecorder,
+        transaction: TransactionManager,
     ) -> None:
         self._nearby = nearby
         self._rate_limiter = rate_limiter
         self._policy = policy
         self._clock = clock
+        self._warnings = warnings
+        self._transaction = transaction
 
-    def execute(self, user_id: uuid.UUID, location: GeoPoint) -> Sequence[DuplicateCandidate]:
+    def execute(
+        self, user_id: uuid.UUID, location: GeoPoint
+    ) -> tuple[Sequence[DuplicateCandidate], uuid.UUID | None]:
         ensure_in_service_area(location, self._policy.service_area)
         # Cupo propio, no el de crear reportes: consultar antes de enviar no debe
         # gastar el cupo del envío.
         self._rate_limiter.hit(
             f"nearby:user:{user_id}", self._policy.limit_per_user, self._clock.now()
         )
-        return self._nearby.find_active_within(
+        candidates = self._nearby.find_active_within(
             location, DEDUPLICATION_RADIUS_M, MAX_DUPLICATE_CANDIDATES, user_id
         )
+        if not candidates:
+            return candidates, None
+        try:
+            warning_id = self._warnings.record(user_id, location, candidates)
+            self._transaction.commit()
+        except Exception:
+            self._transaction.rollback()
+            raise
+        return candidates, warning_id

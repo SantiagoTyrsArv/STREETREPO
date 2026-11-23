@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -11,6 +12,9 @@ from app.core.config import Settings
 from app.modules.admin.domain.demo import NotEnoughOsmDataError
 from app.modules.reports.domain.photos import PhotoKeys
 from app.modules.reports.infrastructure.local_photo_storage import LocalPhotoStorage
+from app.modules.users.domain.role import UserRole
+from app.modules.validation.application.import_zones import ImportZonesResult
+from app.modules.validation.domain.zones import InvalidZonesError
 
 
 def test_osm_import_rejects_invalid_bbox(capsys: pytest.CaptureFixture[str]) -> None:
@@ -36,6 +40,68 @@ def test_create_admin_rejects_mismatched_passwords(
 def test_create_admin_requires_name_and_email() -> None:
     with pytest.raises(SystemExit):
         main(["create-admin", "--email", "admin@example.com"])
+
+
+def _fake_staff_account(
+    monkeypatch: pytest.MonkeyPatch, calls: list[tuple[str, str, str, UserRole]]
+) -> None:
+    class _CreateStaff:
+        def __init__(self, *_deps: object) -> None:
+            pass
+
+        def execute(self, name: str, email: str, password: str, role: UserRole) -> uuid.UUID:
+            calls.append((name, email, password, role))
+            return uuid.UUID(int=7)
+
+    monkeypatch.setattr("app.cli.create_session", nullcontext)
+    monkeypatch.setattr("app.cli.CreateStaffAccount", _CreateStaff)
+    monkeypatch.setattr("app.cli.SqlUserRepository", lambda _session: None)
+
+
+def test_create_evaluator_creates_the_account_with_the_evaluator_role(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    calls: list[tuple[str, str, str, UserRole]] = []
+    _fake_staff_account(monkeypatch, calls)
+    prompts: list[str] = []
+
+    def getpass(prompt: str) -> str:
+        prompts.append(prompt)
+        return "una frase de paso larga"
+
+    monkeypatch.setattr("getpass.getpass", getpass)
+
+    assert main(["create-evaluator", "--name", "Eva", "--email", "eva@example.com"]) == 0
+    assert calls == [("Eva", "eva@example.com", "una frase de paso larga", UserRole.EVALUATOR)]
+    assert json.loads(capsys.readouterr().out) == {"evaluador": str(uuid.UUID(int=7))}
+    assert prompts == ["Contraseña del evaluador: ", "Repite la contraseña: "]
+
+
+def test_create_admin_still_creates_the_account_with_the_admin_role(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    calls: list[tuple[str, str, str, UserRole]] = []
+    _fake_staff_account(monkeypatch, calls)
+    monkeypatch.setattr("getpass.getpass", lambda _prompt: "una frase de paso larga")
+
+    assert main(["create-admin", "--name", "Ana", "--email", "ana@example.com"]) == 0
+    assert calls[0][3] is UserRole.ADMIN
+    assert json.loads(capsys.readouterr().out) == {"administrador": str(uuid.UUID(int=7))}
+
+
+def test_create_evaluator_rejects_mismatched_passwords(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    answers = iter(["una frase de paso larga", "otra frase distinta"])
+    monkeypatch.setattr("getpass.getpass", lambda _prompt: next(answers))
+
+    assert main(["create-evaluator", "--name", "Eva", "--email", "eva@example.com"]) == 2
+    assert "no coinciden" in capsys.readouterr().err
+
+
+def test_create_evaluator_requires_name_and_email() -> None:
+    with pytest.raises(SystemExit):
+        main(["create-evaluator", "--email", "eva@example.com"])
 
 
 def test_purge_orphan_photos_prints_how_many_were_deleted(
@@ -121,3 +187,52 @@ def test_cli_seed_demo_without_osm_data_fails_with_a_hint(
 
     assert main(["seed-demo"]) == 1
     assert "osm-import" in capsys.readouterr().err
+
+
+def test_zones_import_prints_the_totals(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    received: list[object] = []
+
+    class _UseCase:
+        def execute(self, geojson: object) -> ImportZonesResult:
+            received.append(geojson)
+            return ImportZonesResult(zones=2, reports_assigned=9)
+
+    file = tmp_path / "zonas.geojson"
+    file.write_text('{"type": "FeatureCollection", "features": []}', encoding="utf-8")
+    monkeypatch.setattr("app.cli.create_session", nullcontext)
+    monkeypatch.setattr("app.cli._build_import_zones", lambda _session: _UseCase())
+
+    assert main(["zones-import", str(file)]) == 0
+    assert "Zonas cargadas: 2 · reportes asignados: 9" in capsys.readouterr().out
+    assert received == [{"type": "FeatureCollection", "features": []}]
+
+
+def test_zones_import_exits_1_with_the_message_when_zones_are_invalid(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    class _UseCase:
+        def execute(self, geojson: object) -> object:
+            raise InvalidZonesError("La zona «Centro» no es un polígono")
+
+    file = tmp_path / "zonas.geojson"
+    file.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr("app.cli.create_session", nullcontext)
+    monkeypatch.setattr("app.cli._build_import_zones", lambda _session: _UseCase())
+
+    assert main(["zones-import", str(file)]) == 1
+    assert "La zona «Centro» no es un polígono" in capsys.readouterr().err
+
+
+def test_zones_import_exits_1_when_the_file_is_missing_or_not_json(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    monkeypatch.setattr("app.cli.create_session", nullcontext)
+    bad = tmp_path / "malo.geojson"
+    bad.write_text("{no es json", encoding="utf-8")
+
+    assert main(["zones-import", str(tmp_path / "no-existe.geojson")]) == 1
+    assert "No se pudo leer" in capsys.readouterr().err
+    assert main(["zones-import", str(bad)]) == 1
+    assert "JSON" in capsys.readouterr().err

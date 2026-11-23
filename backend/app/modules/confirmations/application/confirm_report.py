@@ -15,6 +15,7 @@ from app.modules.confirmations.domain.errors import (
     ReportNotFoundError,
 )
 from app.modules.confirmations.domain.ports import ConfirmationRepository
+from app.modules.reports.domain.ports import DuplicateWarningRecorder
 from app.modules.reports.domain.status import ReportStatus
 from app.shared.application.clock import Clock
 from app.shared.application.rate_limit import RateLimit, RateLimiter
@@ -26,20 +27,33 @@ from app.shared.domain.geo_parameters import CONFIRMATION_RADIUS_M
 class ConfirmReport:
     def __init__(
         self,
+        *,
         confirmations: ConfirmationRepository,
         rate_limiter: RateLimiter,
         limit_per_user: RateLimit,
         clock: Clock,
         transaction: TransactionManager,
+        warnings: DuplicateWarningRecorder,
     ) -> None:
         self._confirmations = confirmations
         self._rate_limiter = rate_limiter
         self._limit_per_user = limit_per_user
         self._clock = clock
         self._transaction = transaction
+        self._warnings = warnings
 
-    def execute(self, report_id: uuid.UUID, user_id: uuid.UUID, location: GeoPoint) -> int:
-        """Confirma el reporte y devuelve cuántas confirmaciones tiene ahora."""
+    def execute(
+        self,
+        report_id: uuid.UUID,
+        user_id: uuid.UUID,
+        location: GeoPoint,
+        duplicate_warning_id: uuid.UUID | None = None,
+    ) -> int:
+        """Confirma el reporte y devuelve cuántas confirmaciones tiene ahora.
+
+        Si llega ``duplicate_warning_id`` (se confirmó desde «Posible duplicado»), el aviso
+        queda «confirmo» en la misma transacción; uno que no aplica no la impide.
+        """
         # El cupo va primero: que no sirva para sondear qué identificadores existen.
         self._rate_limiter.hit(f"confirm:user:{user_id}", self._limit_per_user, self._clock.now())
         target = self._confirmations.find_target(report_id, location)
@@ -53,6 +67,8 @@ class ConfirmReport:
             raise ConfirmationTooFarError(str(report_id))
         try:
             self._confirmations.add(report_id, user_id, target.distance_m)
+            if duplicate_warning_id is not None:
+                self._warnings.resolve(duplicate_warning_id, user_id, "confirmo", report_id)
             self._transaction.commit()
         except Exception:
             self._transaction.rollback()

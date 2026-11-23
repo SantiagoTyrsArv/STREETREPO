@@ -1,7 +1,17 @@
 from decimal import Decimal
 
 from geoalchemy2 import Geometry
-from sqlalchemy import BigInteger, CheckConstraint, Index, Integer, Numeric, String, text
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    UniqueConstraint,
+    text,
+)
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -33,8 +43,15 @@ class RoadModel(Base):
 
 class ZoneModel(Base):
     __tablename__ = "zona"
-    __table_args__ = (Index("ix_zona_geom", "geom", postgresql_using="gist"),)
+    __table_args__ = (
+        Index("ix_zona_geom", "geom", postgresql_using="gist"),
+        UniqueConstraint("nombre", name="uq_zona_nombre"),
+    )
 
     id: Mapped[int] = mapped_column("id_zona", Integer, primary_key=True)
     name: Mapped[str] = mapped_column("nombre", String(100))
     geom: Mapped[Geometry] = mapped_column("geom", polygon())
+    # Concentración de reportes de la zona del piloto (alta o baja); texto, sin enum de dominio.
+    concentration: Mapped[str] = mapped_column(
+        "concentracion", ENUM("alta", "baja", name="concentracion_zona", create_type=False)
+    )

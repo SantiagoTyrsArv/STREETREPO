@@ -58,6 +58,11 @@ def _admin(web: TestClient, conn: Connection) -> None:
     conn.execute(text("UPDATE usuario SET rol = 'administrador' WHERE correo = :c"), {"c": EMAIL})
 
 
+def _evaluator(web: TestClient, conn: Connection) -> None:
+    register_user(web, email=EMAIL)
+    conn.execute(text("UPDATE usuario SET rol = 'evaluador' WHERE correo = :c"), {"c": EMAIL})
+
+
 def _login(web: TestClient, headers: dict[str, str] | None = None) -> Response:
     return web.post(f"{WEB}/login", json=CREDENTIALS, headers=PANEL_HEADERS | (headers or {}))
 
@@ -93,13 +98,34 @@ def test_web_login_sets_httponly_cookie_and_no_refresh_in_body(
     assert web.get(f"{API_V1_PREFIX}/me", headers=bearer(body["access_token"])).status_code == 200
 
 
+def test_web_login_evaluator_gets_cookie_and_role(web: TestClient, conn: Connection) -> None:
+    _evaluator(web, conn)
+
+    response = _login(web)
+
+    assert response.status_code == 200, response.json()
+    _set_cookie(response)
+    me = web.get(f"{API_V1_PREFIX}/me", headers=bearer(response.json()["access_token"])).json()
+    assert me["role"] == "evaluador"
+
+
+def test_web_refresh_of_an_evaluator_rotates_cookie(web: TestClient, conn: Connection) -> None:
+    _evaluator(web, conn)
+    _login(web)
+
+    response = web.post(f"{WEB}/refresh", headers=PANEL_HEADERS)
+
+    assert response.status_code == 200, response.json()
+    assert _active_sessions(conn) == 1
+
+
 def test_web_login_citizen_is_403(web: TestClient, conn: Connection) -> None:
     register_user(web, email=EMAIL)
 
     response = _login(web)
 
     assert response.status_code == 403
-    assert response.json()["code"] == "ADMIN_ROLE_REQUIRED"
+    assert response.json()["code"] == "STAFF_ROLE_REQUIRED"
     assert response.json()["message"] == "Esta cuenta no tiene acceso al panel."
     assert "set-cookie" not in response.headers
     assert _active_sessions(conn) == 0
@@ -197,7 +223,7 @@ def test_web_refresh_of_demoted_admin_is_403_and_clears(web: TestClient, conn: C
     response = web.post(f"{WEB}/refresh", headers=PANEL_HEADERS)
 
     assert response.status_code == 403
-    assert response.json()["code"] == "ADMIN_ROLE_REQUIRED"
+    assert response.json()["code"] == "STAFF_ROLE_REQUIRED"
     assert "max-age=0" in _set_cookie(response).lower()
     assert _active_sessions(conn) == 0
 

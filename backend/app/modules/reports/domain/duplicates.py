@@ -48,6 +48,10 @@ class DuplicateCandidate:
 class PossibleDuplicateError(Exception):
     """Hay reportes activos a 25 m y el ciudadano no pidió crearlo de todos modos."""
 
-    def __init__(self, candidates: Sequence[DuplicateCandidate]) -> None:
+    def __init__(
+        self, candidates: Sequence[DuplicateCandidate], warning_id: uuid.UUID | None = None
+    ) -> None:
         super().__init__(f"{len(candidates)} reportes activos cercanos")
         self.candidates = tuple(candidates)
+        # Aviso registrado para el objetivo 4; None si no se registró (ver CreateReport).
+        self.warning_id = warning_id

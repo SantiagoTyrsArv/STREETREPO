@@ -59,9 +59,10 @@ class Login:
         self._lockout = lockout
 
     def execute(
-        self, email: str, password: str, required_role: UserRole | None = None
+        self, email: str, password: str, allowed_roles: frozenset[UserRole] | None = None
     ) -> TokenPair:
-        """Con ``required_role``, una cuenta con otro rol recibe ``InsufficientRoleError``
+        """Con ``allowed_roles``, una cuenta con un rol fuera del conjunto recibe
+        ``InsufficientRoleError``
         sin sesión; no cuenta como intento fallido porque la contraseña era correcta.
         """
         now = self._clock.now()
@@ -79,8 +80,8 @@ class Login:
         if user is None or not password_ok or not user.is_active:
             self._register_failure(key, now)
             raise InvalidCredentialsError("Correo o contraseña incorrectos")
-        if required_role is not None and user.role is not required_role:
-            raise InsufficientRoleError(f"Se requiere el rol {required_role}")
+        if allowed_roles is not None and user.role not in allowed_roles:
+            raise InsufficientRoleError("El rol de la cuenta no tiene acceso")
         try:
             if self._hasher.needs_rehash(user.password_hash):
                 self._users.update_password_hash(user.id, self._hasher.hash(password))
@@ -117,9 +118,11 @@ class RefreshSession:
         self._clock = clock
         self._transaction = transaction
 
-    def execute(self, refresh_token: str, required_role: UserRole | None = None) -> TokenPair:
-        """Con ``required_role``, si la cuenta ya no tiene ese rol se revoca la sesión del
-        token y se lanza ``InsufficientRoleError`` sin emitir otra.
+    def execute(
+        self, refresh_token: str, allowed_roles: frozenset[UserRole] | None = None
+    ) -> TokenPair:
+        """Con ``allowed_roles``, si la cuenta ya no tiene uno de esos roles se revoca la
+        sesión del token y se lanza ``InsufficientRoleError`` sin emitir otra.
         """
         now = self._clock.now()
         stored = self._refresh_tokens.get_by_hash(hash_refresh_token(refresh_token))
@@ -137,10 +140,10 @@ class RefreshSession:
             self._refresh_tokens.revoke_all_for_user(stored.user_id)
             self._transaction.commit()
             raise InvalidRefreshTokenError(_INVALID_SESSION)
-        if required_role is not None and user.role is not required_role:
+        if allowed_roles is not None and user.role not in allowed_roles:
             self._refresh_tokens.revoke_chain(stored.id)
             self._transaction.commit()
-            raise InsufficientRoleError(f"Se requiere el rol {required_role}")
+            raise InsufficientRoleError("El rol de la cuenta no tiene acceso")
         try:
             session = self._sessions.issue(user, now)
             self._refresh_tokens.mark_replaced(stored.id, session.refresh_token_id)

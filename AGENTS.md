@@ -86,6 +86,12 @@ Entidades y columnas añadidas por propuestas **aprobadas** (ya reflejadas en el
 - `reporte.clave_idempotencia` con restricción única (id_usuario, clave_idempotencia) (propuesta 11)
 - `confirmacion.distancia_m` (propuesta 112; NULL en las confirmaciones anteriores a la migración 0008)
 
+Añadidas por el diseño del objetivo 4 (decisión 115, migración 0009; falta reflejarlas en el ER de Lucid, el conector solo tiene lectura):
+- `zona.concentracion` (`alta` / `baja`) y nombre único de `zona`
+- `ronda_evaluacion`, `ronda_reporte` (reportes congelados con su U y orden del motor) y `orden_evaluador`
+- `aviso_duplicado` y `aviso_duplicado_candidato` (avisos de «Posible duplicado» y su decisión)
+- valor `evaluador` de `rol_usuario`
+
 > Si necesitas una entidad o columna que no esté en los diagramas, aplica el protocolo 0.3.
 
 ### 2.2 Modelo de prioridad
@@ -326,6 +332,13 @@ GET    /api/v1/admin/ranking            GET /api/v1/admin/summary      GET /api/
 GET    /api/v1/admin/reports/{id}       PATCH /api/v1/admin/reports/{id}/status
 GET/PUT /api/v1/admin/weights           GET /api/v1/admin/weights/versions
 POST   /api/v1/admin/osm/import
+GET    /api/v1/admin/zones              (objetivo 4, ADR 0008)
+GET/POST /api/v1/admin/evaluation-rounds        GET /api/v1/admin/evaluation-rounds/{id}
+POST   /api/v1/admin/evaluation-rounds/{id}/close   GET /api/v1/admin/evaluation-rounds/{id}/results
+GET    /api/v1/admin/evaluation-rounds/{id}/export/{ficha|resumen|reportes|avisos}.csv
+GET    /api/v1/evaluation/current       GET /api/v1/evaluation/current/zones/{id}   (rol evaluador)
+PUT    /api/v1/evaluation/current/zones/{id}/order
+GET    /api/v1/evaluation/current/reports/{id}/photo   (y /thumbnail)
 ```
 
 ---
@@ -611,6 +624,8 @@ Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si al
 **Estado (2026-11-11), punto de reanudación:** fases 1 a 6 cerradas e integradas en `main` (etiquetas `v0.1.0` a `v0.6.0`), con la CI en verde. **Lo siguiente** lo decide el responsable: completar la app Flutter (fase 7: mapa de reportes, edición de perfil, supresión y los estados que faltan), el objetivo 4 de la tesis (comparación con el panel de referencia, HU-09) o el endurecimiento (fase 8). Para las capturas del objetivo 3: levantar el stack, crear un administrador y cargar `seed-demo` (README, sección «Panel administrativo»); las capturas se presentan como demostración de funcionamiento, no como resultados de campo. Al empezar o terminar cada tarea se actualizan la bitácora y el estado del *issue* en Linear.
 
 **Estado (2026-11-22), fase 7 cerrada (`v0.7.0`, decisión 111):** el perfil de la app permite editar los datos y pedir la supresión con constancia (cumple la condición de la decisión 71), existe `GET /api/v1/reports` por área visible con vista pública y la app tiene la pestaña Mapa con ficha del reporte y «Confirmar este daño» (decisiones 91 a 96). El responsable lo probó en su celular el 2026-11-22 (lista en `mobile/README.md`). **Propuesta 112 aprobada** (confirmar solo a 50 m o menos del daño): integrada en `main` y precisada en la tesis (fila 113); falta probarla en el celular y añadir `confirmacion.distancia_m` al ER de Lucid (el conector solo tiene lectura). **Lo siguiente:** el objetivo 4 de la tesis (comparación con el panel de referencia, HU-09) y luego el endurecimiento (fase 8).
+
+**Estado (2026-11-23), objetivo 4 — entrega 1 (backend) integrada:** zonas, evaluadores, rondas congeladas, vista a ciegas, métricas (propuesta 114), ficha en CSV y avisos de duplicado (filas 116 y 117 de la bitácora, ADR 0008); 1001 pruebas del backend con cobertura del 99 %. **Lo siguiente:** la entrega 2 del plan `docs/superpowers/plans/2026-11-22-objetivo-4-comparacion-panel-referencia.md` (tareas 10 a 15: panel por rol, Zonas y Rondas, vista a ciegas, Resultados, aviso en la app y punta a punta), en la rama `feat/validation-panel`. Pendiente del responsable: dibujar las zonas reales de Pasto y añadir las tablas de la migración 0009 al ER de Lucid.
 
 **Estado (2026-11-19), punto de reanudación — página de presentación y descarga (`landing/`, decisión 99, Linear ARE-46):** diseño en `docs/superpowers/specs/2026-11-19-landing-descarga-apk-design.md` y plan en `docs/superpowers/plans/2026-11-19-landing-descarga-apk.md` (9 tareas, ejecución directa). **Hechas e integradas en `main`:** tarea 1 (andamiaje, tokens, fuentes y CI), 3 (marca: símbolo «SR» en blanco con la vía y el Galeras, elegido por el responsable), 5 (motor de secuencias), 6 (capítulos, *scroll* y textos; los textos esperan la revisión del responsable), 7 (teléfono 3D con capturas reales tomadas en el emulador; fila 106), 8 (panel, descarga con «Próximamente», «Saltar a la descarga» y pie; fila 105) y 4 (escenas: el responsable aprobó una toma de Seedance por escena y formato; secuencias WebP de 16 fps con `scripts/build-sequences.ts`, escritorio 19 MB y móvil 23 MB; fila 107); desplegada en https://streetrepo.vercel.app/ (importada por el responsable). Además, fondo vivo y microinteracciones (fila 108, diseño y plan `2026-11-19-landing-fondo-vivo`). **Pendientes:** tarea 2 (`vercel.json` con cabeceras de seguridad y caché larga de `/media/`); tarea 9 (presupuesto de medios, Lighthouse, prueba en el celular, documentación); y la revisión final de la rama completa. El registro de avance de la ejecución está en `.superpowers/sdd/2026-11-19-landing-descarga-apk/progress.md` (local, fuera de git); las decisiones, en las filas 99 a 108 de la bitácora. La cuenta de Higgsfield del conector de Claude Code tiene 3 créditos.
 

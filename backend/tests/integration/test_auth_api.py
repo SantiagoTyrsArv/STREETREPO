@@ -10,8 +10,9 @@ from sqlalchemy import Connection, text
 from sqlalchemy.orm import Session
 
 from app.main import API_V1_PREFIX
-from app.modules.auth.application.create_admin import CreateAdmin
+from app.modules.auth.application.create_staff import CreateStaffAccount
 from app.modules.auth.infrastructure.passwords import Argon2PasswordHasher
+from app.modules.users.domain.role import UserRole
 from app.modules.users.infrastructure.repository import SqlUserRepository
 from tests.integration.conftest import (
     EMAIL,
@@ -177,11 +178,44 @@ def test_deactivated_user_loses_access_immediately(api: TestClient, conn: Connec
 
 
 def test_create_admin_command_creates_an_administrator(session: Session, conn: Connection) -> None:
-    user = CreateAdmin(SqlUserRepository(session), Argon2PasswordHasher(), session).execute(
-        " Secretaría ", "Admin@Example.com", PASSWORD
-    )
+    user_id = CreateStaffAccount(
+        SqlUserRepository(session), Argon2PasswordHasher(), session
+    ).execute(" Secretaría ", "Admin@Example.com", PASSWORD, UserRole.ADMIN)
 
     row = conn.execute(
-        text("SELECT rol::text, correo FROM usuario WHERE id_usuario = :id"), {"id": user.id}
+        text("SELECT rol::text, correo FROM usuario WHERE id_usuario = :id"), {"id": user_id}
     ).one()
     assert tuple(row) == ("administrador", "admin@example.com")
+
+
+def test_create_staff_account_creates_an_evaluator(session: Session, conn: Connection) -> None:
+    user_id = CreateStaffAccount(
+        SqlUserRepository(session), Argon2PasswordHasher(), session
+    ).execute("Evaluadora", "Eva@Example.com", PASSWORD, UserRole.EVALUATOR)
+
+    row = conn.execute(
+        text("SELECT rol::text, correo FROM usuario WHERE id_usuario = :id"), {"id": user_id}
+    ).one()
+    assert tuple(row) == ("evaluador", "eva@example.com")
+
+
+def test_evaluator_routes_accept_only_evaluators(api: TestClient, conn: Connection) -> None:
+    for email in (EMAIL, "admin@example.com", "eva@example.com"):
+        register_user(api, email=email)
+    conn.execute(
+        text("UPDATE usuario SET rol = 'administrador' WHERE correo = 'admin@example.com'")
+    )
+    conn.execute(text("UPDATE usuario SET rol = 'evaluador' WHERE correo = 'eva@example.com'"))
+    probe = f"{API_V1_PREFIX}/evaluator/probe"
+
+    for email in (EMAIL, "admin@example.com"):
+        token = login_user(api, email=email)["access_token"]
+        response = api.get(probe, headers=bearer(token))
+        assert response.status_code == 403
+        assert response.json()["code"] == "FORBIDDEN"
+    allowed = api.get(
+        probe, headers=bearer(login_user(api, email="eva@example.com")["access_token"])
+    )
+    assert allowed.status_code == 200
+    assert allowed.json() == {"rol": "evaluador"}
+    assert api.get(probe).status_code == 401

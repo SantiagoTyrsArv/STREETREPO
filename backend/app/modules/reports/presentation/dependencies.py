@@ -29,6 +29,7 @@ from app.modules.reports.infrastructure.public_map import SqlPublicReportsReader
 from app.modules.reports.infrastructure.report_view import SqlReportViewReader
 from app.modules.reports.infrastructure.repository import SqlReportRepository
 from app.modules.reports.infrastructure.status_history import SqlStatusHistoryRecorder
+from app.modules.validation.infrastructure.warning_repository import SqlDuplicateWarningRecorder
 from app.shared.application.clock import SystemClock
 from app.shared.application.rate_limit import RateLimit
 
@@ -62,6 +63,7 @@ def get_create_report(
         ),
         clock=SystemClock(),
         transaction=session,
+        warnings=SqlDuplicateWarningRecorder(session),
     )
 
 
@@ -72,16 +74,18 @@ def get_find_possible_duplicates(
     session: SessionDep, settings: SettingsDep, limiter: RateLimiterDep
 ) -> FindPossibleDuplicates:
     return FindPossibleDuplicates(
-        PostgisNearbyReportFinder(session),
-        limiter,
-        NearbyPolicy(
+        nearby=PostgisNearbyReportFinder(session),
+        rate_limiter=limiter,
+        policy=NearbyPolicy(
             service_area=settings.report_area,
             # Mismo valor que el de crear reportes (propuesta 43), con cuenta aparte.
             limit_per_user=RateLimit(
                 max_requests=settings.reports_per_user_per_hour, window=_ONE_HOUR
             ),
         ),
-        SystemClock(),
+        clock=SystemClock(),
+        warnings=SqlDuplicateWarningRecorder(session),
+        transaction=session,
     )
 
 

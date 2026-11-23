@@ -29,12 +29,17 @@ def test_all_er_entities_are_mapped() -> None:
         "zona",
         "token_refresco",
         "solicitud_supresion",
+        "ronda_evaluacion",
+        "ronda_reporte",
+        "orden_evaluador",
+        "aviso_duplicado",
+        "aviso_duplicado_candidato",
     }
 
 
 def test_enum_values_match_er_diagram() -> None:
     assert [s.value for s in ReportStatus] == ["registrado", "evaluado", "priorizado", "reparado"]
-    assert [r.value for r in UserRole] == ["ciudadano", "administrador"]
+    assert [r.value for r in UserRole] == ["ciudadano", "administrador", "evaluador"]
     assert [c.value for c in RoadClass] == ["primaria", "secundaria", "terciaria", "residencial"]
     assert [d.value for d in DeletionRequestStatus] == ["pendiente", "atendida"]
 

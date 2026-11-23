@@ -2,15 +2,18 @@
 
 osm-import [--bbox sur,oeste,norte,este]   Carga vías y servicios críticos de OSM.
 create-admin --name NOMBRE --email CORREO  Crea un administrador (pide la contraseña sin eco).
+create-evaluator --name NOMBRE --email CORREO  Crea un evaluador (igual que create-admin).
 purge-orphan-photos                       Borra las fotos que ninguna evidencia referencia.
 seed-demo [--remove]                      Carga (o borra) los datos de demostración del panel.
+zones-import RUTA                         Carga las zonas de validación desde un GeoJSON.
 """
 
 import argparse
 import getpass
 import json
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -23,7 +26,7 @@ from app.modules.admin.domain.demo import NotEnoughOsmDataError
 from app.modules.admin.infrastructure.demo_data import SqlDemoData, load_demo_photos
 from app.modules.admin.infrastructure.demo_points import PostgisDemoPointPicker
 from app.modules.admin.infrastructure.overpass import create_overpass_client
-from app.modules.auth.application.create_admin import CreateAdmin
+from app.modules.auth.application.create_staff import CreateStaffAccount
 from app.modules.auth.domain.passwords import WeakPasswordError
 from app.modules.auth.infrastructure.passwords import Argon2PasswordHasher
 from app.modules.critical_services.infrastructure.repository import SqlCriticalServiceRepository
@@ -36,7 +39,11 @@ from app.modules.reports.infrastructure.repository import SqlReportRepository
 from app.modules.reports.infrastructure.status_history import SqlStatusHistoryRecorder
 from app.modules.roads.infrastructure.repository import SqlRoadRepository
 from app.modules.users.domain.ports import EmailAlreadyRegisteredError
+from app.modules.users.domain.role import UserRole
 from app.modules.users.infrastructure.repository import SqlUserRepository
+from app.modules.validation.application.import_zones import ImportZones
+from app.modules.validation.domain.zones import InvalidZonesError
+from app.modules.validation.infrastructure.zone_repository import SqlZoneRepository
 from app.shared.application.clock import SystemClock
 from app.shared.domain.geo import BoundingBox, InvalidGeometryError
 
@@ -68,25 +75,33 @@ def _osm_import(bbox: str | None) -> int:
     return 0
 
 
-def _create_admin(name: str, email: str) -> int:
+def _create_staff(name: str, email: str, role: UserRole, label: str, output_key: str) -> int:
     # La contraseña nunca va en los argumentos: quedaría en el historial de la terminal.
-    password = getpass.getpass("Contraseña del administrador: ")
+    password = getpass.getpass(f"Contraseña del {label}: ")
     if password != getpass.getpass("Repite la contraseña: "):
         print("Las contraseñas no coinciden.", file=sys.stderr)
         return 2
     with create_session() as session:
         try:
-            user = CreateAdmin(SqlUserRepository(session), Argon2PasswordHasher(), session).execute(
-                name, email, password
-            )
+            user_id = CreateStaffAccount(
+                SqlUserRepository(session), Argon2PasswordHasher(), session
+            ).execute(name, email, password, role)
         except WeakPasswordError as exc:
             print(f"{exc}.", file=sys.stderr)
             return 2
         except EmailAlreadyRegisteredError:
             print("Ya existe una cuenta con ese correo.", file=sys.stderr)
             return 1
-    print(json.dumps({"administrador": str(user.id)}))
+    print(json.dumps({output_key: str(user_id)}))
     return 0
+
+
+def _create_admin(name: str, email: str) -> int:
+    return _create_staff(name, email, UserRole.ADMIN, "administrador", "administrador")
+
+
+def _create_evaluator(name: str, email: str) -> int:
+    return _create_staff(name, email, UserRole.EVALUATOR, "evaluador", "evaluador")
 
 
 def _purge_orphan_photos() -> int:
@@ -142,6 +157,29 @@ def _seed_demo(*, remove: bool) -> int:
     return 0
 
 
+def _build_import_zones(session: Session) -> ImportZones:
+    return ImportZones(SqlZoneRepository(session), session)
+
+
+def _zones_import(path: Path) -> int:
+    try:
+        geojson = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        print(f"No se pudo leer el archivo de zonas: {exc.strerror or exc}", file=sys.stderr)
+        return 1
+    except ValueError:
+        print("El archivo de zonas no es un JSON válido.", file=sys.stderr)
+        return 1
+    with create_session() as session:
+        try:
+            result = _build_import_zones(session).execute(geojson)
+        except InvalidZonesError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+    print(f"Zonas cargadas: {result.zones} · reportes asignados: {result.reports_assigned}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -150,21 +188,35 @@ def main(argv: Sequence[str] | None = None) -> int:
     admin = commands.add_parser("create-admin", help="Crear una cuenta de administrador")
     admin.add_argument("--name", required=True, help="Nombre del administrador")
     admin.add_argument("--email", required=True, help="Correo con el que iniciará sesión")
+    evaluator = commands.add_parser("create-evaluator", help="Crear una cuenta de evaluador")
+    evaluator.add_argument("--name", required=True, help="Nombre del evaluador")
+    evaluator.add_argument("--email", required=True, help="Correo con el que iniciará sesión")
     commands.add_parser("purge-orphan-photos", help="Borrar las fotos huérfanas de más de una hora")
     demo = commands.add_parser("seed-demo", help="Cargar los datos de demostración del panel")
     demo.add_argument("--remove", action="store_true", help="Borrar los datos de demostración")
 
+    zones = commands.add_parser(
+        "zones-import",
+        help="Cargar las zonas de validación desde un GeoJSON",
+        description=(
+            "Carga zonas (Polygon con name y concentration alta|baja). Las zonas con el mismo "
+            "nombre se actualizan; las que están en la base y no vienen en el archivo no se "
+            "tocan. Luego recalcula la zona de todos los reportes."
+        ),
+    )
+    zones.add_argument("path", metavar="RUTA", type=Path, help="Archivo GeoJSON de zonas")
+
     args = parser.parse_args(argv)
     configure_logging(get_settings().log_level)
-    if args.command == "osm-import":
-        return _osm_import(args.bbox)
-    if args.command == "create-admin":
-        return _create_admin(args.name, args.email)
-    if args.command == "purge-orphan-photos":
-        return _purge_orphan_photos()
-    if args.command == "seed-demo":
-        return _seed_demo(remove=args.remove)
-    return 2  # pragma: no cover - argparse ya valida el comando
+    handlers: dict[str, Callable[[], int]] = {
+        "osm-import": lambda: _osm_import(args.bbox),
+        "create-admin": lambda: _create_admin(args.name, args.email),
+        "create-evaluator": lambda: _create_evaluator(args.name, args.email),
+        "purge-orphan-photos": _purge_orphan_photos,
+        "seed-demo": lambda: _seed_demo(remove=args.remove),
+        "zones-import": lambda: _zones_import(args.path),
+    }
+    return handlers[args.command]()
 
 
 if __name__ == "__main__":

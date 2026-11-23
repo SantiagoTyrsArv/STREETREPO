@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, Header, Query, Response, Upl
 
 from app.core.errors import AppError
 from app.core.rate_limiting import too_many_requests
-from app.modules.auth.presentation.dependencies import CurrentUserDep
+from app.modules.auth.presentation.dependencies import CurrentUserDep, forbid_evaluator
 from app.modules.reports.application.create_report import ReportSubmission
 from app.modules.reports.application.get_photo import PhotoNotAvailableError, PhotoViewer
 from app.modules.reports.domain.duplicates import PossibleDuplicateError
@@ -53,6 +53,9 @@ from app.shared.domain.geo import BoundingBox, GeoPoint, InvalidGeometryError
 router = APIRouter(prefix="/reports", tags=["reportes"])
 
 _CREATE_DOC: dict[int | str, dict[str, Any]] = {
+    status.HTTP_403_FORBIDDEN: {
+        "description": "Las cuentas de evaluador no crean reportes (EVALUATOR_CANNOT_REPORT)"
+    },
     status.HTTP_200_OK: {
         "description": "Reintento con un Idempotency-Key ya usado: el reporte existente",
         "model": ReportResponse,
@@ -77,7 +80,7 @@ def _create_report_errors() -> Iterator[None]:
     try:
         yield
     except PossibleDuplicateError as exc:
-        nearby = NearbyReportsResponse.from_candidates(exc.candidates)
+        nearby = NearbyReportsResponse.from_candidates(exc.candidates, exc.warning_id)
         raise AppError(
             "REPORT_DUPLICATE_NEARBY",
             "Ya hay un reporte activo muy cerca. Puedes confirmarlo en lugar de crear otro.",
@@ -133,7 +136,8 @@ def _create_report_errors() -> Iterator[None]:
     "",
     response_model=ReportResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(limit_reports_per_ip)],
+    # El rol se revisa antes del límite: un evaluador rechazado no gasta cupo.
+    dependencies=[Depends(forbid_evaluator), Depends(limit_reports_per_ip)],
     responses=_CREATE_DOC,
 )
 def create_report(
@@ -150,6 +154,10 @@ def create_report(
         bool,
         Form(description="true si el ciudadano vio los posibles duplicados y decide crearlo"),
     ] = False,
+    duplicate_warning_id: Annotated[
+        uuid.UUID | None,
+        Form(description="Aviso del 409 o de /nearby que el ciudadano vio; opcional"),
+    ] = None,
     idempotency_key: Annotated[
         uuid.UUID | None,
         Header(
@@ -163,8 +171,9 @@ def create_report(
     La foto se recodifica sin metadatos (EXIF, GPS). El reporte queda «evaluado» con
     su urgencia U; si no hay vía OSM a 30 m, se marca para revisar la vía.
 
-    Si hay reportes activos a 25 m responde 409 con ellos, salvo que llegue
-    ``create_anyway=true``.
+    Si hay reportes activos a 25 m responde 409 con ellos y un ``duplicate_warning_id``,
+    salvo que llegue ``create_anyway=true``; si llega con ese id, el aviso queda como
+    «creó igual» con el reporte nuevo.
     """
     # Se lee un byte más del máximo para saber si lo supera sin cargar todo el archivo.
     raw_photo = photo.file.read(MAX_PHOTO_BYTES + 1)
@@ -178,6 +187,7 @@ def create_report(
                 idempotency_key=idempotency_key,
                 photo=raw_photo,
                 create_anyway=create_anyway,
+                duplicate_warning_id=duplicate_warning_id,
             )
         )
     if not result.created:
@@ -269,10 +279,14 @@ def find_nearby_reports(
 
     No incluye el autor ni la ubicación exacta de los reportes ajenos: la ubicación va
     redondeada a 4 decimales y la distancia se mide desde ella (propuesta 43).
+
+    Si hay resultados, registra el aviso (objetivo 4) y devuelve su ``duplicate_warning_id``.
     """
     with _nearby_errors():
-        candidates = use_case.execute(user.id, GeoPoint(longitude=longitude, latitude=latitude))
-    return NearbyReportsResponse.from_candidates(candidates)
+        candidates, warning_id = use_case.execute(
+            user.id, GeoPoint(longitude=longitude, latitude=latitude)
+        )
+    return NearbyReportsResponse.from_candidates(candidates, warning_id)
 
 
 @router.get(

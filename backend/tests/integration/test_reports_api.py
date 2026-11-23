@@ -452,3 +452,24 @@ def test_nearby_outside_the_service_area_over_http(api: TestClient) -> None:
     )
 
     assert response.status_code == 422
+
+
+def test_an_evaluator_cannot_create_reports_and_spends_no_quota(
+    api: TestClient, conn: Connection, photo_dir: Path
+) -> None:
+    token = _token(api)
+    conn.execute(text("UPDATE usuario SET rol = 'evaluador'"))
+
+    # Más intentos que el cupo por IP (30): si el rol se revisara después del límite,
+    # los últimos darían 429 en lugar de 403.
+    responses = [
+        api.post(REPORTS, data=FORM, files=_photo(), headers=bearer(token)) for _ in range(31)
+    ]
+
+    assert {response.status_code for response in responses} == {403}
+    assert responses[0].json()["code"] == "EVALUATOR_CANNOT_REPORT"
+    assert responses[0].json()["message"] == (
+        "Las cuentas de evaluador no pueden crear ni confirmar reportes."
+    )
+    assert conn.execute(text("SELECT count(*) FROM reporte")).scalar_one() == 0
+    assert not photo_dir.exists() or not any(photo_dir.rglob("*.*"))

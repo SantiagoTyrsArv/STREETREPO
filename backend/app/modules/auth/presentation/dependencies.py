@@ -114,3 +114,28 @@ def require_admin(user: CurrentUserDep) -> User:
 
 
 AdminUserDep = Annotated[User, Depends(require_admin)]
+
+
+def require_evaluator(user: CurrentUserDep) -> User:
+    """Las rutas del evaluador (comparación a ciegas) verifican el rol en el servidor."""
+    if user.role is not UserRole.EVALUATOR:
+        raise AppError(
+            "FORBIDDEN",
+            "No tienes permiso para realizar esta acción.",
+            status.HTTP_403_FORBIDDEN,
+        )
+    return user
+
+
+EvaluatorUserDep = Annotated[User, Depends(require_evaluator)]
+
+
+def forbid_evaluator(user: CurrentUserDep) -> User:
+    """Las cuentas de evaluador solo ordenan reportes: no crean ni confirman (HU-09)."""
+    if user.role is UserRole.EVALUATOR:
+        raise AppError(
+            "EVALUATOR_CANNOT_REPORT",
+            "Las cuentas de evaluador no pueden crear ni confirmar reportes.",
+            status.HTTP_403_FORBIDDEN,
+        )
+    return user

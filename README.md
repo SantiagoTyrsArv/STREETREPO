@@ -231,6 +231,33 @@ Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
 
 Decisiones en [ADR 0007](docs/adr/0007-creacion-de-reportes.md).
 
+## Validación con el panel de referencia (objetivo 4)
+
+Backend listo; el panel web de evaluadores y resultados llega en la entrega 2. Decisiones en
+[ADR 0008](docs/adr/0008-validacion-panel-referencia.md).
+
+1. **Zonas:** `python -m app.cli zones-import zonas.geojson` (de 1 a 3 polígonos con nombre y
+   concentración `alta` o `baja`; [formato y ejemplo](docs/validacion/README.md)). Asigna su zona a
+   cada reporte. `GET /api/v1/admin/zones` las lista con sus reportes activos.
+2. **Evaluadores:** `python -m app.cli create-evaluator --name "Nombre" --email correo@dominio.co`
+   (pide la contraseña sin mostrarla). Entran al panel con la sesión web; no crean ni confirman
+   reportes y no ven `/admin`.
+3. **Ronda:** `POST /api/v1/admin/evaluation-rounds` con `{"name": "Piloto 1", "sample_size": 10}`
+   congela, por zona, hasta `sample_size` reportes activos con su U y el orden del motor (cada zona
+   necesita al menos 5). Solo una ronda abierta a la vez. `GET /api/v1/admin/evaluation-rounds/{id}`
+   muestra el avance («Evaluador k» por zona) y `POST …/{id}/close` la cierra.
+4. **Vista a ciegas:** `GET /api/v1/evaluation/current` y `…/zones/{id}` dan las tarjetas barajadas
+   por evaluador, sin U, factores, estado, fechas ni confirmaciones; `PUT …/zones/{id}/order` guarda
+   el orden 1..n una sola vez.
+5. **Resultados** (ronda cerrada): `GET …/{id}/results` (rho, tau, W de Kendall, coincidencia ±1,
+   prueba entre zonas y deduplicación por zona) y las descargas `…/{id}/export/ficha.csv` y
+   `resumen.csv`. Para la revisión manual de duplicados, `reportes.csv` y `avisos.csv` se descargan
+   también con la ronda abierta.
+
+Los avisos de «Posible duplicado» se registran desde la migración 0009: `GET /reports/nearby` y el
+409 de `POST /reports` devuelven `duplicate_warning_id`, que la app manda al confirmar o al crear de
+todos modos. Los evaluadores aparecen siempre como «Evaluador k», nunca por nombre ni correo.
+
 ## Base de datos
 
 Esquema según el diagrama ER: ver [`docs/base-de-datos.md`](docs/base-de-datos.md).
