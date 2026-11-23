@@ -32,6 +32,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   campo opcional del mismo nombre al crear con `create_anyway` y al confirmar.
 
 ### Cambiado
+- Página de presentación: cada capítulo ocupa una pantalla y su animación corre sola al llegar,
+  una vez por carga, con un imán de proximidad entre capítulos; «Pruébalo» cabe en una pantalla y
+  las letras de la portada empiezan en ámbar. La página pasa de ~22 a 7,95 pantallas en el
+  celular.
+- Página de presentación: el HTML llega prerenderizado (`src/entry-server.tsx` y
+  `scripts/prerender.ts`) y el cliente lo hidrata; sin JavaScript se leen todos los textos. LCP en
+  producción de 3,1 s a 2,2 s (móvil, 4G lento, CPU ×4).
 - El inicio de sesión del panel acepta administradores y evaluadores; a un ciudadano le responde
   `STAFF_ROLE_REQUIRED`. Un evaluador no puede crear ni confirmar reportes
   (`EVALUATOR_CANNOT_REPORT`).
