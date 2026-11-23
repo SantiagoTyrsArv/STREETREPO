@@ -19,6 +19,9 @@ interface FrameSequenceProps {
 }
 
 function currentResolution(): Resolution {
+  // En el prerenderizado no hay ventana; la resolución solo decide qué cuadros se descargan, así
+  // que no cambia el marcado y la hidratación coincide.
+  if (typeof window === "undefined") return "desktop";
   return pickResolution(window.innerWidth, window.innerHeight);
 }
 

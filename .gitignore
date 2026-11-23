@@ -44,4 +44,5 @@ Thumbs.db
 # Página de presentación (landing/)
 landing/node_modules/
 landing/dist/
+landing/dist-ssr/
 landing/media/originals/

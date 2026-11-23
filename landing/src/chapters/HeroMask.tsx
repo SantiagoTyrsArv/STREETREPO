@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useIsomorphicLayoutEffect } from "../lib/useIsomorphicLayoutEffect";
 import { letterFill, MASK_UNTIL, maskScale } from "./heroMaskScale";
 import "./HeroMask.css";
 
@@ -19,18 +20,18 @@ const TEXT_PROPS = {
 export function HeroMask({ progress }: { progress: number }) {
   const anchor = useRef<SVGTSpanElement>(null);
   const [origin, setOrigin] = useState("50% 50%");
-  const [portrait, setPortrait] = useState(
-    () => typeof window !== "undefined" && window.innerHeight > window.innerWidth,
-  );
+  // Horizontal en el HTML prerenderizado; se ajusta antes de pintar, al hidratar.
+  const [portrait, setPortrait] = useState(false);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const onResize = () => setPortrait(window.innerHeight > window.innerWidth);
+    onResize();
     window.addEventListener("resize", onResize, { passive: true });
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
   // El zoom sale del asta de la «R» de REPO (dentro de una letra): así la escena llena la pantalla.
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const span = anchor.current;
     if (!span || typeof span.getExtentOfChar !== "function") return;
     try {

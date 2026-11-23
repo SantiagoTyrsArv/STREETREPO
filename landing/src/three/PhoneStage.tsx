@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useReducedMotion } from "../a11y/useReducedMotion";
 import { usePointerTracking } from "../interaction/pointer";
 import { trackVisibility } from "../interaction/visibility";
+import { useClientCheck } from "../lib/useClientCheck";
 import { isWebGLAvailable } from "./isWebGLAvailable";
 import type { PhoneScreen } from "./types";
 import "./PhoneStage.css";
@@ -49,7 +50,7 @@ interface PhoneStageProps {
 
 export function PhoneStage({ progress, screens }: PhoneStageProps) {
   const still = useReducedMotion();
-  const [webgl] = useState(isWebGLAvailable);
+  const webgl = useClientCheck(isWebGLAvailable);
   const live = webgl && !still;
   const { ref, near } = useNearViewport(live);
   usePointerTracking(live && near);

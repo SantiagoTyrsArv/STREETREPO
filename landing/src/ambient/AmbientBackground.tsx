@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
 import { damp } from "../interaction/motion";
 import { pointer, usePointerTracking } from "../interaction/pointer";
+import { useClientCheck } from "../lib/useClientCheck";
 import { isWebGLAvailable } from "../three/isWebGLAvailable";
 import {
   dominantAccent,
@@ -115,7 +116,7 @@ function createScene(canvas: HTMLCanvasElement): Scene | null {
  */
 export function AmbientBackground() {
   const still = useReducedMotion();
-  const [webgl] = useState(isWebGLAvailable);
+  const webgl = useClientCheck(isWebGLAvailable);
   const enabled = webgl && !still;
   usePointerTracking(enabled);
   const ref = useRef<HTMLCanvasElement>(null);

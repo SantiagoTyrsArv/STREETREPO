@@ -1,5 +1,6 @@
 import gsap from "gsap";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
+import { useClientCheck } from "../lib/useClientCheck";
 import { trackVisibility } from "../interaction/visibility";
 import "./TitleLens.css";
 
@@ -23,7 +24,7 @@ function canvas2dAvailable(): boolean {
  * relleno se vuelve transparente mientras la lupa funciona.
  */
 export function TitleLens({ section }: { section: RefObject<HTMLElement> }) {
-  const [supported] = useState(canvas2dAvailable);
+  const supported = useClientCheck(canvas2dAvailable);
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
