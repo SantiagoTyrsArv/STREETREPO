@@ -34,11 +34,11 @@ export function useSmoothScroll(enabled: boolean): void {
     const tick = (time: number): void => lenis.raf(time * 1000);
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
-    // Salto inmediato: recorrer suavemente todas las escenas obligaría a cargar sus cuadros.
     const snap = new Snap(lenis, SNAP_OPTIONS);
     document
       .querySelectorAll<HTMLElement>("main > section")
       .forEach((section) => snap.addElement(section, { align: "start" }));
+    // Salto inmediato: recorrer suavemente todas las escenas obligaría a cargar sus cuadros.
     const unbindAnchors = bindAnchorNavigation(document, (target) =>
       lenis.scrollTo(target, { immediate: true, force: true }),
     );
