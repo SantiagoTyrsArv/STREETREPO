@@ -37,10 +37,10 @@ describe("DownloadSection con una versión publicada", () => {
     expect(screen.queryByText("Próximamente")).toBeNull();
   });
 
-  it("muestra un QR hacia el APK con texto alternativo", () => {
+  it("muestra un QR hacia el APK con texto alternativo", async () => {
     render(<DownloadSection release={release} />);
 
-    const qr = screen.getByRole("img", { name: /código QR/i });
+    const qr = await screen.findByRole("img", { name: /código QR/i });
     expect(qr.querySelector("path")?.getAttribute("d")).toMatch(/^M\d/);
   });
 

@@ -1,12 +1,14 @@
-import { useRef } from "react";
+import { lazy, Suspense, useRef } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
 import { COPY } from "../content/copy";
 import { useMagnetic } from "../interaction/useMagnetic";
 import { formatSize, type Release } from "../config/release";
-import { QrCode } from "./QrCode";
 import { ProximityText } from "../text/ProximityText";
 import { KICKER_AXES, DOWNLOAD_CTA_AXES, LEAD_AXES } from "../text/proximity";
 import "./DownloadSection.css";
+
+// La librería del QR solo hace falta cuando hay un APK publicado: no viaja en la carga inicial.
+const QrCode = lazy(() => import("./QrCode").then((module) => ({ default: module.QrCode })));
 
 interface DownloadSectionProps {
   release: Release | null;
@@ -66,7 +68,9 @@ export function DownloadSection({ release }: DownloadSectionProps) {
             </p>
           </div>
           <figure className="download__qr">
-            <QrCode value={release.apkUrl} label={copy.qrAlt} className="download__qr-code" />
+            <Suspense fallback={<div className="download__qr-code" aria-hidden="true" />}>
+              <QrCode value={release.apkUrl} label={copy.qrAlt} className="download__qr-code" />
+            </Suspense>
             <figcaption>{copy.qrHint}</figcaption>
           </figure>
         </div>

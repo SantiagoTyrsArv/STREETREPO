@@ -18,7 +18,11 @@ npm run lint         # eslint
 npm run format:check # prettier
 npm run typecheck    # tsc --noEmit
 npm run build        # compilación estática en dist/
+node scripts/check-media-budget.ts  # presupuesto de peso (después de build; también en la CI)
 ```
+
+Presupuesto de peso (diseño, sección 7): carga inicial ≤ 6 MB (portada, fuentes e ícono), ≤ 45 MB
+en escritorio y ≤ 25 MB en móvil. El 2026-11-23 medía 5,4 MB, 18,7 MB y 22,5 MB.
 
 ## Identidad
 

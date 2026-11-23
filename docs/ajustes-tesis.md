@@ -18,4 +18,5 @@ Lista única de cambios del documento que se derivan de decisiones del desarroll
 | 69 | Nombrar Linear como herramienta de planificación del Product Backlog y los sprints (sprints como hitos del proyecto) | Capítulo 3, metodología (Scrum) | Hecho (2026-10-23): sección 3.4 |
 | 75 | Indicadores del encabezado de Priorización: Activos · Evaluados · Priorizados · Reparados (conteos por estado), en lugar de «prioridad alta» y «en intervención» de la maqueta descrita en el documento, que no tienen definición en el modelo | Descripción de la maqueta o del panel (capítulo 3) y 4.3 | Pendiente |
 | 76 | Resultado del objetivo 3 con el panel construido (priorización, detalle y estado, pesos del modelo), con capturas tomadas con los datos de demostración de `seed-demo`; presentarlas como demostración de funcionamiento y no como resultados de campo | 4.3 | Pendiente (el capítulo 4 sigue en pausa) |
+| 99 | Página de presentación y descarga (`landing/`, https://streetrepo.vercel.app/); no tiene HU en la tesis | Por definir con el asesor | Pendiente |
 | — | Capítulo 4 | 4 | En pausa hasta tener el MVP |

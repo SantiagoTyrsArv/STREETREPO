@@ -5,6 +5,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- Página de presentación: cabeceras de seguridad y caché larga en Vercel (`landing/vercel.json`) y
+  presupuesto de peso comprobado en la CI (`scripts/check-media-budget.ts`). El QR de descarga se
+  carga aparte, solo cuando hay un APK publicado.
 - Despliegue con HTTPS (HU-17): `infra/docker-compose.prod.yml` con Caddy como proxy inverso
   (Let's Encrypt, redirección a HTTPS, HSTS, tope de 11 MB por petición a la API), solo los
   puertos 80 y 443 publicados y la API en `APP_ENV=prod` confiando solo en la IP fija del proxy.

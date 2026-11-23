@@ -160,6 +160,8 @@ jobs:
         run: npm audit --audit-level=high
       - name: Compilar
         run: npm run build
+      - name: Presupuesto de peso (6 MB inicial, 45 MB escritorio, 25 MB móvil)
+        run: node scripts/check-media-budget.ts
 
   sonar:
     # Los push de Dependabot no reciben SONAR_TOKEN y el job fallaría siempre; esas ramas se

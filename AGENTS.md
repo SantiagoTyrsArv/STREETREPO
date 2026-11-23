@@ -250,6 +250,7 @@ street-repo/
 │  └─ pyproject.toml
 ├─ admin-web/                 # React + Leaflet
 ├─ mobile/                    # Flutter
+├─ landing/                   # página de presentación y descarga (React + Vite, Vercel)
 ├─ infra/                     # docker-compose, Dockerfiles, scripts de carga OSM
 └─ .github/workflows/         # CI
 ```
