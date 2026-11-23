@@ -28,9 +28,21 @@
   letter-spacing: -0.02em;
 }
 
+/* Una disposición por orientación: en una línea en horizontal, en dos en vertical. Las dos están
+   en el HTML prerenderizado, así que la portada sale bien antes de que cargue el JavaScript. */
+.hero-mask__text--portrait {
+  display: none;
+}
+
 @media (orientation: portrait) {
   .hero-mask__text {
     font-size: min(17vw, 20vh);
+  }
+  .hero-mask__text--landscape {
+    display: none;
+  }
+  .hero-mask__text--portrait {
+    display: inline;
   }
 }
 
