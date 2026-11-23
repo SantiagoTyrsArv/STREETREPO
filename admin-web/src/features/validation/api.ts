@@ -6,6 +6,8 @@ export type Zone = components["schemas"]["ZoneResponse"];
 export type Concentration = components["schemas"]["Concentration"];
 export type Round = components["schemas"]["RoundSummaryResponse"];
 export type RoundProgress = components["schemas"]["RoundProgressResponse"];
+export type RoundResults = components["schemas"]["RoundResultsResponse"];
+export type ZoneResult = components["schemas"]["ZoneResultResponse"];
 type Zones = components["schemas"]["ZonesResponse"];
 type Rounds = components["schemas"]["RoundsResponse"];
 type RoundCreated = components["schemas"]["RoundCreatedResponse"];
@@ -20,6 +22,7 @@ export const validationKeys = {
   zones: ["validation", "zones"] as const,
   rounds: ["rounds"] as const,
   round: (id: string) => ["rounds", id] as const,
+  results: (id: string) => ["rounds", id, "results"] as const,
 };
 
 export function useZones() {
@@ -44,6 +47,16 @@ export function useRound(id: string | undefined) {
   return useQuery({
     queryKey: validationKeys.round(id ?? ""),
     queryFn: () => api.get<RoundProgress>(`${ROUNDS_PATH}/${id}`),
+    enabled: id !== undefined,
+  });
+}
+
+/** Métricas de una ronda cerrada; no se piden mientras la ronda está abierta. */
+export function useRoundResults(id: string | undefined) {
+  const { api } = useSession();
+  return useQuery({
+    queryKey: validationKeys.results(id ?? ""),
+    queryFn: () => api.get<RoundResults>(`${ROUNDS_PATH}/${id}/results`),
     enabled: id !== undefined,
   });
 }

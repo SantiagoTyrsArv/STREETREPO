@@ -12,6 +12,7 @@ export function fakeApi(overrides: Partial<ApiClient> = {}): ApiClient {
     put: unexpected,
     post: unexpected,
     getBlob: unexpected,
+    getFile: unexpected,
     ...overrides,
   };
 }

@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type KeyboardEvent } from "react";
-import { EmptyView } from "../../components/StateViews";
+import { ResultsPanel } from "./ResultsPanel";
 import { RoundsPanel } from "./RoundsPanel";
 import { ZonesMap } from "./ZonesMap";
 import "./validation.css";
@@ -19,13 +19,7 @@ function TabContent({ tab }: { tab: TabKey }) {
   if (tab === "rondas") {
     return <RoundsPanel />;
   }
-  // Las métricas de la ronda cerrada llegan con la tarea 13 del plan del objetivo 4.
-  return (
-    <EmptyView
-      title="Resultados de la ronda"
-      detail="Las métricas de una ronda se ven cuando la cierras."
-    />
-  );
+  return <ResultsPanel />;
 }
 
 /**
@@ -63,8 +57,8 @@ export function ComparisonPage() {
       <header>
         <h1 className="page__title">Comparación con el panel de referencia</h1>
         <p className="page__subtitle">
-          Compara el ranking del motor con el orden que dan los evaluadores, a ciegas, en cada zona
-          del estudio.
+          Coincidencia entre el ranking del motor y la evaluación a ciegas del panel, por zona
+          muestreada.
         </p>
       </header>
 

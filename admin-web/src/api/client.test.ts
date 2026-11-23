@@ -223,6 +223,32 @@ describe("cliente de la API", () => {
     await expect(makeClient().put("/api/v1/things/1", {})).resolves.toBeUndefined();
   });
 
+  it("getFile devuelve el archivo con el nombre que da el servidor", async () => {
+    server.use(
+      http.get(`${API}/api/v1/admin/evaluation-rounds/r-1/export/ficha.csv`, () =>
+        HttpResponse.text("\ufeffid_reporte\n", {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": 'attachment; filename="ronda-piloto-1-ficha.csv"',
+          },
+        }),
+      ),
+    );
+
+    const file = await makeClient().getFile("/api/v1/admin/evaluation-rounds/r-1/export/ficha.csv");
+
+    expect(file.filename).toBe("ronda-piloto-1-ficha.csv");
+    expect(file.blob.size).toBeGreaterThan(0);
+  });
+
+  it("getFile sin Content-Disposition no inventa un nombre", async () => {
+    server.use(http.get(`${API}/api/v1/things/1.csv`, () => HttpResponse.text("a\n")));
+
+    const file = await makeClient().getFile("/api/v1/things/1.csv");
+
+    expect(file.filename).toBeNull();
+  });
+
   it("getBlob devuelve los bytes de la imagen", async () => {
     server.use(
       http.get(`${API}/api/v1/reports/9/photo`, () =>

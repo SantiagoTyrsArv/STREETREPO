@@ -67,7 +67,17 @@ export type ApiClient = {
   /** Sin `body` no se envía cuerpo ni `Content-Type` (p. ej. cerrar una ronda). */
   post<T>(path: string, body?: unknown): Promise<T>;
   getBlob(path: string): Promise<Blob>;
+  /** Archivo para descargar, con el nombre de `Content-Disposition` (o `null` si no viene). */
+  getFile(path: string): Promise<DownloadedFile>;
 };
+
+export type DownloadedFile = { blob: Blob; filename: string | null };
+
+/** `attachment; filename="ronda-piloto-1-ficha.csv"` → `ronda-piloto-1-ficha.csv`. */
+function filenameFrom(disposition: string | null): string | null {
+  const match = disposition?.match(/filename="?([^";]+)"?/i);
+  return match?.[1] ?? null;
+}
 
 export type ApiClientOptions = {
   /** Origen de la API, sin barra final. */
@@ -157,5 +167,12 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     post: async <T>(path: string, body?: unknown) =>
       json<T>(await send("POST", buildUrl(baseUrl, path), body)),
     getBlob: async (path: string) => (await send("GET", buildUrl(baseUrl, path))).blob(),
+    getFile: async (path: string) => {
+      const response = await send("GET", buildUrl(baseUrl, path));
+      return {
+        blob: await response.blob(),
+        filename: filenameFrom(response.headers.get("Content-Disposition")),
+      };
+    },
   };
 }

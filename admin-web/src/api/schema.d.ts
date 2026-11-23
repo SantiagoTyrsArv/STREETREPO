@@ -1565,6 +1565,8 @@ export interface components {
              * Format: uuid
              */
             report_id: string;
+            /** Road Name */
+            road_name: string | null;
             /** Urgency Score */
             urgency_score: number;
             /** Motor Order */

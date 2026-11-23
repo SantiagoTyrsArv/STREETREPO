@@ -6,6 +6,7 @@ import { ComparisonPage } from "./ComparisonPage";
 
 vi.mock("./ZonesMap", () => ({ ZonesMap: () => <p>Contenido de zonas</p> }));
 vi.mock("./RoundsPanel", () => ({ RoundsPanel: () => <p>Contenido de rondas</p> }));
+vi.mock("./ResultsPanel", () => ({ ResultsPanel: () => <p>Contenido de resultados</p> }));
 
 describe("pantalla Comparación", () => {
   it("abre en Zonas y cambia de pestaña con clic", async () => {

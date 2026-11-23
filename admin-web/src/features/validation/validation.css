@@ -161,3 +161,156 @@
 .rounds .card__header {
   padding: 20px 20px 10px;
 }
+
+/* Resultados (Figma 18:2: cifras, zonas muestreadas y ranking comparado) */
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.result-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-exports {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.result-exports .page__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.result-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.result-figure {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+}
+
+.result-figure__value {
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.result-figure__label {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.result-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+}
+
+.result-card .data-table {
+  width: 100%;
+  margin: 10px 0 0;
+}
+
+.result-card .card__note {
+  margin: 10px -20px -20px;
+}
+
+.result-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.metrics dt {
+  color: var(--color-text-secondary);
+}
+
+.metrics dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.metric__p {
+  margin-left: 8px;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+/* Etiquetas del Figma: neutra para «Igual», ámbar para un cambio de posición */
+.result-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--color-disabled-bg);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.result-chip--shift {
+  background: var(--color-status-priorizado-bg);
+  color: var(--color-status-priorizado);
+}
+
+.segmented {
+  display: flex;
+  gap: 4px;
+}
+
+.segmented__option {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-field-border);
+  border-radius: var(--radius-chip);
+  background: var(--color-surface);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented__option[aria-pressed="true"] {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+
+.result-note {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.result-verdict {
+  margin-top: 10px;
+  font-weight: 700;
+}
