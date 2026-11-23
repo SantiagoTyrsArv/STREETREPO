@@ -107,7 +107,7 @@ function OpenRoundProgress({ round }: { round: Round }) {
     <section className="card">
       <div className="card__header">
         <div>
-          <h2 className="card__title">Ronda abierta: {round.name}</h2>
+          <h2 className="card__title validation-title">Ronda abierta: {round.name}</h2>
           <p className="card__hint">
             Abierta el {formatDateTime(round.opened_at)} · hasta {round.sample_size} reportes por
             zona. Los resultados se calculan al cerrarla.

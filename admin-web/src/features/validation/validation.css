@@ -80,24 +80,35 @@
   background: var(--color-status-evaluado-bg);
 }
 
-/* Tabla de datos de la comparación */
+/* Tarjetas y tablas como en el Figma «Panel · Comparación con el panel de referencia» */
+.validation-title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 800;
+}
+
 .data-table {
-  width: 100%;
+  width: calc(100% - 40px);
+  margin: 0 20px 20px;
   border-collapse: collapse;
   font-size: 14px;
 }
 
 .data-table th,
 .data-table td {
-  padding: 12px 18px;
-  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-track);
   text-align: left;
 }
 
 .data-table th {
+  padding: 6px 8px;
   color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 700;
+}
+
+.data-table td {
+  padding: 11px 8px;
 }
 
 .data-table__number {
@@ -109,7 +120,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 0 18px 18px;
+  padding: 0 20px 20px;
 }
 
 .open-round__intro,
@@ -143,4 +154,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+/* Relleno de las tarjetas de la comparación (Figma: 20 px) */
+.zones .card__header,
+.rounds .card__header {
+  padding: 20px 20px 10px;
 }

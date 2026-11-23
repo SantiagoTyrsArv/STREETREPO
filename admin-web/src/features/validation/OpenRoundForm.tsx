@@ -56,7 +56,7 @@ export function OpenRoundForm() {
   return (
     <form className="card open-round" onSubmit={handleSubmit} aria-labelledby={`${nameId}-title`}>
       <div className="card__header">
-        <h2 className="card__title" id={`${nameId}-title`}>
+        <h2 className="card__title validation-title" id={`${nameId}-title`}>
           Abrir una ronda de evaluación
         </h2>
       </div>

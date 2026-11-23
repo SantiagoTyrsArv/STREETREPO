@@ -47,7 +47,7 @@ export function ZonesMap() {
     <div className="zones">
       <section className="card">
         <div className="card__header">
-          <h2 className="card__title">Mapa de las zonas</h2>
+          <h2 className="card__title validation-title">Mapa de las zonas</h2>
           <ConcentrationLegend />
         </div>
         <BaseMap label="Mapa de las zonas del estudio" className="zones__map">

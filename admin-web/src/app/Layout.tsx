@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import iconDb from "../assets/icon-db.svg";
 import iconMap from "../assets/icon-map.svg";
 import iconPin from "../assets/icon-pin.svg";
 import iconSliders from "../assets/icon-sliders.svg";
@@ -15,7 +16,7 @@ const MENUS: Record<StaffRole, readonly MenuItem[]> = {
   administrador: [
     { to: HOME_PATHS.administrador, label: "Priorización", icon: iconMap },
     { to: "/pesos", label: "Pesos del modelo", icon: iconSliders },
-    { to: "/comparacion", label: "Comparación", icon: iconUsers },
+    { to: "/comparacion", label: "Comparación", icon: iconDb },
   ],
   evaluador: [{ to: HOME_PATHS.evaluador, label: "Mis evaluaciones", icon: iconUsers }],
 };
