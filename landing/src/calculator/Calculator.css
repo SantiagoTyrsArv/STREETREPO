@@ -1,9 +1,13 @@
-/* «Pruébalo»: sección propia, translúcida al fondo azul (diseño 6.6). */
+/* «Pruébalo»: sección propia, translúcida al fondo azul (diseño 6.6). Cabe en una pantalla
+   para que el imán la acomode entera (diseño 2026-11-23, 4.3). */
 .calc {
   position: relative;
   display: grid;
-  gap: clamp(2rem, 5vh, 3.5rem);
-  padding: clamp(5rem, 14vh, 9rem) var(--gutter);
+  align-content: center;
+  gap: clamp(1rem, 3vh, 2.5rem);
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: clamp(4.5rem, 9vh, 6rem) var(--gutter) clamp(1.5rem, 4vh, 3rem);
 }
 
 .calc__intro {
@@ -30,7 +34,7 @@
 }
 
 .calc__lead {
-  margin: 1.25rem 0 0;
+  margin: 0.75rem 0 0;
   font-size: var(--fs-lead);
   line-height: 1.45;
   color: var(--mist);
@@ -38,8 +42,8 @@
 
 .calc__panel {
   display: grid;
-  gap: clamp(1.5rem, 3vw, 3rem);
-  padding: clamp(1.5rem, 3vw, 2.5rem);
+  gap: clamp(1rem, 3vw, 3rem);
+  padding: clamp(1rem, 3vw, 2.5rem);
   border: 1px solid color-mix(in srgb, var(--paper) 14%, transparent);
   border-radius: 1.25rem;
   background: color-mix(in srgb, var(--night) 78%, transparent);
@@ -56,12 +60,12 @@
 
 .calc__controls {
   display: grid;
-  gap: 1.75rem;
+  gap: clamp(0.75rem, 2vh, 1.75rem);
 }
 
 .calc__field {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin: 0;
   padding: 0;
   border: 0;
@@ -69,13 +73,14 @@
 }
 
 .calc__field legend {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   padding: 0;
 }
 
+/* Severidad en una sola fila: tres botones del mismo ancho. */
 .calc__options {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
@@ -84,9 +89,10 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   min-height: 44px;
-  padding: 0 1.1rem;
+  padding: 0 0.75rem;
   border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent);
   border-radius: 999px;
   cursor: pointer;
@@ -139,7 +145,7 @@
   margin: 0.25rem 0 0;
   font-family: var(--font-brand);
   font-weight: 800;
-  font-size: clamp(3.5rem, 9vw, 6.5rem);
+  font-size: clamp(2.75rem, min(9vw, 9vh), 6.5rem);
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--paper);
@@ -153,7 +159,7 @@
 
 .calc__bar {
   height: 6px;
-  margin-top: 1.25rem;
+  margin-top: 0.75rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--paper) 12%, transparent);
   overflow: hidden;
@@ -168,7 +174,7 @@
 }
 
 .calc__breakdown {
-  margin: 1rem 0 0;
+  margin: 0.75rem 0 0;
   font-variant-numeric: tabular-nums;
   color: var(--paper);
 }
@@ -185,7 +191,7 @@
 }
 
 .calc__note {
-  margin: 1rem 0 0;
+  margin: 0.75rem 0 0;
   font-size: var(--fs-small);
   color: var(--mist);
 }
