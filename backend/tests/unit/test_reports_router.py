@@ -28,7 +28,15 @@ from app.shared.application.rate_limit import RateLimit
 from app.shared.domain.geo import BoundingBox
 from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
 from tests.images import image_bytes
-from tests.unit.test_create_report import USER_ID, FakeNearby, FakeProcessor, Harness, candidate
+from tests.unit.test_create_report import (
+    USER_ID,
+    WARNING_ID,
+    FakeNearby,
+    FakeProcessor,
+    FakeWarnings,
+    Harness,
+    candidate,
+)
 
 REPORTS = f"{API_V1_PREFIX}/reports"
 CITIZEN = User(
@@ -232,6 +240,7 @@ def test_nearby_active_report_answers_409_with_the_candidates(
         }
     ]
     assert harness.reports.saved == {}
+    assert body["details"]["duplicate_warning_id"] == str(WARNING_ID)
 
 
 def test_create_anyway_in_the_form(api: TestClient, harness: Harness) -> None:
@@ -242,17 +251,53 @@ def test_create_anyway_in_the_form(api: TestClient, harness: Harness) -> None:
     assert response.status_code == 201
 
 
+def test_the_warning_id_travels_in_the_form(api: TestClient, harness: Harness) -> None:
+    form = FORM | {"create_anyway": "true", "duplicate_warning_id": str(WARNING_ID)}
+
+    response = api.post(REPORTS, data=form, files=_photo())
+
+    assert response.status_code == 201
+    assert [entry[:3] for entry in harness.warnings.resolved] == [
+        (WARNING_ID, USER_ID, "creo_igual")
+    ]
+
+
+def test_the_warning_id_must_be_a_uuid(api: TestClient) -> None:
+    form = FORM | {"create_anyway": "true", "duplicate_warning_id": "no-es-uuid"}
+
+    response = api.post(REPORTS, data=form, files=_photo())
+
+    assert response.status_code == 422
+
+
+class _NoTransaction:
+    def __init__(self) -> None:
+        self.commits = 0
+
+    def commit(self) -> None:
+        self.commits += 1
+
+    def rollback(self) -> None:
+        pass
+
+
 def _nearby_client(
-    settings: Settings, nearby: FakeNearby, limit: int = 10, area: str = PASTO_AREA
+    settings: Settings,
+    nearby: FakeNearby,
+    limit: int = 10,
+    area: str = PASTO_AREA,
+    warnings: FakeWarnings | None = None,
 ) -> TestClient:
     use_case = FindPossibleDuplicates(
-        nearby,
-        InMemoryRateLimiter(),
-        NearbyPolicy(
+        nearby=nearby,
+        rate_limiter=InMemoryRateLimiter(),
+        policy=NearbyPolicy(
             service_area=BoundingBox.parse(area),
             limit_per_user=RateLimit(max_requests=limit, window=timedelta(hours=1)),
         ),
-        SystemClock(),
+        clock=SystemClock(),
+        warnings=warnings or FakeWarnings(),
+        transaction=_NoTransaction(),
     )
     app = create_app(settings)
     app.dependency_overrides[get_current_user] = lambda: CITIZEN
@@ -281,7 +326,7 @@ def test_nearby_without_results(settings: Settings) -> None:
     with _nearby_client(settings, FakeNearby()) as client:
         response = client.get(f"{REPORTS}/nearby", params={"longitude": -77.28, "latitude": 1.21})
 
-    assert response.json() == {"radius_m": 25.0, "items": []}
+    assert response.json() == {"radius_m": 25.0, "items": [], "duplicate_warning_id": None}
 
 
 @pytest.mark.parametrize("params", [{"longitude": -77.28}, {"longitude": -77.28, "latitude": 91}])
@@ -334,3 +379,34 @@ def test_nearby_has_its_own_hourly_limit_per_user(settings: Settings) -> None:
     assert "Retry-After" in response.headers
     # Ni el área inválida ni el rechazo por cupo llegan a consultar la base.
     assert len(nearby.calls) == 2
+
+
+# --- Registro de avisos de duplicado (objetivo 4) -----------------------------------
+
+
+def test_nearby_with_candidates_records_a_warning_and_returns_its_id(settings: Settings) -> None:
+    nearby = FakeNearby()
+    nearby.default = [candidate(distance_m=3.0)]
+    warnings = FakeWarnings()
+
+    with _nearby_client(settings, nearby, warnings=warnings) as client:
+        response = client.get(
+            f"{REPORTS}/nearby", params={"longitude": -77.2811, "latitude": 1.2136}
+        )
+
+    assert response.json()["duplicate_warning_id"] == str(WARNING_ID)
+    assert len(warnings.recorded) == 1
+    user_id, _, candidates = warnings.recorded[0]
+    assert (user_id, candidates) == (USER_ID, tuple(nearby.default))
+
+
+def test_nearby_without_candidates_records_nothing(settings: Settings) -> None:
+    warnings = FakeWarnings()
+
+    with _nearby_client(settings, FakeNearby(), warnings=warnings) as client:
+        response = client.get(
+            f"{REPORTS}/nearby", params={"longitude": -77.2811, "latitude": 1.2136}
+        )
+
+    assert response.json()["duplicate_warning_id"] is None
+    assert warnings.recorded == []

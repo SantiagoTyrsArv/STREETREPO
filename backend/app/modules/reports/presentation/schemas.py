@@ -134,10 +134,18 @@ class NearbyReportsResponse(BaseModel):
 
     radius_m: float = DEDUPLICATION_RADIUS_M
     items: list[DuplicateCandidateResponse]
+    # Aviso registrado (objetivo 4); la app lo manda al confirmar o al crear de todos
+    # modos. null si no hubo candidatos.
+    duplicate_warning_id: uuid.UUID | None = None
 
     @classmethod
-    def from_candidates(cls, candidates: Sequence[DuplicateCandidate]) -> "NearbyReportsResponse":
-        return cls(items=[DuplicateCandidateResponse.from_candidate(c) for c in candidates])
+    def from_candidates(
+        cls, candidates: Sequence[DuplicateCandidate], warning_id: uuid.UUID | None = None
+    ) -> "NearbyReportsResponse":
+        return cls(
+            items=[DuplicateCandidateResponse.from_candidate(c) for c in candidates],
+            duplicate_warning_id=warning_id,
+        )
 
 
 class MapReportResponse(BaseModel):

@@ -20,6 +20,7 @@ from app.modules.reports.domain.photos import (
 )
 from app.modules.reports.domain.ports import (
     DuplicateIdempotencyKeyError,
+    DuplicateWarningRecorder,
     NearbyReportFinder,
     PhotoProcessor,
     PhotoStorage,
@@ -53,6 +54,8 @@ class ReportSubmission:
     photo: bytes
     # El ciudadano vio los posibles duplicados y decidió crear el reporte (guía 2.5).
     create_anyway: bool = False
+    # Aviso que la app mostró antes (objetivo 4); con ``create_anyway`` queda «creo_igual».
+    duplicate_warning_id: uuid.UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +80,10 @@ class CreateReport:
     Si hay reportes activos a 25 m y el ciudadano no pidió crearlo de todos modos, lanza
     ``PossibleDuplicateError`` (propuesta 36). La verificación se repite dentro de la
     transacción que inserta, con el candado de creación tomado.
+
+    Cada aviso que se muestra queda registrado (objetivo 4): el de la primera verificación
+    se confirma antes del 409, y el ``duplicate_warning_id`` de un ``create_anyway`` se
+    resuelve como «creo_igual» en la misma transacción que crea el reporte.
     """
 
     def __init__(
@@ -93,6 +100,7 @@ class CreateReport:
         policy: CreateReportPolicy,
         clock: Clock,
         transaction: TransactionManager,
+        warnings: DuplicateWarningRecorder,
     ) -> None:
         self._reports = reports
         self._nearby = nearby
@@ -105,6 +113,7 @@ class CreateReport:
         self._policy = policy
         self._clock = clock
         self._transaction = transaction
+        self._warnings = warnings
 
     def execute(self, submission: ReportSubmission) -> CreateReportResult:
         # Un reintento de la app (red móvil inestable) devuelve el reporte ya creado
@@ -125,7 +134,7 @@ class CreateReport:
         if len(submission.photo) > MAX_PHOTO_BYTES:
             raise PhotoTooLargeError("La foto supera el tamaño máximo permitido")
         # Primera verificación, sin candado: avisa del duplicado sin consumir cupo.
-        self._reject_possible_duplicates(submission)
+        self._reject_possible_duplicates(submission, record_warning=True)
         self._rate_limiter.hit(
             f"reports:user:{submission.user_id}", self._policy.limit_per_user, self._clock.now()
         )
@@ -142,7 +151,10 @@ class CreateReport:
             if replayed is not None:
                 self._undo(keys)
                 return replayed
-            self._reject_possible_duplicates(submission)
+            # La segunda verificación (otro reporte cercano llegó en el instante entre
+            # las dos) no registra aviso: es una carrera rara y registrarlo obligaría a
+            # confirmar la transacción a medias.
+            self._reject_possible_duplicates(submission, record_warning=False)
             report_id = self._reports.add(report)
             self._statuses.apply(report_id, initial_status_change(submission.user_id))
             self._reports.add_evidence(
@@ -150,6 +162,7 @@ class CreateReport:
                 StoredEvidence(keys.photo, STORED_PHOTO_FORMAT, len(photo.content)),
             )
             self._evaluator.evaluate(report_id)
+            self._resolve_warning(submission, report_id)
             self._transaction.commit()
         except DuplicateIdempotencyKeyError:
             # Dos envíos simultáneos con la misma clave: gana el primero.
@@ -163,7 +176,9 @@ class CreateReport:
             raise
         return CreateReportResult(self._details(report_id), created=True)
 
-    def _reject_possible_duplicates(self, submission: ReportSubmission) -> None:
+    def _reject_possible_duplicates(
+        self, submission: ReportSubmission, *, record_warning: bool
+    ) -> None:
         if submission.create_anyway:
             return
         candidates = self._nearby.find_active_within(
@@ -172,8 +187,28 @@ class CreateReport:
             MAX_DUPLICATE_CANDIDATES,
             submission.user_id,
         )
-        if candidates:
-            raise PossibleDuplicateError(candidates)
+        if not candidates:
+            return
+        warning_id = None
+        if record_warning:
+            # Se confirma ya: el 409 no crea nada más y el aviso debe sobrevivirlo.
+            try:
+                warning_id = self._warnings.record(
+                    submission.user_id, submission.location, candidates
+                )
+                self._transaction.commit()
+            except Exception:
+                self._transaction.rollback()
+                raise
+        raise PossibleDuplicateError(candidates, warning_id)
+
+    def _resolve_warning(self, submission: ReportSubmission, report_id: uuid.UUID) -> None:
+        if not submission.create_anyway or submission.duplicate_warning_id is None:
+            return
+        # Un aviso ajeno, ya resuelto o inexistente devuelve False y no se toca.
+        self._warnings.resolve(
+            submission.duplicate_warning_id, submission.user_id, "creo_igual", report_id
+        )
 
     def _find_replayed(self, submission: ReportSubmission) -> CreateReportResult | None:
         if submission.idempotency_key is None:

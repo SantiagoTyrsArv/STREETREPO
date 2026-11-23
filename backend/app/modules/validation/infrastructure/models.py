@@ -118,8 +118,9 @@ class DuplicateWarningModel(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         "id_aviso", primary_key=True, server_default=text("gen_random_uuid()")
     )
+    # RESTRICT: las cuentas se anonimizan, no se borran (decisión 23a); como las confirmaciones.
     user_id: Mapped[uuid.UUID] = mapped_column(
-        "id_usuario", ForeignKey("usuario.id_usuario", ondelete="CASCADE")
+        "id_usuario", ForeignKey("usuario.id_usuario", ondelete="RESTRICT")
     )
     zone_id: Mapped[int | None] = mapped_column(
         "id_zona", Integer, ForeignKey("zona.id_zona", ondelete="SET NULL")

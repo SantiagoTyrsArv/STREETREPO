@@ -10,6 +10,8 @@ class ConfirmationRequest(BaseModel):
 
     longitude: float = Field(ge=-180, le=180)
     latitude: float = Field(ge=-90, le=90)
+    # Aviso de «Posible duplicado» desde el que se confirma (objetivo 4); opcional.
+    duplicate_warning_id: uuid.UUID | None = None
 
 
 class ConfirmationResponse(BaseModel):

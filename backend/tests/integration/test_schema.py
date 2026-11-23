@@ -583,6 +583,15 @@ def test_duplicate_warning_keeps_its_row_when_the_resulting_report_is_deleted(
     assert result is None
 
 
+def test_user_with_duplicate_warnings_cannot_be_deleted(conn: Connection) -> None:
+    # Las cuentas se anonimizan (decisión 23a): borrar una no debe llevarse sus avisos.
+    user_id = insert_user(conn)
+    conn.execute(text("INSERT INTO aviso_duplicado (id_usuario) VALUES (:u)"), {"u": user_id})
+
+    with pytest.raises(IntegrityError, match="aviso_duplicado_id_usuario_fkey"):
+        conn.execute(text("DELETE FROM usuario WHERE id_usuario = :u"), {"u": user_id})
+
+
 def test_evaluator_role_exists(conn: Connection) -> None:
     user_id = insert_user(conn)
 

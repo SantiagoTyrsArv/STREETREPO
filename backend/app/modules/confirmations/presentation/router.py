@@ -63,7 +63,7 @@ def confirm_report(
     """
     location = GeoPoint(longitude=body.longitude, latitude=body.latitude)
     try:
-        total = use_case.execute(report_id, user.id, location)
+        total = use_case.execute(report_id, user.id, location, body.duplicate_warning_id)
     except ReportNotFoundError as exc:
         raise AppError(
             "REPORT_NOT_FOUND", "No encontramos ese reporte.", status.HTTP_404_NOT_FOUND
