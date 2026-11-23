@@ -1,0 +1,58 @@
+# Producción con HTTPS (HU-17). Se suma al Compose base:
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml --env-file .env up -d --build
+# Solo Caddy publica puertos (80 y 443); la base, la API y el panel quedan en la red interna.
+services:
+  db:
+    ports: !reset []
+    restart: unless-stopped
+    networks: [interna]
+
+  migrate:
+    environment:
+      APP_ENV: prod
+    networks: [interna]
+
+  api:
+    ports: !reset []
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      # Solo se cree X-Forwarded-For si viene de Caddy (dirección fija abajo).
+      FORWARDED_ALLOW_IPS: 172.30.0.10
+    networks: [interna]
+
+  admin-web:
+    ports: !reset []
+    restart: unless-stopped
+    networks: [interna]
+
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Define API_DOMAIN en .env (p. ej. api.ejemplo.co)}
+      PANEL_DOMAIN: ${PANEL_DOMAIN:?Define PANEL_DOMAIN en .env (p. ej. panel.ejemplo.co)}
+      ACME_EMAIL: ${ACME_EMAIL:?Define ACME_EMAIL en .env (avisos de Let's Encrypt)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+      - admin-web
+    networks:
+      interna:
+        ipv4_address: 172.30.0.10
+
+networks:
+  interna:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  caddy-data:
+  caddy-config:

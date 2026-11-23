@@ -5,6 +5,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- Despliegue con HTTPS (HU-17): `infra/docker-compose.prod.yml` con Caddy como proxy inverso
+  (Let's Encrypt, redirección a HTTPS, HSTS, tope de 11 MB por petición a la API), solo los
+  puertos 80 y 443 publicados y la API en `APP_ENV=prod` confiando solo en la IP fija del proxy.
 - Objetivo 4 de la tesis (HU-09), backend: zonas de validación desde GeoJSON (`zones-import`,
   `GET /api/v1/admin/zones`), cuentas de evaluador (`create-evaluator`), rondas de evaluación con
   reportes congelados (`/api/v1/admin/evaluation-rounds`), vista a ciegas y envío del orden del

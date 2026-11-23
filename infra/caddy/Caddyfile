@@ -1,0 +1,31 @@
+# Proxy HTTPS de producción (HU-17). Caddy obtiene y renueva los certificados de Let's Encrypt
+# para los dos dominios; necesita los puertos 80 y 443 abiertos y los DNS apuntando al servidor.
+{
+	email {$ACME_EMAIL}
+}
+
+(seguridad) {
+	header {
+		# HSTS solo tiene efecto sobre HTTPS; por eso lo añade el proxy y no nginx ni la API.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}
+
+{$API_DOMAIN} {
+	import seguridad
+	# Tope de la petición antes de llegar a la API: foto de 10 MB + margen del multipart
+	# (body_size_limit.py). La API vuelve a validarlo.
+	request_body {
+		max_size 11MB
+	}
+	reverse_proxy api:8000
+}
+
+{$PANEL_DOMAIN} {
+	import seguridad
+	request_body {
+		max_size 1MB
+	}
+	reverse_proxy admin-web:8080
+}
