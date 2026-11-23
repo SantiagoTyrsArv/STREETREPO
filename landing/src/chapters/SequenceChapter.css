@@ -144,3 +144,8 @@ h1.chapter__title {
     animation: none;
   }
 }
+
+/* La portada deja libre el aviso «Desliza» (centrado abajo) para no montarse sobre el texto. */
+.chapter__content--intro {
+  bottom: calc(clamp(1.25rem, 4vh, 2.5rem) + 5.5rem);
+}

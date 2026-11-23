@@ -12,9 +12,16 @@ interface FrameSequenceProps {
   /** Progreso del capítulo entre 0 y 1. */
   progress: number;
   alt: string;
+  /** Con `true` descarga los cuadros; antes solo se ve el cuadro clave. */
+  load: boolean;
+  /** Se llama una vez, cuando todos los cuadros están cargados. */
+  onReady?: () => void;
 }
 
 function currentResolution(): Resolution {
+  // En el prerenderizado no hay ventana; la resolución solo decide qué cuadros se descargan, así
+  // que no cambia el marcado y la hidratación coincide.
+  if (typeof window === "undefined") return "desktop";
   return pickResolution(window.innerWidth, window.innerHeight);
 }
 
@@ -22,16 +29,19 @@ function currentResolution(): Resolution {
  * Secuencia de cuadros dibujada en un lienzo según el progreso del *scroll*. Debajo siempre está
  * el cuadro clave (`key.webp`), de modo que con red lenta o sin manifiesto nunca queda vacío.
  */
-export function FrameSequence({ chapter, progress, alt }: FrameSequenceProps) {
+export function FrameSequence({ chapter, progress, alt, load, onReady }: FrameSequenceProps) {
   const baseUrl = `/media/${chapter}`;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const loaderRef = useRef<FrameLoader | null>(null);
   const progressRef = useRef(progress);
   const [manifest, setManifest] = useState<SequenceManifest | null>(null);
   const [resolution, setResolution] = useState<Resolution>(currentResolution);
-  const [, setLoadedCount] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(0);
+  const onReadyRef = useRef(onReady);
+  const readySent = useRef(false);
 
   progressRef.current = progress;
+  onReadyRef.current = onReady;
 
   useEffect(() => {
     let alive = true;
@@ -61,7 +71,7 @@ export function FrameSequence({ chapter, progress, alt }: FrameSequenceProps) {
   }, []);
 
   useEffect(() => {
-    if (!manifest) {
+    if (!manifest || !load) {
       return undefined;
     }
     const loader = createFrameLoader(baseUrl, manifest, resolution, () =>
@@ -73,7 +83,16 @@ export function FrameSequence({ chapter, progress, alt }: FrameSequenceProps) {
       loader.cancel();
       loaderRef.current = null;
     };
-  }, [baseUrl, manifest, resolution]);
+  }, [baseUrl, manifest, resolution, load]);
+
+  useEffect(() => {
+    const loader = loaderRef.current;
+    if (!manifest || !loader || readySent.current) return;
+    if (loader.loaded.size >= manifest.frameCount) {
+      readySent.current = true;
+      onReadyRef.current?.();
+    }
+  }, [manifest, loadedCount]);
 
   const target = manifest ? frameIndexForProgress(progress, manifest.frameCount) : 0;
 

@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { MASK_UNTIL, maskScale } from "./heroMaskScale";
+import { useRef, useState } from "react";
+import { useIsomorphicLayoutEffect } from "../lib/useIsomorphicLayoutEffect";
+import { letterFill, MASK_UNTIL, maskScale } from "./heroMaskScale";
 import "./HeroMask.css";
 
 const WORDS = ["STREET", "REPO"] as const;
@@ -12,24 +13,25 @@ const TEXT_PROPS = {
 
 /**
  * Portada enmascarada: una capa de noche cubre la escena y solo la deja ver a través de
- * «STREET REPO». Con el *scroll* la capa crece desde el asta de la «R» hasta atravesar las letras.
+ * «STREET REPO». Las letras empiezan llenas de color; con la reproducción la capa crece desde el
+ * asta de la «R» y el color se desvanece hasta dejar ver la escena.
  * Decorativa: el título accesible es el `h1` del capítulo.
  */
 export function HeroMask({ progress }: { progress: number }) {
   const anchor = useRef<SVGTSpanElement>(null);
   const [origin, setOrigin] = useState("50% 50%");
-  const [portrait, setPortrait] = useState(
-    () => typeof window !== "undefined" && window.innerHeight > window.innerWidth,
-  );
+  // Horizontal en el HTML prerenderizado; se ajusta antes de pintar, al hidratar.
+  const [portrait, setPortrait] = useState(false);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const onResize = () => setPortrait(window.innerHeight > window.innerWidth);
+    onResize();
     window.addEventListener("resize", onResize, { passive: true });
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
   // El zoom sale del asta de la «R» de REPO (dentro de una letra): así la escena llena la pantalla.
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const span = anchor.current;
     if (!span || typeof span.getExtentOfChar !== "function") return;
     try {
@@ -88,6 +90,13 @@ export function HeroMask({ progress }: { progress: number }) {
           height="100%"
           mask="url(#hero-mask-letters)"
         />
+        <text
+          className="hero-mask__text hero-mask__fill"
+          {...TEXT_PROPS}
+          fillOpacity={letterFill(progress)}
+        >
+          {letters(false)}
+        </text>
         <text className="hero-mask__text hero-mask__outline" {...TEXT_PROPS}>
           {letters(false)}
         </text>

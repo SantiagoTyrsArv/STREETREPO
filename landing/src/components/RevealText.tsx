@@ -1,6 +1,7 @@
 import gsap from "gsap";
 import { SplitText } from "gsap/SplitText";
-import { Fragment, useLayoutEffect, useRef, useState, type ElementType } from "react";
+import { Fragment, useRef, useState, type ElementType } from "react";
+import { useIsomorphicLayoutEffect } from "../lib/useIsomorphicLayoutEffect";
 import { useProximity, type ProximityAxes } from "../text/ProximityText";
 import { useWarp } from "../text/useWarp";
 import "./RevealText.css";
@@ -80,7 +81,7 @@ export function RevealText({
   const placeRef = useRef(place);
   placeRef.current = place;
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!byLines || !el) return;
     const splitter = SplitText.create(el, {
@@ -103,7 +104,7 @@ export function RevealText({
 
   const progressRef = useRef(progress);
   progressRef.current = progress;
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (byLines) placeRef.current(progress);
   }, [byLines, progress]);
 

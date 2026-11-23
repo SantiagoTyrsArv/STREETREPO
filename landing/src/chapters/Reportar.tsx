@@ -2,19 +2,24 @@ import { useRef } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
 import { RevealText } from "../components/RevealText";
 import { COPY } from "../content/copy";
-import { useChapterProgress } from "../scroll/useChapterProgress";
+import { useChapterPlayback } from "../scroll/useChapterPlayback";
 import { PhoneStage } from "../three/PhoneStage";
 import { ProximityText } from "../text/ProximityText";
 import { KICKER_AXES, LEAD_AXES } from "../text/proximity";
 import "./Reportar.css";
 
-/** Largo del recorrido fijado: cuatro capturas necesitan más recorrido que una escena. */
-const PIN_LENGTH_VH = 400;
+/** Duración de la reproducción al entrar (diseño 4.1). */
+const DURATION_MS = 6000;
 
 export function Reportar() {
   const ref = useRef<HTMLElement>(null);
   const still = useReducedMotion();
-  const progress = useChapterProgress(ref, { pinLengthVh: PIN_LENGTH_VH, enabled: !still });
+  // Sin secuencia de cuadros: no hay nada que esperar.
+  const { progress } = useChapterPlayback(ref, {
+    durationMs: DURATION_MS,
+    enabled: !still,
+    ready: true,
+  });
   const copy = COPY.reportar;
 
   return (
