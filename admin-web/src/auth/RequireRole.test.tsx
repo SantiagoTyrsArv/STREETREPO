@@ -27,12 +27,12 @@ vi.mock("../features/validation/ComparisonPage", () => ({
   ComparisonPage: () => <h1>Comparación con el panel de referencia</h1>,
 }));
 
-vi.mock("../features/evaluation/EvaluationPage", () => ({
-  EvaluationPage: () => <h1>Mis evaluaciones</h1>,
+vi.mock("../features/evaluation/MyEvaluationsPage", () => ({
+  MyEvaluationsPage: () => <h1>Mis evaluaciones</h1>,
 }));
 
-vi.mock("../features/evaluation/EvaluationZonePage", () => ({
-  EvaluationZonePage: () => <h1>Ordenar la zona</h1>,
+vi.mock("../features/evaluation/BlindZonePage", () => ({
+  BlindZonePage: () => <h1>Ordenar la zona</h1>,
 }));
 
 const EVALUATOR: SessionUser = { name: "Eva Evaluadora", role: "evaluador" };

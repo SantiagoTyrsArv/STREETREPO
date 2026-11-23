@@ -39,4 +39,19 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Única excepción: el borrador del orden de la vista a ciegas (diseño del objetivo 4,
+    // sección 6) guarda solo ids de reportes en sessionStorage, nunca datos de la sesión.
+    files: [
+      "src/features/evaluation/useDraftOrder.ts",
+      "src/features/evaluation/useDraftOrder.test.ts",
+      "src/features/evaluation/BlindZonePage.test.tsx",
+    ],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        { name: "localStorage", message: "La sesión no se guarda en localStorage (guía 7.3)." },
+      ],
+    },
+  },
 );

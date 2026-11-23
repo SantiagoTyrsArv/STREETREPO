@@ -5,8 +5,8 @@ import { HOME_PATHS } from "../auth/roles";
 import { useSession } from "../auth/SessionProvider";
 import { LoadingView } from "../components/StateViews";
 import { ComparisonPage } from "../features/validation/ComparisonPage";
-import { EvaluationPage } from "../features/evaluation/EvaluationPage";
-import { EvaluationZonePage } from "../features/evaluation/EvaluationZonePage";
+import { MyEvaluationsPage } from "../features/evaluation/MyEvaluationsPage";
+import { BlindZonePage } from "../features/evaluation/BlindZonePage";
 import { PrioritizationPage } from "../features/prioritization/PrioritizationPage";
 import { ReportDetailPage } from "../features/report-detail/ReportDetailPage";
 import { WeightsPage } from "../features/weights/WeightsPage";
@@ -46,8 +46,8 @@ export function AppRoutes() {
       </Route>
       <Route element={<RequireRole staffRole="evaluador" />}>
         <Route element={<Layout />}>
-          <Route path={HOME_PATHS.evaluador} element={<EvaluationPage />} />
-          <Route path="/evaluacion/zonas/:zoneId" element={<EvaluationZonePage />} />
+          <Route path={HOME_PATHS.evaluador} element={<MyEvaluationsPage />} />
+          <Route path="/evaluacion/zonas/:zoneId" element={<BlindZonePage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
