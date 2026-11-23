@@ -1,10 +1,10 @@
-import { useRef, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useReducedMotion } from "../a11y/useReducedMotion";
 import { RevealText } from "../components/RevealText";
 import { SEQUENCE_COPY } from "../content/copy";
 import { useDrift } from "../interaction/useDrift";
 import { TitleLens } from "./TitleLens";
-import { useChapterProgress } from "../scroll/useChapterProgress";
+import { useChapterPlayback } from "../scroll/useChapterPlayback";
 import { FrameSequence } from "../sequence/FrameSequence";
 import type { ChapterId } from "../sequence/types";
 import { ProximityText } from "../text/ProximityText";
@@ -15,23 +15,25 @@ type Accent = "amber" | "signal" | "repair" | "none";
 
 export interface SequenceChapterConfig {
   id: ChapterId;
-  /** Largo del recorrido fijado, en % del alto de la ventana. */
-  pinLengthVh: number;
+  /** Duración de la reproducción al entrar (diseño 4.1). */
+  durationMs: number;
   accent: Accent;
   /** El título hace de lupa sobre la escena (Reparado). */
   lens?: boolean;
+  /** Se reproduce al cargar la página (la portada). */
+  autoplay?: boolean;
+  /** Curva de la reproducción; por defecto la del hook. */
+  ease?: string;
 }
 
 /** Capítulos con escena generada, en el orden del guion (diseño, sección 6). */
 export const SEQUENCE_CHAPTERS: readonly SequenceChapterConfig[] = [
-  { id: "apertura", pinLengthVh: 250, accent: "none" },
-  { id: "problema", pinLengthVh: 350, accent: "amber" },
-  { id: "priorizar", pinLengthVh: 400, accent: "signal" },
-  { id: "reparado", pinLengthVh: 300, accent: "repair", lens: true },
+  // La portada usa curva lineal: con una que frena, el zoom de las letras pasaría en un instante.
+  { id: "apertura", durationMs: 4500, accent: "none", autoplay: true, ease: "none" },
+  { id: "problema", durationMs: 3000, accent: "amber" },
+  { id: "priorizar", durationMs: 3500, accent: "signal" },
+  { id: "reparado", durationMs: 3000, accent: "repair", lens: true },
 ];
-
-/** Fracción final del progreso en la que la escena se desvanece hacia la siguiente. */
-const VANISH_FROM = 0.9;
 
 interface SequenceChapterProps {
   chapter: SequenceChapterConfig;
@@ -60,19 +62,17 @@ export function SequenceChapter({
 }: SequenceChapterProps) {
   const ref = useRef<HTMLElement>(null);
   const still = useReducedMotion();
-  const progress = useChapterProgress(ref, { pinLengthVh: chapter.pinLengthVh, enabled: !still });
+  const [framesReady, setFramesReady] = useState(false);
+  const { progress, near } = useChapterPlayback(ref, {
+    durationMs: chapter.durationMs,
+    enabled: !still,
+    ready: framesReady,
+    autoplay: chapter.autoplay,
+    ease: chapter.ease,
+  });
   const copy = SEQUENCE_COPY[chapter.id];
   const driftRef = useRef<HTMLDivElement>(null);
   useDrift(driftRef, { enabled: !still });
-
-  const vanish = still ? 0 : Math.max(0, (progress - VANISH_FROM) / (1 - VANISH_FROM));
-  const sceneStyle = still
-    ? undefined
-    : {
-        opacity: 1 - vanish * 0.85,
-        filter: `blur(${vanish * 14}px)`,
-        transform: `scale(${1 + vanish * 0.04})`,
-      };
 
   return (
     <section
@@ -82,7 +82,7 @@ export function SequenceChapter({
       data-accent={chapter.accent}
       aria-labelledby={`${chapter.id}-titulo`}
     >
-      <div className="chapter__scene" style={sceneStyle}>
+      <div className="chapter__scene">
         {/* En reposo la escena «respira» (CSS) y se desplaza hacia el puntero o el dedo. */}
         <div className="chapter__breath">
           <div className="chapter__drift" ref={driftRef}>
@@ -93,7 +93,13 @@ export function SequenceChapter({
                 alt={copy.alt}
               />
             ) : (
-              <FrameSequence chapter={chapter.id} progress={progress} alt={copy.alt} />
+              <FrameSequence
+                chapter={chapter.id}
+                progress={progress}
+                alt={copy.alt}
+                load={near}
+                onReady={() => setFramesReady(true)}
+              />
             )}
           </div>
         </div>
@@ -106,10 +112,8 @@ export function SequenceChapter({
           still
             ? undefined
             : {
-                opacity: Math.min(
-                  1 - vanish,
+                opacity:
                   revealAfter > 0 ? Math.min(1, Math.max(0, (progress - revealAfter) / 0.06)) : 1,
-                ),
               }
         }
       >

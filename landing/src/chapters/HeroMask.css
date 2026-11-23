@@ -40,3 +40,8 @@
   stroke: color-mix(in srgb, var(--paper) 28%, transparent);
   stroke-width: 1;
 }
+
+/* Color de las letras: se desvanece con el zoom (fill-opacity) hasta dejar ver la escena. */
+.hero-mask__fill {
+  fill: var(--amber);
+}

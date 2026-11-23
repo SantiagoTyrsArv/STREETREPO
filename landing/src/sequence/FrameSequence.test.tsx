@@ -1,8 +1,36 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FrameSequence } from "./FrameSequence";
-import { frameUrl } from "./loader";
+import { createFrameLoader, frameUrl } from "./loader";
+import type * as LoaderModule from "./loader";
 import type { SequenceManifest } from "./types";
+
+// El cargador real usa <img> que jsdom nunca termina de cargar: se sustituye por uno que avisa
+// a mano. frameUrl sigue siendo el real.
+vi.mock("./loader", async (importOriginal) => {
+  const actual = await importOriginal<typeof LoaderModule>();
+  return {
+    ...actual,
+    createFrameLoader: vi.fn(
+      (_base: string, _manifest: unknown, _res: unknown, onFrame?: (i: number) => void) => {
+        const loaded = new Set<number>();
+        return {
+          start: () => undefined,
+          cancel: () => undefined,
+          get: () => undefined,
+          loaded,
+          finish: (index: number) => {
+            loaded.add(index);
+            onFrame?.(index);
+          },
+        };
+      },
+    ),
+  };
+});
+
+type FakeLoader = ReturnType<typeof createFrameLoader> & { finish: (index: number) => void };
+const loaderMock = vi.mocked(createFrameLoader);
 
 const MANIFEST: SequenceManifest = {
   id: "problema",
@@ -30,7 +58,12 @@ describe("FrameSequence", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <FrameSequence chapter="problema" progress={0} alt="Una calle de Pasto bajo la lluvia" />,
+      <FrameSequence
+        chapter="problema"
+        progress={0}
+        alt="Una calle de Pasto bajo la lluvia"
+        load
+      />,
     );
 
     expect(
@@ -44,10 +77,48 @@ describe("FrameSequence", () => {
   it("si el manifiesto no carga, sigue mostrando el cuadro clave como respaldo", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("sin red")));
 
-    const { container } = render(<FrameSequence chapter="problema" progress={0} alt="Calle" />);
+    const { container } = render(
+      <FrameSequence chapter="problema" progress={0} alt="Calle" load />,
+    );
 
     await waitFor(() => {
       expect(container.querySelector("img")).toHaveAttribute("src", "/media/problema/key.webp");
     });
+  });
+
+  it("no descarga cuadros mientras load es false", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(MANIFEST)));
+    vi.stubGlobal("fetch", fetchMock);
+    loaderMock.mockClear();
+
+    const { rerender } = render(
+      <FrameSequence chapter="problema" progress={0} alt="Calle" load={false} />,
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await act(async () => undefined);
+    expect(loaderMock).not.toHaveBeenCalled();
+
+    rerender(<FrameSequence chapter="problema" progress={0} alt="Calle" load />);
+    await waitFor(() => expect(loaderMock).toHaveBeenCalledTimes(1));
+  });
+
+  it("avisa una vez cuando todos los cuadros están cargados", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(MANIFEST))));
+    loaderMock.mockClear();
+    const onReady = vi.fn();
+
+    render(<FrameSequence chapter="problema" progress={0} alt="Calle" load onReady={onReady} />);
+    await waitFor(() => expect(loaderMock).toHaveBeenCalled());
+    const loader = loaderMock.mock.results[0]!.value as FakeLoader;
+
+    act(() => {
+      loader.finish(0);
+      loader.finish(1);
+    });
+    expect(onReady).not.toHaveBeenCalled();
+    act(() => loader.finish(2));
+    expect(onReady).toHaveBeenCalledTimes(1);
+    act(() => loader.finish(2));
+    expect(onReady).toHaveBeenCalledTimes(1);
   });
 });

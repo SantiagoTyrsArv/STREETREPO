@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { HeroMask } from "./HeroMask";
+import { MASK_UNTIL } from "./heroMaskScale";
 
 describe("HeroMask", () => {
   it("es decorativa", () => {
@@ -12,7 +13,7 @@ describe("HeroMask", () => {
   });
 
   it("desaparece al terminar de atravesar las letras", () => {
-    const { container } = render(<HeroMask progress={0.31} />);
+    const { container } = render(<HeroMask progress={MASK_UNTIL + 0.01} />);
     expect(container.querySelector(".hero-mask")).toBeNull();
   });
 
@@ -30,5 +31,22 @@ describe("HeroMask", () => {
     const css = readFileSync(resolve(__dirname, "HeroMask.css"), "utf8");
     const rule = /\.hero-mask\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
     expect(rule).not.toMatch(/will-change/);
+  });
+
+  it("rellena las letras de color al empezar", () => {
+    const { container } = render(<HeroMask progress={0} />);
+    const fill = container.querySelector(".hero-mask__fill");
+    expect(fill?.textContent).toContain("STREET");
+    expect(fill?.closest("mask")).toBeNull();
+    expect(fill).toHaveAttribute("fill-opacity", "1");
+  });
+
+  it("con el zoom el color se desvanece y deja ver la escena", () => {
+    const { container } = render(<HeroMask progress={MASK_UNTIL / 2} />);
+    const opacity = Number(
+      container.querySelector(".hero-mask__fill")?.getAttribute("fill-opacity"),
+    );
+    expect(opacity).toBeGreaterThan(0);
+    expect(opacity).toBeLessThan(1);
   });
 });
