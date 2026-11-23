@@ -11,6 +11,7 @@ from app.modules.validation.domain.blind import (
     EvaluatorZone,
     OpenRoundRef,
 )
+from app.modules.validation.domain.results import ReviewReport, ReviewWarning, RoundData
 from app.modules.validation.domain.rounds import (
     RoundCandidate,
     RoundEntry,
@@ -120,4 +121,22 @@ class BlindEvaluationRepository(Protocol):
     def photo_key(self, round_id: uuid.UUID, report_id: uuid.UUID) -> str | None:
         """Clave de la foto más reciente si el reporte está en la ronda; ``None`` si no
         está o no tiene foto."""
+        ...
+
+
+class RoundResultsReader(Protocol):
+    """Lecturas para los resultados y la ficha comparativa; solo las usa el administrador."""
+
+    def summary(self, round_id: uuid.UUID) -> RoundSummary | None: ...
+
+    def load(self, round_id: uuid.UUID) -> RoundData | None:
+        """Reportes congelados por zona, órdenes de los evaluadores y deduplicación."""
+        ...
+
+    def review_reports(self, round_id: uuid.UUID) -> list[ReviewReport]:
+        """Todos los reportes de las zonas de la ronda, para la revisión manual."""
+        ...
+
+    def review_warnings(self, round_id: uuid.UUID) -> list[ReviewWarning]:
+        """Los avisos de duplicado mostrados en las zonas de la ronda, con sus candidatos."""
         ...

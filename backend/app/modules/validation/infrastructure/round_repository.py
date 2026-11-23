@@ -19,6 +19,7 @@ from app.modules.validation.domain.rounds import (
     RoundStatus,
     RoundSummary,
     ZoneProgress,
+    number_evaluators,
 )
 from app.modules.validation.domain.zones import Concentration
 from app.modules.validation.infrastructure.models import (
@@ -167,8 +168,7 @@ class SqlRoundRepository:
             current = first_seen.get(sub.id_usuario)
             if current is None or sub.primer_envio < current:
                 first_seen[sub.id_usuario] = sub.primer_envio
-        ordered = sorted(first_seen, key=lambda user: (first_seen[user], user))
-        labels = {user: EvaluatorLabel(k) for k, user in enumerate(ordered, start=1)}
+        labels = {user: EvaluatorLabel(k) for user, k in number_evaluators(first_seen).items()}
         zones = [
             ZoneProgress(
                 zone_id=z.id_zona,

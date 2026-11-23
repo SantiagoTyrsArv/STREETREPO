@@ -9,6 +9,13 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.modules.critical_services.domain.service_type import CriticalServiceType
 from app.modules.reports.presentation.schemas import LocationResponse, SeverityLevel
+from app.modules.validation.domain.agreement import (
+    NEIGHBOR_TOLERANCE,
+    BetweenZones,
+    Correlation,
+    KendallW,
+    ZoneAgreement,
+)
 from app.modules.validation.domain.blind import (
     BlindCard,
     BlindZone,
@@ -18,7 +25,9 @@ from app.modules.validation.domain.blind import (
     ZoneView,
 )
 from app.modules.validation.domain.ports import ZoneSummary
+from app.modules.validation.domain.results import DedupSummary, RoundResults, ZoneResult
 from app.modules.validation.domain.rounds import (
+    EvaluatorLabel,
     RoundProgress,
     RoundStatus,
     RoundSummary,
@@ -251,3 +260,192 @@ class SubmitOrderRequest(_Strict):
 class OrderSubmittedResponse(_Strict):
     zone_id: int
     submitted: bool
+
+
+# --- Resultados de la ronda (solo el administrador) ------------------------------------
+
+
+class CorrelationResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    coefficient: float
+    p_value: float
+
+    @classmethod
+    def maybe(cls, value: Correlation | None) -> "CorrelationResponse | None":
+        return None if value is None else cls(coefficient=value.coefficient, p_value=value.p_value)
+
+
+class KendallWResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    w: float
+    chi2: float
+    p_value: float
+
+    @classmethod
+    def maybe(cls, value: KendallW | None) -> "KendallWResponse | None":
+        return None if value is None else cls(w=value.w, chi2=value.chi2, p_value=value.p_value)
+
+
+class EvaluatorAgreementResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    # «Evaluador k»: nunca nombre, correo ni id (Ley 1581).
+    evaluator: str
+    spearman: CorrelationResponse | None
+    kendall: CorrelationResponse | None
+
+
+class ZoneAgreementResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    n_evaluators: int
+    spearman: CorrelationResponse | None
+    kendall: CorrelationResponse | None
+    # null con un solo evaluador: la W necesita al menos dos.
+    kendall_w: KendallWResponse | None
+    within_one_pct: float
+    per_evaluator: list[EvaluatorAgreementResponse]
+
+
+class ResultReportResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    report_id: uuid.UUID
+    urgency_score: float
+    motor_order: int
+    # null si nadie envió el orden de la zona.
+    panel_order: float | None
+    disagreement: float | None
+    within_one: bool | None
+
+
+class DedupResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    reports: int
+    reports_confirmed: int
+    confirmations: int
+    warnings_total: int
+    warnings_confirmed: int
+    warnings_created_anyway: int
+    warnings_pending: int
+
+    @classmethod
+    def from_summary(cls, dedup: DedupSummary) -> "DedupResponse":
+        return cls(
+            reports=dedup.reports,
+            reports_confirmed=dedup.reports_confirmed,
+            confirmations=dedup.confirmations,
+            warnings_total=dedup.warnings_total,
+            warnings_confirmed=dedup.warnings_confirmed,
+            warnings_created_anyway=dedup.warnings_created_anyway,
+            warnings_pending=dedup.warnings_pending,
+        )
+
+
+def _agreement(
+    agreement: ZoneAgreement | None, numbers: dict[uuid.UUID, int]
+) -> ZoneAgreementResponse | None:
+    if agreement is None:
+        return None
+    per_evaluator = sorted(agreement.per_evaluator.items(), key=lambda item: numbers[item[0]])
+    return ZoneAgreementResponse(
+        n_evaluators=agreement.n_evaluators,
+        spearman=CorrelationResponse.maybe(agreement.spearman),
+        kendall=CorrelationResponse.maybe(agreement.kendall),
+        kendall_w=KendallWResponse.maybe(agreement.kendall_w),
+        within_one_pct=agreement.within_one_pct,
+        per_evaluator=[
+            EvaluatorAgreementResponse(
+                evaluator=EvaluatorLabel(numbers[evaluator]).text,
+                spearman=CorrelationResponse.maybe(values.spearman),
+                kendall=CorrelationResponse.maybe(values.kendall),
+            )
+            for evaluator, values in per_evaluator
+        ],
+    )
+
+
+class ZoneResultResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    zone_id: int
+    name: str
+    concentration: Concentration
+    n_reports: int
+    agreement: ZoneAgreementResponse | None
+    dedup: DedupResponse
+    reports: list[ResultReportResponse]
+
+    @classmethod
+    def from_result(cls, result: ZoneResult, numbers: dict[uuid.UUID, int]) -> "ZoneResultResponse":
+        zone, agreement = result.zone, result.agreement
+        reports = []
+        for entry in zone.entries:
+            panel = agreement.panel_order[entry.report_id] if agreement else None
+            reports.append(
+                ResultReportResponse(
+                    report_id=entry.report_id,
+                    urgency_score=float(entry.urgency_score),
+                    motor_order=entry.motor_order,
+                    panel_order=panel,
+                    disagreement=agreement.disagreement[entry.report_id] if agreement else None,
+                    within_one=(
+                        None
+                        if panel is None
+                        else abs(entry.motor_order - panel) <= NEIGHBOR_TOLERANCE
+                    ),
+                )
+            )
+        return cls(
+            zone_id=zone.zone_id,
+            name=zone.name,
+            concentration=zone.concentration,
+            n_reports=len(zone.entries),
+            agreement=_agreement(agreement, numbers),
+            dedup=DedupResponse.from_summary(result.dedup),
+            reports=reports,
+        )
+
+
+class BetweenZonesResponse(BaseModel):
+    """Prueba entre zonas; ``computable`` es false con ``reason`` cuando no se pudo hacer."""
+
+    model_config = ConfigDict(frozen=True)
+
+    computable: bool
+    test: str | None = None
+    statistic: float | None = None
+    p_value: float | None = None
+    significant: bool | None = None
+    reason: str | None = None
+
+
+class RoundResultsResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    round: RoundSummaryResponse
+    zones: list[ZoneResultResponse]
+    between: BetweenZonesResponse
+
+    @classmethod
+    def from_results(cls, results: RoundResults) -> "RoundResultsResponse":
+        numbers = dict(results.evaluator_numbers)
+        between = results.between
+        return cls(
+            round=RoundSummaryResponse.from_summary(results.round),
+            zones=[ZoneResultResponse.from_result(z, numbers) for z in results.zones],
+            between=(
+                BetweenZonesResponse(
+                    computable=True,
+                    test=between.test,
+                    statistic=between.statistic,
+                    p_value=between.p_value,
+                    significant=between.significant,
+                )
+                if isinstance(between, BetweenZones)
+                else BetweenZonesResponse(computable=False, reason=between.reason)
+            ),
+        )

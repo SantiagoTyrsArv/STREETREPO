@@ -84,6 +84,13 @@ class EvaluatorLabel:
         return f"Evaluador {self.number}"
 
 
+def number_evaluators(first_submission: Mapping[uuid.UUID, datetime]) -> dict[uuid.UUID, int]:
+    """Numera a los evaluadores («Evaluador k») por su primer envío en la ronda; el id
+    desempata. Así el número es estable y no revela quién es quién."""
+    ordered = sorted(first_submission, key=lambda user: (first_submission[user], user))
+    return {user: k for k, user in enumerate(ordered, start=1)}
+
+
 @dataclass(frozen=True, slots=True)
 class ZoneProgress:
     zone_id: int

@@ -19,7 +19,7 @@ from app.modules.validation.domain.zones import Concentration
 _MIN_EVALUATORS_FOR_W = 2
 _TWO_ZONES = 2
 _MIN_POINTS_FOR_CORRELATION = 2
-_NEIGHBOR_TOLERANCE = 1
+NEIGHBOR_TOLERANCE = 1
 _IDENTICAL_REASON = "Los desacuerdos de todas las zonas son idénticos"
 _NO_ORDERS_REASON = "Se necesita al menos una zona de alta y una de baja concentración con órdenes"
 
@@ -139,7 +139,7 @@ def zone_agreement(ranking: ZoneRanking) -> ZoneAgreement | None:
     overall = _correlations(motor, panel)
     gaps = [abs(m - p) for m, p in zip(motor, panel, strict=True)]
     scale = max(n - 1, 1)
-    within_one = 100 * sum(g <= _NEIGHBOR_TOLERANCE for g in gaps) / n
+    within_one = 100 * sum(g <= NEIGHBOR_TOLERANCE for g in gaps) / n
     m_count = len(evaluator_lists)
     return ZoneAgreement(
         zone_id=ranking.zone_id,
