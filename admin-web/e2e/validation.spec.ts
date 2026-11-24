@@ -85,13 +85,17 @@ test("ronda de evaluación completa", async ({ page, browser }) => {
   await expect.poll(async () => (await top(0)) - (await top(1))).toBeGreaterThan(0);
   await evalPage.keyboard.press("Space");
   await expect.poll(() => cardTitles(evalPage)).toEqual([before[1], before[0], ...before.slice(2)]);
-  // Y con los botones: la última sube una posición.
-  await evalPage
-    .getByRole("button", { name: `Subir ${before[4]}` })
-    .first()
+  // Y con los botones: la última sube una posición. Se busca el botón dentro de la quinta
+  // tarjeta y no por su nombre: dos reportes de la muestra pueden tener la misma vía
+  // («Vía sin nombre») y el nombre señalaría a otra tarjeta.
+  await cards
+    .nth(4)
+    .getByRole("button", { name: /^Subir / })
     .click();
+  await expect
+    .poll(async () => (await cardTitles(evalPage)).slice(3))
+    .toEqual([before[4], before[3]]);
   const sent = await cardTitles(evalPage);
-  expect(sent.slice(3)).toEqual([before[4], before[3]]);
 
   // El borrador sobrevive a una recarga.
   await evalPage.reload();
