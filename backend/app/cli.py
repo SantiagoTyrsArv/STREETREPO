@@ -11,6 +11,7 @@ zones-import RUTA                         Carga las zonas de validación desde u
 import argparse
 import getpass
 import json
+import os
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -22,7 +23,9 @@ from app.core.database import create_session
 from app.core.logging import configure_logging
 from app.modules.admin.application.demo_seed import SeedDemo
 from app.modules.admin.application.import_osm_data import ImportOsmData, OsmSourceError
+from app.modules.admin.application.loadtest_accounts import LoadTestAccounts
 from app.modules.admin.domain.demo import NotEnoughOsmDataError
+from app.modules.admin.domain.loadtest import LOADTEST_EMAIL_DOMAIN
 from app.modules.admin.infrastructure.demo_data import SqlDemoData, load_demo_photos
 from app.modules.admin.infrastructure.demo_points import PostgisDemoPointPicker
 from app.modules.admin.infrastructure.overpass import create_overpass_client
@@ -46,6 +49,9 @@ from app.modules.validation.domain.zones import InvalidZonesError
 from app.modules.validation.infrastructure.zone_repository import SqlZoneRepository
 from app.shared.application.clock import SystemClock
 from app.shared.domain.geo import BoundingBox, InvalidGeometryError
+
+# Contraseña común de las cuentas de carga (fase 8): solo por variable de entorno.
+LOADTEST_PASSWORD_ENV = "LOADTEST_PASSWORD"  # noqa: S105 - nombre de la variable y no su valor
 
 
 def _osm_import(bbox: str | None) -> int:
@@ -157,6 +163,42 @@ def _seed_demo(*, remove: bool) -> int:
     return 0
 
 
+def _build_loadtest_accounts(session: Session, settings: Settings) -> LoadTestAccounts:
+    storage = LocalPhotoStorage(settings.photo_storage_dir)
+    return LoadTestAccounts(
+        users=SqlUserRepository(session),
+        hasher=Argon2PasswordHasher(),
+        data=SqlDemoData(session, email_domain=LOADTEST_EMAIL_DOMAIN),
+        photo_files=PhotoFileCleanup(storage),
+        transaction=session,
+        clock=SystemClock(),
+        policy_version=settings.privacy_policy_version,
+    )
+
+
+def _loadtest_accounts(*, count: int | None, remove: bool) -> int:
+    """Cuentas de la prueba de carga (fase 8). La contraseña llega solo por variable de
+    entorno, nunca por argumento: quedaría en el historial de la terminal."""
+    settings = get_settings()
+    with create_session() as session:
+        accounts = _build_loadtest_accounts(session, settings)
+        if remove:
+            print(f"Cuentas de carga: {accounts.remove()} reportes borrados.")
+            return 0
+        password = os.environ.get(LOADTEST_PASSWORD_ENV, "")
+        if not password:
+            print(
+                f"Define {LOADTEST_PASSWORD_ENV} con la contraseña de las cuentas.", file=sys.stderr
+            )
+            return 1
+        if count is None:
+            print("Indica cuántas cuentas con --count N.", file=sys.stderr)
+            return 1
+        emails = accounts.create(count, password)
+    print(f"Cuentas de carga listas: {len(emails)} ({emails[0]} … {emails[-1]}).")
+    return 0
+
+
 def _build_import_zones(session: Session) -> ImportZones:
     return ImportZones(SqlZoneRepository(session), session)
 
@@ -195,6 +237,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     demo = commands.add_parser("seed-demo", help="Cargar los datos de demostración del panel")
     demo.add_argument("--remove", action="store_true", help="Borrar los datos de demostración")
 
+    load = commands.add_parser(
+        "loadtest-accounts",
+        help="Crear o borrar las cuentas de la prueba de carga (@carga.example.com)",
+        description=(
+            f"Crea las cuentas carga-001…carga-N con la contraseña de {LOADTEST_PASSWORD_ENV}, "
+            "o las borra con sus reportes y fotos. Solo para el entorno de carga local."
+        ),
+    )
+    load_action = load.add_mutually_exclusive_group(required=True)
+    load_action.add_argument("--count", type=int, help="Cuántas cuentas crear")
+    load_action.add_argument("--remove", action="store_true", help="Borrar las cuentas de carga")
+
     zones = commands.add_parser(
         "zones-import",
         help="Cargar las zonas de validación desde un GeoJSON",
@@ -215,6 +269,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "purge-orphan-photos": _purge_orphan_photos,
         "seed-demo": lambda: _seed_demo(remove=args.remove),
         "zones-import": lambda: _zones_import(args.path),
+        "loadtest-accounts": lambda: _loadtest_accounts(count=args.count, remove=args.remove),
     }
     return handlers[args.command]()
 
