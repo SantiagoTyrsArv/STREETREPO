@@ -1,64 +1,72 @@
 # Diagrama de componentes UML
 
-Fuente canónica desde el 2026-11-23. Es la versión en Mermaid del diagrama de componentes de Lucid
-(«Street Repo - Diagrama de Componentes UML», última edición del 2026-10-15), con su mismo
-contenido. Las diferencias con el sistema construido están en la sección final.
+Fuente canónica de la arquitectura. Refleja lo construido al 2026-11-23 (fila 130 de la bitácora):
+un monolito modular en FastAPI con capas `presentation → application → domain ← infrastructure`
+(sección 4 de `AGENTS.md`), dos clientes y la página de presentación.
 
 ```mermaid
 flowchart TB
-    subgraph presentacion["Capa de presentación (clientes)"]
-        app["«component»<br/>App Móvil Ciudadana<br/><i>Flutter: cámara, GPS, formulario de reporte</i>"]
-        panel["«component»<br/>Panel Administrativo<br/><i>React + Leaflet: mapa y gestión de estados</i>"]
+    subgraph clientes["Clientes"]
+        app["«component»<br/>App ciudadana<br/><i>Flutter · Riverpod · go_router · dio<br/>cámara, GPS, mapa (flutter_map)</i>"]
+        panel["«component»<br/>Panel administrativo<br/><i>React · TanStack Query · Leaflet + leaflet.heat<br/>roles administrador y evaluador</i>"]
+        landing["«component»<br/>Página de presentación<br/><i>React (Vite) · GSAP · Lenis, prerenderizada</i>"]
     end
 
-    iapi(("IApiREST<br/>HTTPS/JSON + JWT"))
+    iapi(("API REST /api/v1<br/>HTTPS · JSON<br/>JWT (app) · cookie HttpOnly + CSRF (panel)"))
 
-    subgraph backend["Backend - API REST (FastAPI, Docker)"]
-        router["«component»<br/>Controladores REST<br/><i>routers FastAPI, validación Pydantic</i>"]
-        auth["«component»<br/>Módulo de Autenticación<br/><i>JWT, roles ciudadano/admin</i>"]
-        rep["«component»<br/>Módulo de Reportes<br/><i>registro, consulta, estados</i>"]
-        evid["«component»<br/>Módulo de Evidencias<br/><i>carga y validación de fotos</i>"]
-        prior["«component»<br/>Motor de Priorización<br/><i>U = w1·S + w2·F + w3·P</i>"]
-        datos["«component»<br/>Acceso a Datos<br/><i>SQLAlchemy + GeoAlchemy2: ST_Distance, ST_DWithin</i>"]
-        nomc["«component»<br/>Cliente Nominatim<br/><i>geocodificación inversa</i>"]
-        ovc["«component»<br/>Cliente Overpass<br/><i>hospitales y colegios</i>"]
+    subgraph backend["Backend · FastAPI (monolito modular)"]
+        core["«component» core<br/><i>config, logs JSON, errores uniformes,<br/>cabeceras de seguridad, límite de tamaño,<br/>límite de intentos, /health y /ready</i>"]
+        auth["«component» auth<br/><i>registro con consentimiento, login Argon2id,<br/>JWT + refresco rotatorio, sesión web, RBAC</i>"]
+        users["«component» users<br/><i>perfil, derechos del titular (Ley 1581),<br/>supresión por anonimización</i>"]
+        reports["«component» reports<br/><i>crear reporte, fotos sin EXIF,<br/>posible duplicado (25 m), mis reportes, mapa público</i>"]
+        confirmations["«component» confirmations<br/><i>confirmar a 50 m o menos, una por usuario</i>"]
+        priority["«component» priority<br/><i>motor U = w1·S + w2·F + w3·P,<br/>pesos versionados, recálculo</i>"]
+        roads["«component» roads<br/><i>vías OSM, map-matching a 30 m</i>"]
+        services["«component» critical_services<br/><i>hospitales y escuelas, proximidad</i>"]
+        admin["«component» admin<br/><i>ranking, mapa de calor, detalle y estado,<br/>pesos, carga OSM, datos de demostración</i>"]
+        validation["«component» validation<br/><i>objetivo 4: zonas, rondas, vista a ciegas,<br/>métricas, CSV y avisos de duplicado</i>"]
+        cli["«component» CLI<br/><i>osm-import, zones-import, create-admin,<br/>create-evaluator, seed-demo, purge-orphan-photos</i>"]
+        infra["«component» Adaptadores de infraestructura<br/><i>repositorios SQLAlchemy + GeoAlchemy2,<br/>fotos con Pillow, cliente Overpass</i>"]
     end
 
-    subgraph capaDatos["Capa de datos (Docker)"]
-        pg[("«component»<br/>PostgreSQL + PostGIS<br/><i>reportes, vías, zonas, servicios</i>")]
-        alm[("«component»<br/>Almacén de Evidencias<br/><i>volumen de archivos (fotos)</i>")]
+    subgraph datos["Datos"]
+        pg[("«component»<br/>PostgreSQL + PostGIS<br/><i>migraciones Alembic 0001–0009</i>")]
+        fotos[("«component»<br/>Almacén de fotos<br/><i>volumen en disco</i>")]
     end
 
-    subgraph externos["Servicios externos (OpenStreetMap)"]
-        nomapi["«component»<br/>Nominatim API<br/><i>geocodificación</i>"]
-        ovapi["«component»<br/>Overpass API<br/><i>consulta de datos OSM</i>"]
-    end
+    overpass["«component»<br/>Overpass API (OSM)<br/><i>solo en la carga, no por solicitud</i>"]
+    tiles["«component»<br/>Teselas de OpenStreetMap<br/><i>proveedor configurable</i>"]
 
     app --> iapi
     panel --> iapi
-    iapi --- router
-    router --> auth
-    router --> rep
-    router --> evid
-    router --> prior
-    rep -- "solicita puntaje" --> prior
-    rep --> datos
-    rep --> nomc
-    prior --> ovc
-    prior --> datos
-    auth --> datos
-    evid -- "guarda fotos" --> alm
-    datos -- "SQL / PostGIS" --> pg
-    nomc -- "HTTPS" --> nomapi
-    ovc -- "HTTPS" --> ovapi
+    app -. "mapa" .-> tiles
+    panel -. "mapa" .-> tiles
+    iapi --- core
+    core --> auth & users & reports & confirmations & admin & validation
+
+    reports -- "evalúa al crear" --> priority
+    reports -- "registra aviso" --> validation
+    confirmations -- "registra aviso" --> validation
+    admin --> priority
+    admin --> reports
+    validation -- "pesos vigentes, orden" --> priority
+    priority --> roads
+    priority --> services
+    users -- "borra fotos y textos" --> reports
+    cli --> admin & validation & auth & reports
+
+    auth & users & reports & confirmations & priority & roads & services & admin & validation -.-> infra
+    infra -- "SQL parametrizado<br/>ST_DWithin, ST_Distance" --> pg
+    infra -- "guarda y sirve fotos" --> fotos
+    infra -- "HTTPS, solo en osm-import" --> overpass
 ```
 
-## Diferencias conocidas con el sistema construido (pendientes de decisión)
+Notas:
 
-- El backend es un monolito modular con módulos `auth`, `users`, `reports`, `confirmations`,
-  `priority`, `roads`, `critical_services`, `admin` y `validation` (zonas, rondas y avisos del
-  objetivo 4), cada uno con capas `presentation / application / domain / infrastructure`.
-- Nominatim y Overpass no se llaman en tiempo de ejecución: la carga de OSM es un comando aparte
-  (`osm-import`) que guarda vías y servicios en PostGIS (sección 3.1 de `AGENTS.md`); la dirección
-  del reporte es el nombre de la vía (propuesta 41).
-- Existe una tercera interfaz cliente: la página de presentación (`landing/`, en Vercel, decisión 99).
+- Cada módulo del backend tiene las capas `presentation / application / domain / infrastructure`;
+  el dominio no importa FastAPI ni SQL y define sus puertos (ver [`clases.md`](clases.md)). Las
+  flechas entre módulos son dependencias a través de esos puertos, y cada módulo tiene sus propios
+  adaptadores en `infrastructure/` (aquí agrupados en un solo nodo).
+- Nominatim no se usa en el MVP: la dirección del reporte es el nombre de la vía asociada
+  (propuesta 41). Overpass solo se consulta al cargar los datos de OSM (sección 3.1).
+- La página de presentación no consume la API: solo ofrece la descarga de la app (decisión 99).

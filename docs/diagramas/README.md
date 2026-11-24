@@ -7,12 +7,12 @@ Lucid dejó de ser editable y no reflejaba las migraciones 0008 y 0009.
 | Diagrama | Archivo | Qué describe |
 |---|---|---|
 | Entidad-relación | [`er.md`](er.md) | Esquema real de la base (migraciones 0001 a 0009) |
-| Clases UML | [`clases.md`](clases.md) | Modelo de dominio de la tesis |
+| Clases UML | [`clases.md`](clases.md) | Modelo de dominio, motor de priorización y casos de uso |
 | Componentes UML | [`componentes.md`](componentes.md) | Módulos del sistema y sus dependencias |
 | Despliegue UML | [`despliegue.md`](despliegue.md) | Nodos, contenedores y protocolos |
 
-Los diagramas de clases, componentes y despliegue conservan el contenido de Lucid y listan al final
-sus diferencias con lo construido; actualizarlos es una decisión pendiente (protocolo 0.3).
+Los cuatro reflejan lo construido (fila 130 de la bitácora). Las versiones de Lucid eran el diseño
+inicial de la tesis; quedan en el historial de git (commit `a9cee2e`) y en Lucid como respaldo.
 
 ## Ver y exportar
 

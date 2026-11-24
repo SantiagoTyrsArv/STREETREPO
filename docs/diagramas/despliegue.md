@@ -1,46 +1,61 @@
 # Diagrama de despliegue UML
 
-Fuente canónica desde el 2026-11-23. Es la versión en Mermaid del diagrama de despliegue de Lucid
-(«Street Repo - Diagrama de Despliegue UML», última edición del 2026-10-15), con su mismo contenido.
-Las diferencias con el despliegue actual están en la sección final.
+Fuente canónica del despliegue. Refleja `infra/docker-compose.yml` más
+`infra/docker-compose.prod.yml` (HTTPS con Caddy, HU-17) y la página en Vercel, al 2026-11-23
+(fila 130 de la bitácora). El despliegue en servidor está pospuesto (fila 123): hoy la app se prueba
+en el celular contra el mismo Compose levantado en el computador del responsable.
 
 ```mermaid
 flowchart LR
-    subgraph telefono["«device» Smartphone del Ciudadano (Android / iOS)"]
-        apk["«artifact»<br/>street-repo (APK / IPA)<br/><i>App Flutter: cámara y GPS</i>"]
+    subgraph telefono["«device» Celular del ciudadano (Android; iOS sin probar)"]
+        apk["«artifact»<br/>APK de Street Repo<br/><i>App Flutter: cámara, GPS, mapa</i>"]
     end
 
-    subgraph pc["«device» PC del Administrador"]
-        nav["«artifact»<br/>Navegador web<br/><i>carga la SPA React + Leaflet</i>"]
+    subgraph pc["«device» Computador del funcionario"]
+        nav["«execution environment»<br/>Navegador web<br/><i>SPA React del panel</i>"]
     end
 
-    subgraph servidor["«execution environment» Servidor Linux con Docker Compose"]
-        api["«container» api<br/>«artifact» FastAPI + Uvicorn<br/><i>REST, JWT, motor de priorización</i><br/>puerto 8000"]
-        panelweb["«container» panel-web<br/>«artifact» build estático React<br/>puerto 80"]
-        db[("«container» db<br/>PostgreSQL + PostGIS<br/>puerto 5432")]
-        vol[("«volume» evidencias<br/><i>fotos de los reportes,<br/>montado en el contenedor api</i>")]
+    subgraph servidor["«execution environment» Servidor Linux con Docker Compose · red interna 172.30.0.0/24"]
+        caddy["«container» caddy<br/>Caddy 2.11<br/><i>TLS Let's Encrypt, HSTS,<br/>tope de petición 11 MB / 1 MB</i><br/>puertos 80 y 443"]
+        api["«container» api<br/>FastAPI + Uvicorn<br/><i>REST, JWT, motor de priorización</i><br/>puerto 8000"]
+        adminweb["«container» admin-web<br/>nginx sin root<br/><i>build estático del panel, CSP</i><br/>puerto 8080"]
+        migrate["«container» migrate<br/><i>alembic upgrade head<br/>(se ejecuta y termina)</i>"]
+        db[("«container» db<br/>PostgreSQL 17 + PostGIS 3.5<br/>puerto 5432")]
+        dbdata[("«volume» db-data")]
+        photos[("«volume» photos<br/><i>fotos de evidencia</i>")]
     end
 
-    subgraph osm["«cloud» Servicios externos OpenStreetMap"]
-        nominatim["«web service» Nominatim<br/><i>geocodificación inversa</i>"]
-        overpass["«web service» Overpass API<br/><i>hospitales y colegios</i>"]
+    subgraph vercel["«cloud» Vercel"]
+        landing["«artifact»<br/>Página de presentación<br/><i>streetrepo.vercel.app</i>"]
     end
 
-    apk -- "HTTPS REST + JWT" --> api
-    nav -- "HTTPS" --> panelweb
-    nav -- "HTTPS REST + JWT" --> api
+    subgraph osm["«cloud» OpenStreetMap"]
+        tiles["«web service» Teselas"]
+        overpass["«web service» Overpass API<br/><i>solo en osm-import</i>"]
+    end
+
+    apk -- "HTTPS REST + JWT<br/>API_DOMAIN" --> caddy
+    nav -- "HTTPS<br/>PANEL_DOMAIN" --> caddy
+    nav -- "HTTPS REST<br/>cookie HttpOnly + CSRF" --> caddy
+    caddy -- "HTTP interno" --> api
+    caddy -- "HTTP interno" --> adminweb
+    migrate -- "TCP 5432" --> db
     api -- "TCP 5432" --> db
-    api -- "E/S de archivos" --> vol
-    api -- "HTTPS" --> nominatim
-    api -- "HTTPS" --> overpass
+    db --- dbdata
+    api -- "E/S de archivos" --> photos
+    api -. "HTTPS (CLI osm-import)" .-> overpass
+    apk -. "HTTPS" .-> tiles
+    nav -. "HTTPS" .-> tiles
+    pc -. "HTTPS" .-> landing
+    telefono -. "descarga" .-> landing
 ```
 
-## Diferencias conocidas con el despliegue actual (pendientes de decisión)
+Notas:
 
-- Delante de la API y del panel hay un proxy HTTPS con Caddy (HU-17, fila 121 de la bitácora); el
-  despliegue en servidor está pospuesto y la app se prueba contra el backend local (fila 123).
-- En `infra/docker-compose.yml` el panel es el servicio `admin-web` (nginx sin root), el volumen de
-  fotos se llama `photos` y un servicio `migrate` aplica las migraciones antes de la API.
-- La API no llama a Nominatim ni a Overpass por cada solicitud: `osm-import` carga los datos de OSM
-  a PostGIS (sección 3.1 de `AGENTS.md`).
-- La página de presentación (`landing/`) se despliega en Vercel, fuera del servidor (decisión 99).
+- En producción solo Caddy publica puertos; la base, la API y el panel quedan en la red interna, y
+  la API solo cree `X-Forwarded-For` si viene de la IP fija de Caddy.
+- En desarrollo (solo `docker-compose.yml`) no hay Caddy: la API se publica en el puerto 8000
+  (`API_BIND_ADDRESS` permite exponerla en la red local para el celular) y el panel en el 8080.
+- Los comandos de la CLI (`osm-import`, `zones-import`, `create-admin`, `create-evaluator`,
+  `seed-demo`, `purge-orphan-photos`) se ejecutan dentro del contenedor `api`.
+- La página de presentación se despliega aparte, en Vercel (decisión 99).
