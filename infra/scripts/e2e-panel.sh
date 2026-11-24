@@ -34,20 +34,23 @@ trap '"${COMPOSE[@]}" stop >/dev/null 2>&1 || true' EXIT
 
 roads="$("${COMPOSE[@]}" exec -T db sh -c \
   'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At -c "SELECT count(*) FROM via"')"
-# E2E_OSM_DUMP (opcional, lo usa la CI): volcado de las tablas de OSM para no llamar a
-# Overpass en cada ejecución (guía 3.1). Si existe, se carga; si no, se crea tras importar.
+# E2E_OSM_DUMP (opcional): volcado de las tablas de OSM (`.sql` o `.sql.gz`) para no llamar a
+# Overpass (guía 3.1). Si existe, se carga; si no, se crea tras importar. La CI usa el del
+# repositorio, infra/e2e/osm-pasto.sql.gz (datos © OpenStreetMap, ODbL; ver infra/e2e/README.md).
+psql_load() { "${COMPOSE[@]}" exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -q' >/dev/null; }
+pg_dump_osm() {
+  "${COMPOSE[@]}" exec -T db sh -c \
+    'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --data-only -t via -t servicio_critico'
+}
 if [[ "$roads" == "0" && -n "${E2E_OSM_DUMP:-}" && -s "${E2E_OSM_DUMP}" ]]; then
   echo "==> Cargando vías y servicios críticos desde ${E2E_OSM_DUMP}"
-  "${COMPOSE[@]}" exec -T db sh -c \
-    'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -q' <"${E2E_OSM_DUMP}" >/dev/null
+  if [[ "$E2E_OSM_DUMP" == *.gz ]]; then gunzip -c "$E2E_OSM_DUMP" | psql_load; else psql_load <"$E2E_OSM_DUMP"; fi
 elif [[ "$roads" == "0" ]]; then
   echo "==> Cargando vías y servicios críticos de OSM (solo la primera vez)"
   cli osm-import
   if [[ -n "${E2E_OSM_DUMP:-}" ]]; then
     echo "==> Guardando el volcado de OSM en ${E2E_OSM_DUMP}"
-    "${COMPOSE[@]}" exec -T db sh -c \
-      'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --data-only -t via -t servicio_critico' \
-      >"${E2E_OSM_DUMP}"
+    if [[ "$E2E_OSM_DUMP" == *.gz ]]; then pg_dump_osm | gzip -9 -n >"$E2E_OSM_DUMP"; else pg_dump_osm >"$E2E_OSM_DUMP"; fi
   fi
 fi
 

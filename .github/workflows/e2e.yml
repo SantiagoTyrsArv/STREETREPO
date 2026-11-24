@@ -5,9 +5,8 @@ name: E2E del panel
 # accesibilidad con axe (fila 151 de la bitácora). Van aparte de la CI principal porque
 # levantan la base, la API y el panel y tardan más.
 #
-# Datos de OSM: el script los carga desde un volcado guardado en la caché de GitHub, que se
-# renueva cada mes. Solo cuando la caché está vacía se hace una carga desde Overpass, así no se
-# consulta en cada ejecución (guía 3.1).
+# Datos de OSM: el script los carga desde infra/e2e/osm-pasto.sql.gz (datos © OpenStreetMap,
+# ODbL). No se consulta Overpass, que no responde desde los servidores de GitHub (fila 152).
 
 on:
   push:
@@ -47,19 +46,9 @@ jobs:
           cp .env.example .env
           sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 16)/" .env
           sed -i "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=$(openssl rand -hex 32)/" .env
-      - name: Mes del volcado de OSM
-        id: osm
-        run: |
-          echo "month=$(date +%Y-%m)" >> "$GITHUB_OUTPUT"
-          mkdir -p "$RUNNER_TEMP/osm"
-      - name: Volcado de OSM en caché
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ runner.temp }}/osm
-          key: osm-e2e-${{ hashFiles('backend/migrations/versions/**') }}-${{ steps.osm.outputs.month }}
       - name: Pruebas de punta a punta
         env:
-          E2E_OSM_DUMP: ${{ runner.temp }}/osm/osm-e2e.sql
+          E2E_OSM_DUMP: ${{ github.workspace }}/infra/e2e/osm-pasto.sql.gz
         run: infra/scripts/e2e-panel.sh --reporter=list
       - name: Informe de Playwright si falla
         if: failure()
