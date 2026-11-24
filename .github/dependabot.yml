@@ -8,6 +8,11 @@ updates:
     directory: /admin-web
     schedule:
       interval: weekly
+    groups:
+      # playwright-core lo pide @axe-core/playwright y debe ser la misma versión que usa
+      # @playwright/test; si se separan, los tipos de Page chocan (fila 143).
+      playwright:
+        patterns: ["@playwright/test", "playwright-core"]
     ignore:
       # React 18 por el plan de la fase 6 (react-leaflet 4); migrar a 19 es una decisión aparte.
       - dependency-name: react
