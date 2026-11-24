@@ -46,7 +46,7 @@ dependencies:
   intl: ^0.20.3
   uuid: ^4.6.0
   url_launcher: ^6.3.3
-  flutter_svg: ^2.3.0
+  flutter_svg: ^2.5.0
   flutter_map: ^8.3.2
   latlong2: ^0.10.1
 
