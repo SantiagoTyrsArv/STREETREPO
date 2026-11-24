@@ -19,6 +19,7 @@ from app.modules.admin.domain.loadtest import LOADTEST_EMAIL_DOMAIN
 from tests.conftest import TEST_JWT_SECRET
 from tests.images import jpeg_with_metadata
 from tests.integration.conftest import (
+    PASSWORD,
     TEST_REPORT_AREA,
     bearer,
     insert_report,
@@ -29,7 +30,6 @@ from tests.integration.conftest import (
 
 pytestmark = [pytest.mark.integration, requires_db]
 
-LOAD_PASSWORD = "clave-de-carga-1234"
 LON, LAT = -80.0, 0.0
 LOAD_USERS = "SELECT count(*) FROM usuario WHERE correo LIKE '%@carga.example.com'"
 
@@ -52,7 +52,7 @@ def _count(conn: Connection, sql: str) -> int:
 def test_create_makes_citizen_accounts_that_can_log_in(
     session: Session, conn: Connection, photo_dir: Path, api: TestClient
 ) -> None:
-    emails = _accounts(session, photo_dir).create(3, LOAD_PASSWORD)
+    emails = _accounts(session, photo_dir).create(3, PASSWORD)
 
     assert emails == [f"carga-{n:03d}@{LOADTEST_EMAIL_DOMAIN}" for n in (1, 2, 3)]
     assert _count(conn, LOAD_USERS) == 3
@@ -64,15 +64,15 @@ def test_create_makes_citizen_accounts_that_can_log_in(
         {"d": f"%@{LOADTEST_EMAIL_DOMAIN}"},
     ).all()
     assert roles == [("ciudadano", True)]
-    login = login_user(api, emails[0], LOAD_PASSWORD)
+    login = login_user(api, emails[0], PASSWORD)
     assert login["_status"] == 200
 
 
 def test_create_is_idempotent(session: Session, conn: Connection, photo_dir: Path) -> None:
     accounts = _accounts(session, photo_dir)
-    accounts.create(3, LOAD_PASSWORD)
+    accounts.create(3, PASSWORD)
 
-    again = accounts.create(3, LOAD_PASSWORD)
+    again = accounts.create(3, PASSWORD)
 
     assert len(again) == 3
     assert _count(conn, LOAD_USERS) == 3
@@ -82,8 +82,8 @@ def test_remove_deletes_accounts_reports_warnings_and_photo_files(
     session: Session, conn: Connection, photo_dir: Path, api: TestClient
 ) -> None:
     accounts = _accounts(session, photo_dir)
-    email = accounts.create(1, LOAD_PASSWORD)[0]
-    token = login_user(api, email, LOAD_PASSWORD)["access_token"]
+    email = accounts.create(1, PASSWORD)[0]
+    token = login_user(api, email, PASSWORD)["access_token"]
     # Un reporte ajeno al lado, para que el de carga registre un aviso de posible duplicado.
     insert_report(conn, insert_user(conn), LON, LAT)
     form = {"longitude": str(LON), "latitude": str(LAT), "severity": "media"}
@@ -112,7 +112,7 @@ def test_remove_deletes_accounts_reports_warnings_and_photo_files(
 
 def test_remove_twice_does_not_fail(session: Session, photo_dir: Path) -> None:
     accounts = _accounts(session, photo_dir)
-    accounts.create(2, LOAD_PASSWORD)
+    accounts.create(2, PASSWORD)
     accounts.remove()
 
     assert accounts.remove() == 0
@@ -124,7 +124,7 @@ def test_remove_does_not_touch_other_users(
     other = insert_user(conn, "persona@example.test")
     insert_report(conn, other, LON, LAT)
     accounts = _accounts(session, photo_dir)
-    accounts.create(2, LOAD_PASSWORD)
+    accounts.create(2, PASSWORD)
 
     accounts.remove()
 
@@ -136,4 +136,4 @@ def test_count_must_be_positive(session: Session, photo_dir: Path) -> None:
     accounts = _accounts(session, photo_dir)
 
     with pytest.raises(ValueError, match="count"):
-        accounts.create(0, LOAD_PASSWORD)
+        accounts.create(0, PASSWORD)

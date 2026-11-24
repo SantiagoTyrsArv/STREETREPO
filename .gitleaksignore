@@ -1,0 +1,4 @@
+# Falsos positivos de gitleaks que ya están en el historial de main (no se reescribe).
+# Cada línea es la huella que imprime gitleaks: commit:archivo:regla:línea.
+# Contraseña de prueba de las cuentas de carga, solo en la base de pruebas (fila 148 de la bitácora).
+04bbcb70afe4c937463ee954db2af3ac64e66eb3:backend/tests/integration/test_loadtest_accounts.py:generic-api-key:32
