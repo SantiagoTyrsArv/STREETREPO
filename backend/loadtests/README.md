@@ -21,8 +21,8 @@ El script:
 2. carga OSM la primera vez, `seed-demo`, 60 cuentas de ciudadano
    (`loadtest-accounts --count 60`, en `@carga.example.com`) y un administrador, todas con
    contraseñas aleatorias que no se guardan;
-3. corre `locustfile.py` sin interfaz y deja los CSV y el HTML en `.superpowers/carga/`
-   (fuera de git);
+3. corre `locustfile.py` sin interfaz y deja los CSV y el HTML en
+   `.superpowers/carga/<fecha-hora>/` (fuera de git), una carpeta por corrida;
 4. al terminar, aunque falle, borra las cuentas de carga (con sus reportes y fotos) y los datos
    de demostración, y detiene el stack.
 

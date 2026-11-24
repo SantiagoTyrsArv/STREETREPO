@@ -9,7 +9,7 @@
 # Los límites de solicitudes se suben SOLO en este stack (variables de entorno de abajo): con
 # 50 usuarios desde una sola IP, los valores por defecto cortarían la prueba en segundos.
 # Al terminar, aunque Locust falle, se borran las cuentas de carga y los datos de demostración.
-# Los resultados (CSV y HTML de Locust) quedan en .superpowers/carga/, fuera de git.
+# Los resultados (CSV y HTML de Locust) quedan en .superpowers/carga/<fecha-hora>/, fuera de git.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -20,7 +20,8 @@ USERS="${LOAD_USERS:-50}"
 SPAWN_RATE="${LOAD_SPAWN_RATE:-5}"
 DURATION="${LOAD_DURATION:-5m}"
 ACCOUNTS="${LOAD_ACCOUNTS:-60}"
-OUT="$ROOT/.superpowers/carga"
+# Una carpeta por corrida: así no se pisan los resultados de corridas anteriores.
+OUT="$ROOT/.superpowers/carga/$(date +%Y%m%d-%H%M%S)"
 
 # Las variables del entorno mandan sobre las de --env-file.
 export POSTGRES_DB=streetrepo_load
@@ -63,13 +64,16 @@ cli api python -m app.cli seed-demo
 LOADTEST_PASSWORD="$(openssl rand -hex 16)"
 LOADTEST_ADMIN_EMAIL="carga-admin-$(date +%s)@carga.example.com"
 LOADTEST_ADMIN_PASSWORD="$(openssl rand -hex 16)"
-cli -e LOADTEST_PASSWORD="$LOADTEST_PASSWORD" api python -m app.cli loadtest-accounts --count "$ACCOUNTS"
+# `-e VARIABLE` sin valor la toma del entorno: la contraseña no queda en los argumentos del
+# proceso (visibles en la lista de procesos).
+export LOADTEST_PASSWORD
+cli -e LOADTEST_PASSWORD api python -m app.cli loadtest-accounts --count "$ACCOUNTS"
 printf '%s\n%s\n' "$LOADTEST_ADMIN_PASSWORD" "$LOADTEST_ADMIN_PASSWORD" |
   cli api python -m app.cli create-admin --name "Funcionario de carga" --email "$LOADTEST_ADMIN_EMAIL" >/dev/null 2>&1
 export LOADTEST_PASSWORD LOADTEST_ADMIN_EMAIL LOADTEST_ADMIN_PASSWORD
 
 mkdir -p "$OUT"
-echo "==> Locust: ${USERS} usuarios, ${SPAWN_RATE} nuevos por segundo, ${DURATION}"
+echo "==> Locust: ${USERS} usuarios, ${SPAWN_RATE} nuevos por segundo, ${DURATION} (resultados en ${OUT})"
 cd "$ROOT/backend"
 uv run locust -f loadtests/locustfile.py --headless \
   -u "$USERS" -r "$SPAWN_RATE" -t "$DURATION" \

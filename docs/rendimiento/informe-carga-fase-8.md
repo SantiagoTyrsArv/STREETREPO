@@ -75,4 +75,6 @@ infra/scripts/load-test.sh                                  # la corrida de este
 LOAD_DURATION=30s LOAD_USERS=5 infra/scripts/load-test.sh   # prueba de humo
 ```
 
-Los CSV y el HTML de Locust quedan en `.superpowers/carga/`, fuera de git.
+Los CSV y el HTML de Locust quedan en `.superpowers/carga/<fecha-hora>/`, fuera de git (desde la
+fila 149; la corrida de este informe se guardó antes en `.superpowers/carga/` y una corrida
+posterior la sobrescribió: sus cifras salen de la salida de consola, publicada en Linear, ARE-48).
