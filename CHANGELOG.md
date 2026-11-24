@@ -5,6 +5,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- Revisión de accesibilidad del panel con axe (`e2e/accesibilidad.spec.ts`, WCAG 2.2 AA): 0 hallazgos en
+  11 pantallas (fila 143).
 - Revisión de seguridad de la fase 8 (`docs/seguridad/revision-fase-8.md`, fila 142) con pruebas que
   exigen el rol en todas las rutas `/admin` y `/evaluation` y protegen el log de datos personales.
 - Límite global de solicitudes por IP (600 cada 5 min, `GLOBAL_REQUESTS_PER_IP` y
@@ -65,6 +67,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   10.3.3. TypeScript 7 y ESLint 10 se posponen hasta que sus dependientes los acepten. Dependabot
   vigila también `landing/`.
 - `httpx2` 2.16.2 (desarrollo) para `starlette.testclient`.
+- Panel: `@axe-core/playwright` 4.14.1 y `playwright-core` 1.65.0 (desarrollo).
 - Segunda tanda (fila 136): `setup-uv` 10.4.0; `prettier` 3.10.1, `jsdom` 31.0.1, `vite` 8.3.8 y
   `@testing-library/jest-dom` 8.0.0 en el panel y la página; `@tanstack/react-query` 5.108.2.
   React 19 en la página se pospone.
