@@ -5,6 +5,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- Límite global de solicitudes por IP (600 cada 5 min, `GLOBAL_REQUESTS_PER_IP` y
+  `GLOBAL_WINDOW_SECONDS`; fila 140) y cupo de inicio de sesión configurable
+  (`LOGIN_PER_IP_PER_5_MINUTES`).
 - Página de presentación: cabeceras de seguridad y caché larga en Vercel (`landing/vercel.json`) y
   presupuesto de peso comprobado en la CI (`scripts/check-media-budget.ts`). El QR de descarga se
   carga aparte, solo cuando hay un APK publicado.

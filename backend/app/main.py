@@ -1,5 +1,7 @@
 """Punto de entrada de la API de Street Repo."""
 
+from datetime import timedelta
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,6 +10,7 @@ from app import models as _orm_models  # noqa: F401  - registra todas las tablas
 from app.core.body_size_limit import BodySizeLimitMiddleware
 from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
+from app.core.global_rate_limit import GlobalRateLimitMiddleware
 from app.core.health import router as health_router
 from app.core.logging import CORRELATION_HEADER, RequestLoggingMiddleware, configure_logging
 from app.core.security_headers import SecurityHeadersMiddleware
@@ -24,6 +27,8 @@ from app.modules.reports.presentation.router import router as reports_router
 from app.modules.users.presentation.router import router as users_router
 from app.modules.validation.presentation.admin_router import router as validation_admin_router
 from app.modules.validation.presentation.evaluator_router import router as evaluator_router
+from app.shared.application.clock import SystemClock
+from app.shared.application.rate_limit import RateLimit
 from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
 
 API_V1_PREFIX = "/api/v1"
@@ -57,6 +62,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Starlette ejecuta primero el último middleware añadido. El límite de tamaño va por
     # dentro de los demás para que su 413 lleve CORS, cabeceras de seguridad y log.
     app.add_middleware(BodySizeLimitMiddleware, create_report_path=f"{API_V1_PREFIX}/reports")
+    # Límite global por IP (decisión 30c), también por dentro: su 429 lleva CORS y cabeceras.
+    app.add_middleware(
+        GlobalRateLimitMiddleware,
+        limiter=app.state.rate_limiter,
+        limit=RateLimit(
+            max_requests=settings.global_requests_per_ip,
+            window=timedelta(seconds=settings.global_window_seconds),
+        ),
+        clock=SystemClock(),
+    )
     app.add_middleware(SecurityHeadersMiddleware, enable_hsts=settings.is_production)
     app.add_middleware(RequestLoggingMiddleware)
     # CORS va por fuera de todos: responde el preflight antes que nada y añade sus

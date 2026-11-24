@@ -12,7 +12,7 @@ from fastapi import APIRouter, Cookie, Depends, Response, status
 
 from app.core.dependencies import SessionDep, SettingsDep
 from app.core.errors import AppError
-from app.core.rate_limiting import LOGIN_LIMIT_PER_IP, limit_per_client_ip, too_many_requests
+from app.core.rate_limiting import too_many_requests
 from app.modules.auth.application.errors import (
     AccountLockedError,
     InsufficientRoleError,
@@ -28,6 +28,7 @@ from app.modules.auth.presentation.dependencies import (
     LoginAttemptsDep,
     PasswordHasherDep,
     get_session_issuer,
+    limit_logins_per_ip,
 )
 from app.modules.auth.presentation.schemas import LoginRequest, WebTokenResponse
 from app.modules.auth.presentation.web_session import (
@@ -75,7 +76,7 @@ def _web_tokens(response: Response, tokens: TokenPair, ttl_days: int) -> WebToke
 
 @router.post(
     "/login",
-    dependencies=[Depends(limit_per_client_ip("login", LOGIN_LIMIT_PER_IP))],
+    dependencies=[Depends(limit_logins_per_ip)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Credenciales incorrectas"},
         status.HTTP_429_TOO_MANY_REQUESTS: {"description": "Demasiados intentos"},

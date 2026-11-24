@@ -192,7 +192,9 @@ Las vías o servicios eliminados de OSM no se borran de la base en una nueva car
   ese momento las recoge `python -m app.cli purge-orphan-photos` (conviene programarlo a diario). Cambiar el correo o suprimir la cuenta exige la
   contraseña actual. Decisiones en [ADR 0006](docs/adr/0006-derechos-del-titular.md).
 - Límite de intentos: bloqueo progresivo por correo tras 5 fallos seguidos (1 a 15 min) y límite por
-  IP en inicio de sesión (30 cada 5 min) y registro (30 por hora, `REGISTER_PER_IP_PER_HOUR`); responde
+  IP en inicio de sesión (30 cada 5 min, `LOGIN_PER_IP_PER_5_MINUTES`) y registro (30 por hora,
+  `REGISTER_PER_IP_PER_HOUR`), más un límite global para cualquier ruta (600 solicitudes cada 5 min
+  por IP, `GLOBAL_REQUESTS_PER_IP` y `GLOBAL_WINDOW_SECONDS`; `/health` y `/ready` no cuentan); responde
   429 con `Retry-After`. Los cupos por IP son holgados porque los operadores móviles comparten una IP
   entre muchos usuarios (decisión 58); para una prueba con varias personas en la misma red, súbelos en `.env`.
   Contadores en memoria de un solo proceso ([ADR 0005](docs/adr/0005-limite-de-intentos.md)).
