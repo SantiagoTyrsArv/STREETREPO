@@ -51,6 +51,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 - `scipy` 1.18.1 (y `scipy-stubs`) para las pruebas estadísticas del objetivo 4.
 - Panel: `@dnd-kit/core` 6.3.1, `@dnd-kit/sortable` 10.0.0 y `@dnd-kit/utilities` 3.2.2 para
   ordenar las tarjetas de la vista a ciegas.
+- Actualizaciones de Dependabot (fila 135 de la bitácora): uv 0.13.9, FastAPI 0.165.0,
+  SQLAlchemy 2.1.9, Alembic 1.20.1, pydantic-settings 2.16.3, ruff 0.17.6; Node 26 LTS en la CI y
+  en la imagen del panel; nginx-unprivileged 1.30.6 (estable); `@types/node` 26.6.6 y
+  `typescript-eslint` 8.74.0 en el panel y la página; `sonarqube-scan-action` 8.5.0 y `setup-uv`
+  10.3.3. TypeScript 7 y ESLint 10 se posponen hasta que sus dependientes los acepten. Dependabot
+  vigila también `landing/`.
 
 
 ### Retirado
