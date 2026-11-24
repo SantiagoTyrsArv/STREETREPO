@@ -5,6 +5,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- Revisión de seguridad de la fase 8 (`docs/seguridad/revision-fase-8.md`, fila 142) con pruebas que
+  exigen el rol en todas las rutas `/admin` y `/evaluation` y protegen el log de datos personales.
 - Límite global de solicitudes por IP (600 cada 5 min, `GLOBAL_REQUESTS_PER_IP` y
   `GLOBAL_WINDOW_SECONDS`; fila 140) y cupo de inicio de sesión configurable
   (`LOGIN_PER_IP_PER_5_MINUTES`).
