@@ -543,8 +543,9 @@ def test_login_with_allowed_roles_admits_an_evaluator(auth: Auth) -> None:
 def test_login_with_allowed_roles_rejects_a_role_outside_the_set(auth: Auth) -> None:
     auth.make_admin(auth.register())
 
+    allowed_roles = frozenset({UserRole.EVALUATOR})
     with pytest.raises(InsufficientRoleError):
-        auth.login(allowed_roles=frozenset({UserRole.EVALUATOR}))
+        auth.login(allowed_roles=allowed_roles)
 
 
 def test_refresh_with_allowed_roles_admits_an_evaluator(auth: Auth) -> None:

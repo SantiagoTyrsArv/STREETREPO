@@ -149,8 +149,9 @@ def test_a_zone_without_orders_has_no_agreement_and_stays_out_of_the_test() -> N
 
 
 def test_an_open_round_has_no_results_yet() -> None:
+    service = _service(HIGH, LOW, status=RoundStatus.OPEN)
     with pytest.raises(RoundStillOpenError):
-        _service(HIGH, LOW, status=RoundStatus.OPEN).results(ROUND_ID)
+        service.results(ROUND_ID)
 
 
 def test_an_unknown_round_is_not_found() -> None:

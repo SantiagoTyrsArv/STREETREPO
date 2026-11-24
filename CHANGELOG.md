@@ -33,6 +33,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ### Cambiado
 - Backend sin avisos de Sonar en el código de la aplicación (fila 138): sin cambios en la API.
+- Pruebas del backend sin avisos de Sonar ni de Starlette (fila 139).
 - Página de presentación: cada capítulo ocupa una pantalla y su animación corre sola al llegar,
   una vez por carga, con un imán de proximidad entre capítulos; «Pruébalo» cabe en una pantalla y
   las letras de la portada empiezan en ámbar. La página pasa de ~22 a 7,95 pantallas en el
@@ -58,6 +59,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   `typescript-eslint` 8.74.0 en el panel y la página; `sonarqube-scan-action` 8.5.0 y `setup-uv`
   10.3.3. TypeScript 7 y ESLint 10 se posponen hasta que sus dependientes los acepten. Dependabot
   vigila también `landing/`.
+- `httpx2` 2.16.2 (desarrollo) para `starlette.testclient`.
 - Segunda tanda (fila 136): `setup-uv` 10.4.0; `prettier` 3.10.1, `jsdom` 31.0.1, `vite` 8.3.8 y
   `@testing-library/jest-dom` 8.0.0 en el panel y la página; `@tanstack/react-query` 5.108.2.
   React 19 en la página se pospone.

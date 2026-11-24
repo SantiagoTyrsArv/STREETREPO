@@ -57,5 +57,7 @@ def test_non_finite_weights_are_rejected(value: str) -> None:
 
 
 def test_weights_are_immutable() -> None:
+    # Una instancia propia, no DEFAULT_WEIGHTS: la prueba no debe intentar tocar estado global.
+    weights = _weights("0.50", "0.30", "0.20")
     with pytest.raises(AttributeError):
-        DEFAULT_WEIGHTS.severity = Decimal("1")  # type: ignore[misc]
+        weights.severity = Decimal("1")  # type: ignore[misc]

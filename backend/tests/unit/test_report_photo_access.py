@@ -91,17 +91,19 @@ def test_another_citizen_cannot_tell_whether_the_report_exists(
 
 
 def test_report_without_a_photo() -> None:
+    use_case = _use_case(photo_key=None)
+    viewer = PhotoViewer(OWNER, is_admin=False)
     with pytest.raises(PhotoNotAvailableError):
-        _use_case(photo_key=None).execute(
-            REPORT, PhotoViewer(OWNER, is_admin=False), thumbnail=False
-        )
+        use_case.execute(REPORT, viewer, thumbnail=False)
 
 
 def test_missing_file_is_logged_and_treated_as_not_available(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
+    use_case = _use_case(files={})
+    viewer = PhotoViewer(OWNER, is_admin=False)
     with pytest.raises(PhotoNotAvailableError):
-        _use_case(files={}).execute(REPORT, PhotoViewer(OWNER, is_admin=False), thumbnail=False)
+        use_case.execute(REPORT, viewer, thumbnail=False)
 
     assert KEYS.photo in caplog.text
 

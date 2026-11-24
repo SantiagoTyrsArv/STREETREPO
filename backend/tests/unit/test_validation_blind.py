@@ -123,8 +123,9 @@ def test_valid_order_passes() -> None:
     ],
 )
 def test_invalid_orders_are_rejected(submitted: list[uuid.UUID]) -> None:
+    allowed_ids = set(IDS)
     with pytest.raises(InvalidOrderError):
-        validate_order(set(IDS), submitted)
+        validate_order(allowed_ids, submitted)
 
 
 # --- casos de uso -----------------------------------------------------------------------
@@ -208,8 +209,9 @@ def test_current_round_lists_zones_with_submitted_flag() -> None:
 
 
 def test_current_round_without_open_round_fails() -> None:
+    view_current_round = ViewCurrentRound(FakeRepository(open_round=None))
     with pytest.raises(NoOpenRoundError):
-        ViewCurrentRound(FakeRepository(open_round=None)).execute(EVALUATOR_A)
+        view_current_round.execute(EVALUATOR_A)
 
 
 def test_zone_view_shuffles_cards_per_evaluator() -> None:
@@ -232,13 +234,15 @@ def test_zone_view_reports_submission() -> None:
 
 
 def test_zone_view_of_a_zone_outside_the_round_fails() -> None:
+    view_zone = ViewZone(FakeRepository())
     with pytest.raises(ZoneNotInRoundError):
-        ViewZone(FakeRepository()).execute(EVALUATOR_A, 99)
+        view_zone.execute(EVALUATOR_A, 99)
 
 
 def test_zone_view_without_open_round_fails() -> None:
+    view_zone = ViewZone(FakeRepository(open_round=None))
     with pytest.raises(NoOpenRoundError):
-        ViewZone(FakeRepository(open_round=None)).execute(EVALUATOR_A, ZONE.id)
+        view_zone.execute(EVALUATOR_A, ZONE.id)
 
 
 def test_submit_saves_the_order_and_commits() -> None:
@@ -255,8 +259,9 @@ def test_submit_saves_the_order_and_commits() -> None:
 def test_submit_rejects_an_invalid_order_without_saving() -> None:
     repo, tx = FakeRepository(), FakeTransaction()
 
+    submit_order = SubmitOrder(repo, tx)
     with pytest.raises(InvalidOrderError):
-        SubmitOrder(repo, tx).execute(EVALUATOR_A, ZONE.id, [*IDS[:-1], OTHER_IDS[0]])
+        submit_order.execute(EVALUATOR_A, ZONE.id, [*IDS[:-1], OTHER_IDS[0]])
 
     assert repo.saved == []
     assert (tx.commits, tx.rollbacks) == (0, 1)
@@ -266,8 +271,9 @@ def test_submit_twice_is_rejected() -> None:
     repo, tx = FakeRepository(), FakeTransaction()
     repo.submitted.add((EVALUATOR_A, ZONE.id))
 
+    submit_order = SubmitOrder(repo, tx)
     with pytest.raises(OrderAlreadySubmittedError):
-        SubmitOrder(repo, tx).execute(EVALUATOR_A, ZONE.id, IDS)
+        submit_order.execute(EVALUATOR_A, ZONE.id, IDS)
 
     assert repo.saved == []
     assert tx.rollbacks == 1
@@ -277,8 +283,9 @@ def test_submit_race_is_reported_as_already_submitted() -> None:
     repo, tx = FakeRepository(), FakeTransaction()
     repo.race = True
 
+    submit_order = SubmitOrder(repo, tx)
     with pytest.raises(OrderAlreadySubmittedError):
-        SubmitOrder(repo, tx).execute(EVALUATOR_A, ZONE.id, IDS)
+        submit_order.execute(EVALUATOR_A, ZONE.id, IDS)
 
     assert (tx.commits, tx.rollbacks) == (0, 1)
 
@@ -286,8 +293,9 @@ def test_submit_race_is_reported_as_already_submitted() -> None:
 def test_submit_without_open_round_fails() -> None:
     tx = FakeTransaction()
 
+    submit_order = SubmitOrder(FakeRepository(open_round=None), tx)
     with pytest.raises(NoOpenRoundError):
-        SubmitOrder(FakeRepository(open_round=None), tx).execute(EVALUATOR_A, ZONE.id, IDS)
+        submit_order.execute(EVALUATOR_A, ZONE.id, IDS)
 
     assert tx.rollbacks == 1
 
@@ -295,8 +303,9 @@ def test_submit_without_open_round_fails() -> None:
 def test_submit_to_a_zone_outside_the_round_fails() -> None:
     tx = FakeTransaction()
 
+    submit_order = SubmitOrder(FakeRepository(), tx)
     with pytest.raises(ZoneNotInRoundError):
-        SubmitOrder(FakeRepository(), tx).execute(EVALUATOR_A, 99, IDS)
+        submit_order.execute(EVALUATOR_A, 99, IDS)
 
     assert tx.rollbacks == 1
 
@@ -326,7 +335,6 @@ def test_photo_outside_the_round_or_without_file_is_not_available() -> None:
 
 
 def test_photo_without_open_round_is_not_available() -> None:
+    get_blind_photo = GetBlindPhoto(FakeRepository(open_round=None), FakeReader({}))
     with pytest.raises(BlindPhotoNotAvailableError):
-        GetBlindPhoto(FakeRepository(open_round=None), FakeReader({})).execute(
-            IDS[0], thumbnail=True
-        )
+        get_blind_photo.execute(IDS[0], thumbnail=True)

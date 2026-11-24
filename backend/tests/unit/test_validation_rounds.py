@@ -81,8 +81,9 @@ def test_zone_with_exactly_n_reports_enters_whole() -> None:
 
 
 def test_zone_with_four_reports_is_too_small() -> None:
+    zone = _zone(1, 4)
     with pytest.raises(ZoneTooSmallError) as error:
-        sample_and_rank(_zone(1, 4), 10, seed=1)
+        sample_and_rank(zone, 10, seed=1)
 
     assert (error.value.zone_name, error.value.count) == ("1", 4)
 
@@ -90,8 +91,9 @@ def test_zone_with_four_reports_is_too_small() -> None:
 def test_zone_without_candidates_is_too_small_when_names_are_given() -> None:
     names = {1: "Centro", 2: "Obonuco"}
 
+    zone = _zone(1, 8)
     with pytest.raises(ZoneTooSmallError) as error:
-        sample_and_rank(_zone(1, 8), 10, seed=1, zone_names=names)
+        sample_and_rank(zone, 10, seed=1, zone_names=names)
 
     assert (error.value.zone_name, error.value.count) == ("Obonuco", 0)
 

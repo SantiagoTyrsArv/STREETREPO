@@ -123,8 +123,9 @@ def test_import_zones_rolls_back_when_the_repository_rejects_the_zones() -> None
     repository = _FakeRepository(fail=InvalidZonesError("La zona «Centro» se solapa"))
     use_case = ImportZones(repository, _FakeTransaction(repository.events))
 
+    collection = _collection(_feature("Centro"))
     with pytest.raises(InvalidZonesError):
-        use_case.execute(_collection(_feature("Centro")))
+        use_case.execute(collection)
 
     assert repository.events == ["upsert", "rollback"]
 
@@ -132,7 +133,9 @@ def test_import_zones_rolls_back_when_the_repository_rejects_the_zones() -> None
 def test_import_zones_does_not_touch_the_database_with_a_bad_file() -> None:
     repository = _FakeRepository()
 
+    import_zones = ImportZones(repository, _FakeTransaction(repository.events))
+    collection = _collection()
     with pytest.raises(InvalidZonesError):
-        ImportZones(repository, _FakeTransaction(repository.events)).execute(_collection())
+        import_zones.execute(collection)
 
     assert repository.events == []

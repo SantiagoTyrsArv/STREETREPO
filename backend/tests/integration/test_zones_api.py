@@ -128,8 +128,9 @@ def test_overlapping_polygons_change_nothing(session: Session, conn: Connection)
     report = insert_report(conn, author, -80.0, 0.0)
     overlapping = _feature("Norte", "baja", _square(-80.005, -0.005, -79.985, 0.02))
 
+    collection = _collection(CENTRO, overlapping)
     with pytest.raises(InvalidZonesError, match=r"Centro.*Norte|Norte.*Centro"):
-        _import(session, _collection(CENTRO, overlapping))
+        _import(session, collection)
 
     assert _zone_count(conn) == 0
     assert _zone_of(conn, report) is None
@@ -141,8 +142,9 @@ def test_overlap_with_an_existing_zone_is_rejected_and_keeps_the_previous_state(
     _import(session, _collection(CENTRO))
     overlapping = _feature("Norte", "baja", _square(-80.005, -0.005, -79.985, 0.02))
 
+    collection = _collection(overlapping)
     with pytest.raises(InvalidZonesError, match="Norte"):
-        _import(session, _collection(overlapping))
+        _import(session, collection)
 
     assert _zone_count(conn) == 1
     assert _zone_row(conn, "Centro").concentracion == "alta"
@@ -160,8 +162,9 @@ def test_self_intersecting_polygon_is_rejected(session: Session, conn: Connectio
         "coordinates": [[[-80.0, 0.0], [-79.99, 0.01], [-79.99, 0.0], [-80.0, 0.01], [-80.0, 0.0]]],
     }
 
+    collection = _collection(_feature("Corbata", "alta", bowtie))
     with pytest.raises(InvalidZonesError, match="Corbata"):
-        _import(session, _collection(_feature("Corbata", "alta", bowtie)))
+        _import(session, collection)
 
     assert _zone_count(conn) == 0
 
@@ -169,8 +172,9 @@ def test_self_intersecting_polygon_is_rejected(session: Session, conn: Connectio
 def test_unreadable_polygon_is_rejected(session: Session, conn: Connection) -> None:
     broken = {"type": "Polygon", "coordinates": [[["x", "y"]]]}
 
+    collection = _collection(_feature("Rota", "alta", broken))
     with pytest.raises(InvalidZonesError, match="Rota"):
-        _import(session, _collection(_feature("Rota", "alta", broken)))
+        _import(session, collection)
 
 
 def test_a_report_created_inside_a_zone_gets_its_zone(
