@@ -16,7 +16,7 @@ Este archivo es la fuente de instrucciones para construir el software. Léelo co
 Cuando dos fuentes se contradigan, manda la de mayor nivel:
 
 1. **Documento de la tesis** (`CTG_Noviembre_SantiagoArevalo.docx`, en la carpeta que contiene el repositorio; versión vigente desde el 2026-11-14, decisión 97): alcance, objetivos, historias de usuario, requisitos y reglas del modelo.
-2. **Diagramas** (Lucid: ER y Clases): estructura de datos y de dominio.
+2. **Diagramas** (Mermaid en [`docs/diagramas/`](docs/diagramas/README.md): ER, Clases, Componentes y Despliegue; reemplazan a los de Lucid desde el 2026-11-23, fila 129 de la bitácora): estructura de datos y de dominio.
 3. **Diseño en Figma** (https://www.figma.com/design/wjbs0QbgIJvRiduvFAimAI): interfaz, flujos y tokens visuales.
 4. **Esta guía**: stack, arquitectura y prácticas.
 
@@ -78,7 +78,7 @@ Consulta los diagramas para los atributos exactos. Entidades confirmadas en esta
 - `evaluacion` (resultado del cálculo de prioridad de un reporte)
 - `servicio_critico` (escuelas, hospitales, etc., obtenidos de OSM)
 
-Entidades y columnas añadidas por propuestas **aprobadas** (ya reflejadas en el ER de Lucid; ver bitácora, sección 17):
+Entidades y columnas añadidas por propuestas **aprobadas** (reflejadas en `docs/diagramas/er.md`; ver bitácora, sección 17):
 - `via.geom` y `via.highway_osm` (propuestas 6 y 7)
 - `usuario.version_politica` (propuesta 8)
 - `token_refresco` (propuesta 9)
@@ -86,7 +86,7 @@ Entidades y columnas añadidas por propuestas **aprobadas** (ya reflejadas en el
 - `reporte.clave_idempotencia` con restricción única (id_usuario, clave_idempotencia) (propuesta 11)
 - `confirmacion.distancia_m` (propuesta 112; NULL en las confirmaciones anteriores a la migración 0008)
 
-Añadidas por el diseño del objetivo 4 (decisión 115, migración 0009; falta reflejarlas en el ER de Lucid, el conector solo tiene lectura):
+Añadidas por el diseño del objetivo 4 (decisión 115, migración 0009; reflejadas en `docs/diagramas/er.md`):
 - `zona.concentracion` (`alta` / `baja`) y nombre único de `zona`
 - `ronda_evaluacion`, `ronda_reporte` (reportes congelados con su U y orden del motor) y `orden_evaluador`
 - `aviso_duplicado` y `aviso_duplicado_candidato` (avisos de «Posible duplicado» y su decisión)
@@ -636,7 +636,6 @@ Al cerrar cada fase: actualizar el `README`, la bitácora (sección 17) y, si al
 **Lo siguiente:** la prueba piloto real, que necesita las zonas reales de Pasto (`zones-import`), reportes de campo y el panel de referentes. Después, el endurecimiento (fase 8).
 
 **Pendiente del responsable:**
-- añadir al ER de Lucid las tablas de la migración 0009, `zona.concentracion` y el rol `evaluador`;
 - probar en el celular la lista de `mobile/README.md` (propuesta 112 y avisos de duplicado).
 
 **Estado (2026-11-19), punto de reanudación — página de presentación y descarga (`landing/`, decisión 99, Linear ARE-46):** diseño en `docs/superpowers/specs/2026-11-19-landing-descarga-apk-design.md` y plan en `docs/superpowers/plans/2026-11-19-landing-descarga-apk.md` (9 tareas, ejecución directa). **Hechas e integradas en `main`:** tarea 1 (andamiaje, tokens, fuentes y CI), 3 (marca: símbolo «SR» en blanco con la vía y el Galeras, elegido por el responsable), 5 (motor de secuencias), 6 (capítulos, *scroll* y textos; los textos esperan la revisión del responsable), 7 (teléfono 3D con capturas reales tomadas en el emulador; fila 106), 8 (panel, descarga con «Próximamente», «Saltar a la descarga» y pie; fila 105) y 4 (escenas: el responsable aprobó una toma de Seedance por escena y formato; secuencias WebP de 16 fps con `scripts/build-sequences.ts`, escritorio 19 MB y móvil 23 MB; fila 107); desplegada en https://streetrepo.vercel.app/ (importada por el responsable). Además, fondo vivo y microinteracciones (fila 108, diseño y plan `2026-11-19-landing-fondo-vivo`). **Pendientes:** tarea 2 (`vercel.json` con cabeceras de seguridad y caché larga de `/media/`); tarea 9 (presupuesto de medios, Lighthouse, prueba en el celular, documentación); y la revisión final de la rama completa. El registro de avance de la ejecución está en `.superpowers/sdd/2026-11-19-landing-descarga-apk/progress.md` (local, fuera de git); las decisiones, en las filas 99 a 108 de la bitácora. La cuenta de Higgsfield del conector de Claude Code tiene 3 créditos.

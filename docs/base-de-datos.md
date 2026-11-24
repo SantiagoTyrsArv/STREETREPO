@@ -1,7 +1,7 @@
 # Base de datos
 
-Fuente: diagrama ER en Lucid ("Street Repo - Diagrama Entidad-Relación"). Migración:
-`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`, 0005 pesos iniciales, 0006 autenticación y derechos del titular, 0007 clave de idempotencia del reporte).
+Fuente: diagrama ER en Mermaid, [`docs/diagramas/er.md`](diagramas/er.md) (hasta el 2026-11-23, el DER de Lucid). Migración:
+`backend/migrations/versions/` (0002 esquema inicial, 0003 geometría de `via`, 0004 `via.highway_osm`, 0005 pesos iniciales, 0006 autenticación y derechos del titular, 0007 clave de idempotencia del reporte, 0008 distancia de la confirmación, 0009 objetivo 4: zonas con concentración, rondas, órdenes a ciegas y avisos de duplicado).
 
 Las tablas y columnas usan los nombres del diagrama (español). El código usa nombres en inglés
 (guía 9.1); este es el mapeo.
