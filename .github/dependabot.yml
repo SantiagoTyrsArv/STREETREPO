@@ -20,6 +20,26 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: react-leaflet
         update-types: ["version-update:semver-major"]
+      # TypeScript 7 y ESLint 10 esperan a sus dependientes (fila 135 de la bitácora):
+      # openapi-typescript no acepta TypeScript 7 y eslint-plugin-jsx-a11y no acepta ESLint 10.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: npm
+    directory: /landing
+    schedule:
+      interval: weekly
+    ignore:
+      # Mismas versiones de TypeScript y ESLint que el panel (fila 135 de la bitácora).
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -32,3 +52,6 @@ updates:
       # Python 3.13 por la decisión 2; quitar esta regla si se decide migrar a 3.14 o superior.
       - dependency-name: python
         versions: [">= 3.14"]
+      # nginx: solo la rama estable (minor par); las impares son la rama de desarrollo (fila 135).
+      - dependency-name: nginxinc/nginx-unprivileged
+        versions: ["1.31.x", "1.33.x", "1.35.x"]
