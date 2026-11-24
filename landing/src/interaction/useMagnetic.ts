@@ -12,7 +12,7 @@ const px = (value: number) => `${Number(value.toFixed(2)) + 0}px`;
  * Botón «imán»: se acerca al cursor cuando pasa cerca (radio 80 px, hasta 8 px) y publica en
  * `--spot-x`/`--spot-y` el punto del botón bajo el cursor, para un brillo que lo sigue (CSS).
  */
-export function useMagnetic(ref: RefObject<HTMLElement>, enabled: boolean): void {
+export function useMagnetic(ref: RefObject<HTMLElement | null>, enabled: boolean): void {
   useEffect(() => {
     const el = ref.current;
     if (!enabled || !el || !window.matchMedia(FINE_POINTER).matches) return;

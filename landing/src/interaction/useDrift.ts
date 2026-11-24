@@ -22,7 +22,10 @@ const px = (value: number) => `${Number(value.toFixed(2)) + 0}px`;
  * Paralaje: desplaza el elemento hacia el puntero o el dedo (y lo devuelve al centro en reposo).
  * Escribe `transform` en cada cuadro de `gsap.ticker`, sin re-renderizar React.
  */
-export function useDrift(ref: RefObject<HTMLElement>, { enabled, maxShift = 0.012 }: DriftOptions) {
+export function useDrift(
+  ref: RefObject<HTMLElement | null>,
+  { enabled, maxShift = 0.012 }: DriftOptions,
+) {
   useEffect(() => {
     const el = ref.current;
     if (!enabled || !el) return;

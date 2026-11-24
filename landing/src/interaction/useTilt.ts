@@ -18,7 +18,10 @@ const deg = (value: number) => `${Number(value.toFixed(2)) + 0}deg`;
  * Inclinación 3D hacia el puntero o el dedo (de frente en reposo). Publica además
  * `--tilt-x`/`--tilt-y` (−1…1) para que el CSS mueva un reflejo en sentido contrario.
  */
-export function useTilt(ref: RefObject<HTMLElement>, { enabled, maxDeg = 4 }: TiltOptions): void {
+export function useTilt(
+  ref: RefObject<HTMLElement | null>,
+  { enabled, maxDeg = 4 }: TiltOptions,
+): void {
   useEffect(() => {
     const el = ref.current;
     if (!enabled || !el) return;

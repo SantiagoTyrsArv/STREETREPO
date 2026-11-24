@@ -5,6 +5,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Cambiado
+- Página de presentación en React 19 con `@react-three/fiber` 9, `drei` 10 y `three` 0.187 (fila 150);
+  sin cambios visibles.
 - `/docs/oauth2-redirect` exenta del límite global; la prueba de carga no expone la contraseña en los
   argumentos y guarda cada corrida en su propia carpeta (fila 149).
 

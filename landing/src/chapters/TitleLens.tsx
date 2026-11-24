@@ -23,7 +23,7 @@ function canvas2dAvailable(): boolean {
  * recorta con las palabras en su posición real. El `h2` sigue en la página (accesible); solo su
  * relleno se vuelve transparente mientras la lupa funciona.
  */
-export function TitleLens({ section }: { section: RefObject<HTMLElement> }) {
+export function TitleLens({ section }: { section: RefObject<HTMLElement | null> }) {
   const supported = useClientCheck(canvas2dAvailable);
   const ref = useRef<HTMLCanvasElement>(null);
 
