@@ -13,6 +13,9 @@ updates:
       # @playwright/test; si se separan, los tipos de Page chocan (fila 143).
       playwright:
         patterns: ["@playwright/test", "playwright-core"]
+      # vitest y @vitest/coverage-v8 piden la misma versión exacta: separados, la CI falla (#41).
+      vitest:
+        patterns: ["vitest", "@vitest/*"]
     ignore:
       # React 18 por el plan de la fase 6 (react-leaflet 4); migrar a 19 es una decisión aparte.
       - dependency-name: react
@@ -37,6 +40,9 @@ updates:
     directory: /landing
     schedule:
       interval: weekly
+    groups:
+      vitest:
+        patterns: ["vitest", "@vitest/*"]
     ignore:
       # React 19 exige @react-three/fiber 9 y drei 10, que cambian la escena del teléfono 3D;
       # se migra junto, como decisión aparte (fila 136 de la bitácora).
