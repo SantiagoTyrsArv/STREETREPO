@@ -113,7 +113,10 @@ Antes de recargar los datos de demostración borra las rondas de la ejecución a
 retienen sus reportes.
 
 Va aparte porque guardar pesos crea versiones que no se borran y recalcula todos los
-reportes activos; así no toca la base de desarrollo. No corre en la CI: necesita los datos de OSM.
+reportes activos; así no toca la base de desarrollo. En GitHub Actions corre en su propio flujo
+(`.github/workflows/e2e.yml`) en cada *push* a `main` que toque backend, panel o infraestructura.
+Con `E2E_OSM_DUMP=<archivo>` carga los datos de OSM desde ese volcado, o lo crea tras importarlos
+la primera vez: así la CI no consulta Overpass en cada ejecución.
 La primera vez hay que instalar el navegador: `cd admin-web && npx playwright install chromium`.
 
 ## Desarrollo del backend

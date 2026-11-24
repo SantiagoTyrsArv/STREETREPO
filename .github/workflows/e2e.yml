@@ -1,0 +1,72 @@
+name: E2E del panel
+
+# Pruebas de punta a punta del panel (Playwright) contra el stack real de Docker Compose:
+# flujos de priorización, estado y pesos, la ronda de evaluación a ciegas y la revisión de
+# accesibilidad con axe (fila 151 de la bitácora). Van aparte de la CI principal porque
+# levantan la base, la API y el panel y tardan más.
+#
+# Datos de OSM: el script los carga desde un volcado guardado en la caché de GitHub, que se
+# renueva cada mes. Solo cuando la caché está vacía se hace una carga desde Overpass, así no se
+# consulta en cada ejecución (guía 3.1).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "admin-web/**"
+      - "infra/**"
+      - ".github/workflows/e2e.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26 # LTS
+          cache: npm
+          cache-dependency-path: admin-web/package-lock.json
+      - name: Instalar el panel y el navegador de Playwright
+        working-directory: admin-web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: .env de prueba (claves aleatorias de esta ejecución)
+        run: |
+          cp .env.example .env
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 16)/" .env
+          sed -i "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=$(openssl rand -hex 32)/" .env
+      - name: Mes del volcado de OSM
+        id: osm
+        run: |
+          echo "month=$(date +%Y-%m)" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/osm"
+      - name: Volcado de OSM en caché
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/osm
+          key: osm-e2e-${{ hashFiles('backend/migrations/versions/**') }}-${{ steps.osm.outputs.month }}
+      - name: Pruebas de punta a punta
+        env:
+          E2E_OSM_DUMP: ${{ runner.temp }}/osm/osm-e2e.sql
+        run: infra/scripts/e2e-panel.sh --reporter=list
+      - name: Informe de Playwright si falla
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-e2e
+          path: |
+            admin-web/test-results
+            admin-web/playwright-report
+          retention-days: 7

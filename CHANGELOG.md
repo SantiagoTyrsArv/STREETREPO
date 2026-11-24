@@ -4,6 +4,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Añadido
+- Pruebas de punta a punta del panel en GitHub Actions (`.github/workflows/e2e.yml`), con el volcado de
+  OSM en caché para no llamar a Overpass en cada ejecución (fila 151).
+
 ### Cambiado
 - Página de presentación en React 19 con `@react-three/fiber` 9, `drei` 10 y `three` 0.187 (fila 150);
   sin cambios visibles.

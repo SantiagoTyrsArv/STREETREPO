@@ -34,9 +34,21 @@ trap '"${COMPOSE[@]}" stop >/dev/null 2>&1 || true' EXIT
 
 roads="$("${COMPOSE[@]}" exec -T db sh -c \
   'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At -c "SELECT count(*) FROM via"')"
-if [[ "$roads" == "0" ]]; then
+# E2E_OSM_DUMP (opcional, lo usa la CI): volcado de las tablas de OSM para no llamar a
+# Overpass en cada ejecución (guía 3.1). Si existe, se carga; si no, se crea tras importar.
+if [[ "$roads" == "0" && -n "${E2E_OSM_DUMP:-}" && -s "${E2E_OSM_DUMP}" ]]; then
+  echo "==> Cargando vías y servicios críticos desde ${E2E_OSM_DUMP}"
+  "${COMPOSE[@]}" exec -T db sh -c \
+    'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -q' <"${E2E_OSM_DUMP}" >/dev/null
+elif [[ "$roads" == "0" ]]; then
   echo "==> Cargando vías y servicios críticos de OSM (solo la primera vez)"
   cli osm-import
+  if [[ -n "${E2E_OSM_DUMP:-}" ]]; then
+    echo "==> Guardando el volcado de OSM en ${E2E_OSM_DUMP}"
+    "${COMPOSE[@]}" exec -T db sh -c \
+      'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --data-only -t via -t servicio_critico' \
+      >"${E2E_OSM_DUMP}"
+  fi
 fi
 
 psql_e2e() {
