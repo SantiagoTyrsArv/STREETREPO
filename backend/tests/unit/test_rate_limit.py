@@ -6,8 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import Settings
-from app.core.rate_limiting import LOGIN_LIMIT_PER_IP, retry_after_seconds
-from app.main import API_V1_PREFIX
+from app.core.rate_limiting import retry_after_seconds
+from app.main import API_V1_PREFIX, create_app
 from app.shared.application.rate_limit import RateLimit, RateLimitExceededError
 from app.shared.infrastructure.memory_rate_limiter import InMemoryRateLimiter
 
@@ -84,7 +84,7 @@ def test_retry_after_rounds_up_to_whole_seconds(delta: timedelta, seconds: int) 
 @pytest.mark.parametrize("path", ["/auth/login", "/auth/register"])
 def test_auth_routes_are_limited_per_ip(client: TestClient, settings: Settings, path: str) -> None:
     limit = (
-        LOGIN_LIMIT_PER_IP
+        RateLimit(max_requests=settings.login_per_ip_per_5_minutes, window=timedelta(minutes=5))
         if path == "/auth/login"
         else RateLimit(max_requests=settings.register_per_ip_per_hour, window=timedelta(hours=1))
     )
@@ -105,3 +105,13 @@ def test_other_routes_are_not_limited(client: TestClient) -> None:
     statuses = {client.get("/health").status_code for _ in range(40)}
 
     assert statuses == {200}
+
+
+def test_login_limit_per_ip_is_configurable(settings: Settings) -> None:
+    custom = settings.model_copy(update={"login_per_ip_per_5_minutes": 2})
+    client = TestClient(create_app(custom), raise_server_exceptions=False)
+    url = f"{API_V1_PREFIX}/auth/login"
+
+    statuses = [client.post(url, json={}).status_code for _ in range(3)]
+
+    assert statuses == [422, 422, 429]

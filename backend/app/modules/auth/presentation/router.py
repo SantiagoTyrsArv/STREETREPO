@@ -7,8 +7,6 @@ from fastapi import APIRouter, Depends, Response, status
 from app.core.dependencies import SessionDep, SettingsDep
 from app.core.errors import AppError
 from app.core.rate_limiting import (
-    LOGIN_LIMIT_PER_IP,
-    limit_per_client_ip,
     too_many_requests,
 )
 from app.modules.auth.application.errors import (
@@ -29,6 +27,7 @@ from app.modules.auth.presentation.dependencies import (
     LoginAttemptsDep,
     PasswordHasherDep,
     get_session_issuer,
+    limit_logins_per_ip,
     limit_registrations_per_ip,
 )
 from app.modules.auth.presentation.schemas import (
@@ -132,7 +131,7 @@ def register(
 
 @router.post(
     "/login",
-    dependencies=[Depends(limit_per_client_ip("login", LOGIN_LIMIT_PER_IP))],
+    dependencies=[Depends(limit_logins_per_ip)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Credenciales incorrectas"},
         **_TOO_MANY_REQUESTS_DOC,

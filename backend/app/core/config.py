@@ -68,6 +68,13 @@ class Settings(BaseSettings):
     # Registros por hora desde una misma IP (decisión 25; holgado por el CGNAT, decisión 58).
     # El límite por correo del inicio de sesión no depende de esto.
     register_per_ip_per_hour: int = Field(default=30, ge=1)
+    # Intentos de inicio de sesión por IP cada 5 minutos (decisión 25). El bloqueo por correo
+    # es el que frena la fuerza bruta; este cupo se sube solo en el entorno de carga.
+    login_per_ip_per_5_minutes: int = Field(default=30, ge=1)
+    # Límite global por IP para cualquier ruta (decisión 30c): 600 cada 5 minutos, holgado
+    # por el CGNAT (decisión 58) y las miniaturas del panel. /health y /ready no cuentan.
+    global_requests_per_ip: int = Field(default=600, ge=1)
+    global_window_seconds: int = Field(default=300, ge=1)
 
     # Versión vigente de la política de tratamiento de datos (Ley 1581). El registro
     # exige que el ciudadano haya aceptado exactamente esta versión.

@@ -36,6 +36,16 @@ def limit_registrations_per_ip(
     limit_per_client_ip("register", limit)(request, limiter)
 
 
+def limit_logins_per_ip(request: Request, limiter: RateLimiterDep, settings: SettingsDep) -> None:
+    """Cupo de inicios de sesión por IP (decisión 25), configurable (fila 140 de la bitácora).
+
+    Holgado a propósito: en la universidad o en redes móviles muchos ciudadanos salen a
+    internet con la misma IP. El bloqueo por correo es el que frena la fuerza bruta.
+    """
+    limit = RateLimit(max_requests=settings.login_per_ip_per_5_minutes, window=timedelta(minutes=5))
+    limit_per_client_ip("login", limit)(request, limiter)
+
+
 def get_password_hasher() -> Argon2PasswordHasher:
     return _password_hasher
 
