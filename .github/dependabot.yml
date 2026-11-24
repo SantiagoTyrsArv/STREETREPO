@@ -33,6 +33,20 @@ updates:
     schedule:
       interval: weekly
     ignore:
+      # React 19 exige @react-three/fiber 9 y drei 10, que cambian la escena del teléfono 3D;
+      # se migra junto, como decisión aparte (fila 136 de la bitácora).
+      - dependency-name: react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react-dom
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@react-three/fiber"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@react-three/drei"
+        update-types: ["version-update:semver-major"]
       # Mismas versiones de TypeScript y ESLint que el panel (fila 135 de la bitácora).
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
@@ -52,6 +66,8 @@ updates:
       # Python 3.13 por la decisión 2; quitar esta regla si se decide migrar a 3.14 o superior.
       - dependency-name: python
         versions: [">= 3.14"]
-      # nginx: solo la rama estable (minor par); las impares son la rama de desarrollo (fila 135).
+      # nginx: solo parches de la rama estable. Los minor impares son la rama de desarrollo y
+      # el patrón de versiones no reconoce las etiquetas «-alpine», así que se excluyen todos los
+      # minor; el paso a la siguiente estable se hace a mano (filas 135 y 136).
       - dependency-name: nginxinc/nginx-unprivileged
-        versions: ["1.31.x", "1.33.x", "1.35.x"]
+        update-types: ["version-update:semver-minor"]
