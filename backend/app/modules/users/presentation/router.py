@@ -73,7 +73,7 @@ def _password_confirmation_errors() -> Iterator[None]:
         ) from exc
 
 
-@router.get("", response_model=UserResponse)
+@router.get("")
 def get_my_data(user: CurrentUserDep) -> UserResponse:
     """Datos personales que el sistema guarda del usuario autenticado."""
     return UserResponse.from_user(user)
@@ -81,7 +81,6 @@ def get_my_data(user: CurrentUserDep) -> UserResponse:
 
 @router.patch(
     "",
-    response_model=UserResponse,
     responses={
         status.HTTP_409_CONFLICT: {"description": "El correo ya es de otra cuenta"},
         **_PASSWORD_CONFIRMATION_DOC,
@@ -113,7 +112,6 @@ def update_my_data(
 
 @router.post(
     "/data-deletion-requests",
-    response_model=DataDeletionResponse,
     status_code=status.HTTP_201_CREATED,
     responses=_PASSWORD_CONFIRMATION_DOC,
 )

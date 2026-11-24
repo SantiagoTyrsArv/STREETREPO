@@ -44,7 +44,6 @@ _DOC: dict[int | str, dict[str, Any]] = {
 
 @router.post(
     "/{report_id}/confirmations",
-    response_model=ConfirmationResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(forbid_evaluator)],
     responses=_DOC,

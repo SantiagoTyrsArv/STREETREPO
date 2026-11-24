@@ -12,7 +12,7 @@ from app.modules.reports.presentation.schemas import MyReportsResponse
 router = APIRouter(prefix="/me/reports", tags=["mis reportes"])
 
 
-@router.get("", response_model=MyReportsResponse)
+@router.get("")
 def list_my_reports(
     user: CurrentUserDep,
     use_case: ListMyReportsDep,

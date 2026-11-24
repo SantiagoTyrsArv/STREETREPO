@@ -49,7 +49,7 @@ def parse_bbox(raw: str) -> BoundingBox:
     return BoundingBox.parse_min_max(raw)
 
 
-@router.get("/ranking", response_model=RankingResponse)
+@router.get("/ranking")
 def get_ranking(
     use_case: ReadDashboardDep,
     status_filter: Annotated[list[ReportStatus] | None, Query(alias="status")] = None,
@@ -65,7 +65,7 @@ def get_ranking(
     return RankingResponse.from_page(page, limit, offset)
 
 
-@router.get("/summary", response_model=SummaryResponse)
+@router.get("/summary")
 def get_summary(use_case: ReadDashboardDep) -> SummaryResponse:
     """Indicadores del encabezado: Activos · Evaluados · Priorizados · Reparados."""
     return SummaryResponse.from_summary(use_case.summary())
@@ -73,7 +73,6 @@ def get_summary(use_case: ReadDashboardDep) -> SummaryResponse:
 
 @router.get(
     "/heatmap",
-    response_model=HeatmapResponse,
     responses={422: {"description": "Rectángulo mal formado (INVALID_BBOX)"}},
 )
 def get_heatmap(
@@ -100,7 +99,6 @@ def get_heatmap(
 
 @router.get(
     "/reports/{report_id}",
-    response_model=AdminReportResponse,
     responses={404: {"description": "El reporte no existe (REPORT_NOT_FOUND)"}},
 )
 def get_admin_report(report_id: uuid.UUID, use_case: GetAdminReportDep) -> AdminReportResponse:
@@ -117,7 +115,6 @@ def get_admin_report(report_id: uuid.UUID, use_case: GetAdminReportDep) -> Admin
 
 @router.patch(
     "/reports/{report_id}/status",
-    response_model=AdminReportResponse,
     responses={
         404: {"description": "El reporte no existe (REPORT_NOT_FOUND)"},
         409: {
@@ -159,7 +156,6 @@ def _weights_not_configured() -> AppError:
 
 @router.get(
     "/weights",
-    response_model=WeightVersionResponse,
     responses={404: {"description": "No hay pesos vigentes (WEIGHTS_NOT_CONFIGURED)"}},
 )
 def get_current_weights(use_case: ManageWeightsDep) -> WeightVersionResponse:
@@ -172,7 +168,6 @@ def get_current_weights(use_case: ManageWeightsDep) -> WeightVersionResponse:
 
 @router.put(
     "/weights",
-    response_model=WeightsSavedResponse,
     responses={
         409: {
             "description": "Otro administrador guardó una versión después de base_version_id "
@@ -204,7 +199,7 @@ def save_weights(
     return WeightsSavedResponse.from_saved(saved)
 
 
-@router.get("/weights/versions", response_model=WeightVersionsResponse)
+@router.get("/weights/versions")
 def list_weight_versions(
     use_case: ManageWeightsDep,
     limit: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = DEFAULT_PAGE_SIZE,

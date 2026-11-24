@@ -24,6 +24,9 @@ from app.core.database import Base
 
 # Los tipos los crea la migración 0009; los modelos solo los referencian. Se mapean como texto
 # (los valores del piloto no se usan fuera de esta infraestructura hasta la tarea 2).
+# Columnas referenciadas por varias claves foráneas de este módulo.
+USER_ID_COLUMN = "usuario.id_usuario"
+REPORT_ID_COLUMN = "reporte.id_reporte"
 ROUND_STATE_TYPE = ENUM("abierta", "cerrada", name="estado_ronda", create_type=False)
 WARNING_DECISION_TYPE = ENUM(
     "pendiente", "confirmo", "creo_igual", name="decision_aviso", create_type=False
@@ -57,7 +60,7 @@ class EvaluationRoundModel(Base):
         "id_config", ForeignKey("configuracion_pesos.id_config", ondelete="RESTRICT")
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
-        "id_usuario", ForeignKey("usuario.id_usuario", ondelete="RESTRICT")
+        "id_usuario", ForeignKey(USER_ID_COLUMN, ondelete="RESTRICT")
     )
     opened_at: Mapped[datetime] = mapped_column(
         "fecha_apertura", DateTime(timezone=True), server_default=func.now()
@@ -78,7 +81,7 @@ class RoundReportModel(Base):
     )
     # RESTRICT: un reporte que está en una ronda no se borra (la evidencia debe poder reproducirse).
     report_id: Mapped[uuid.UUID] = mapped_column(
-        "id_reporte", ForeignKey("reporte.id_reporte", ondelete="RESTRICT"), primary_key=True
+        "id_reporte", ForeignKey(REPORT_ID_COLUMN, ondelete="RESTRICT"), primary_key=True
     )
     zone_id: Mapped[int] = mapped_column("id_zona", ForeignKey("zona.id_zona", ondelete="RESTRICT"))
     priority_score: Mapped[Decimal] = mapped_column("puntaje_u", Numeric(4, 2))
@@ -101,7 +104,7 @@ class EvaluatorOrderModel(Base):
 
     round_id: Mapped[uuid.UUID] = mapped_column("id_ronda", primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(
-        "id_usuario", ForeignKey("usuario.id_usuario", ondelete="RESTRICT"), primary_key=True
+        "id_usuario", ForeignKey(USER_ID_COLUMN, ondelete="RESTRICT"), primary_key=True
     )
     report_id: Mapped[uuid.UUID] = mapped_column("id_reporte", primary_key=True)
     position: Mapped[int] = mapped_column("posicion", SmallInteger)
@@ -120,7 +123,7 @@ class DuplicateWarningModel(Base):
     )
     # RESTRICT: las cuentas se anonimizan, no se borran (decisión 23a); como las confirmaciones.
     user_id: Mapped[uuid.UUID] = mapped_column(
-        "id_usuario", ForeignKey("usuario.id_usuario", ondelete="RESTRICT")
+        "id_usuario", ForeignKey(USER_ID_COLUMN, ondelete="RESTRICT")
     )
     zone_id: Mapped[int | None] = mapped_column(
         "id_zona", Integer, ForeignKey("zona.id_zona", ondelete="SET NULL")
@@ -132,7 +135,7 @@ class DuplicateWarningModel(Base):
         "decision", WARNING_DECISION_TYPE, server_default="pendiente"
     )
     resulting_report_id: Mapped[uuid.UUID | None] = mapped_column(
-        "id_reporte_resultante", ForeignKey("reporte.id_reporte", ondelete="SET NULL")
+        "id_reporte_resultante", ForeignKey(REPORT_ID_COLUMN, ondelete="SET NULL")
     )
 
 
@@ -145,6 +148,6 @@ class DuplicateWarningCandidateModel(Base):
         "id_aviso", ForeignKey("aviso_duplicado.id_aviso", ondelete="CASCADE"), primary_key=True
     )
     report_id: Mapped[uuid.UUID] = mapped_column(
-        "id_reporte", ForeignKey("reporte.id_reporte", ondelete="CASCADE"), primary_key=True
+        "id_reporte", ForeignKey(REPORT_ID_COLUMN, ondelete="CASCADE"), primary_key=True
     )
     distance_m: Mapped[Decimal] = mapped_column("distancia_m", Numeric(6, 2))

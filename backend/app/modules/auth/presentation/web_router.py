@@ -75,7 +75,6 @@ def _web_tokens(response: Response, tokens: TokenPair, ttl_days: int) -> WebToke
 
 @router.post(
     "/login",
-    response_model=WebTokenResponse,
     dependencies=[Depends(limit_per_client_ip("login", LOGIN_LIMIT_PER_IP))],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Credenciales incorrectas"},
@@ -125,7 +124,6 @@ def web_login(
 
 @router.post(
     "/refresh",
-    response_model=WebTokenResponse,
     responses={status.HTTP_401_UNAUTHORIZED: {"description": "Sesión no válida (INVALID_SESSION)"}},
 )
 def web_refresh(

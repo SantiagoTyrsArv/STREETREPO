@@ -25,6 +25,8 @@ from app.core.db_types import pg_enum, point
 from app.modules.reports.domain.status import ReportStatus
 
 REPORT_STATUS_TYPE = "estado_reporte"
+# Al borrar la zona, la vía o el usuario, el reporte se conserva sin esa referencia.
+SET_NULL = "SET NULL"
 
 
 class ReportModel(Base):
@@ -55,11 +57,11 @@ class ReportModel(Base):
         "id_usuario", ForeignKey("usuario.id_usuario", ondelete="RESTRICT")
     )
     zone_id: Mapped[int | None] = mapped_column(
-        "id_zona", Integer, ForeignKey("zona.id_zona", ondelete="SET NULL")
+        "id_zona", Integer, ForeignKey("zona.id_zona", ondelete=SET_NULL)
     )
     # NULL = sin vía asociada a 30 m: F = 2 y marca "Revisar vía" (guía 2.2).
     road_id: Mapped[int | None] = mapped_column(
-        "id_via", Integer, ForeignKey("via.id_via", ondelete="SET NULL")
+        "id_via", Integer, ForeignKey("via.id_via", ondelete=SET_NULL)
     )
     location: Mapped[Geometry] = mapped_column("ubicacion", point())
     # Nominatim puede no devolver dirección.
@@ -111,7 +113,7 @@ class StatusHistoryModel(Base):
     )
     # NULL = transición automática del motor de priorización (Registrado -> Evaluado).
     user_id: Mapped[uuid.UUID | None] = mapped_column(
-        "id_usuario", ForeignKey("usuario.id_usuario", ondelete="SET NULL")
+        "id_usuario", ForeignKey("usuario.id_usuario", ondelete=SET_NULL)
     )
     # NULL solo en el registro inicial del reporte.
     previous_status: Mapped[ReportStatus | None] = mapped_column(

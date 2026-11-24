@@ -134,7 +134,6 @@ def _create_report_errors() -> Iterator[None]:
 
 @router.post(
     "",
-    response_model=ReportResponse,
     status_code=status.HTTP_201_CREATED,
     # El rol se revisa antes del límite: un evaluador rechazado no gasta cupo.
     dependencies=[Depends(forbid_evaluator), Depends(limit_reports_per_ip)],
@@ -216,7 +215,6 @@ def _nearby_errors() -> Iterator[None]:
 
 @router.get(
     "",
-    response_model=MapReportsResponse,
     responses={
         status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "description": "Rectángulo mal formado (INVALID_BBOX) u otro parámetro inválido"
@@ -261,7 +259,6 @@ def list_reports_in_area(
 
 @router.get(
     "/nearby",
-    response_model=NearbyReportsResponse,
     responses={
         status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "description": "Punto inválido o fuera del área de servicio"

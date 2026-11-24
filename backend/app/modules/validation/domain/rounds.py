@@ -147,7 +147,7 @@ def sample_and_rank(
     for zone_id in sorted(by_zone):
         pool = sorted(by_zone[zone_id], key=lambda c: c.report_id)
         if len(pool) > sample_size:
-            pool = random.Random(seed + zone_id).sample(  # noqa: S311 - muestra reproducible, no criptográfica
+            pool = random.Random(seed + zone_id).sample(  # noqa: S311 - muestra reproducible y no criptográfica
                 pool, sample_size
             )
         # El id cierra los empates totales para que el orden sea determinista.

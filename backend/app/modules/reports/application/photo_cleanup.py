@@ -38,7 +38,7 @@ class PhotoFileCleanup:
         for photo_key in photo_keys:
             keys = PhotoKeys.from_photo_key(photo_key)
             # Lista, no generador: si falla la foto, igual se intenta con la miniatura.
-            deleted = [self.delete_file(key) for key in (keys.photo, keys.thumbnail)]
+            deleted = [self.delete_file(keys.photo), self.delete_file(keys.thumbnail)]
             if not all(deleted):
                 failed.append(photo_key)
         if failed:

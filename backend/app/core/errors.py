@@ -51,7 +51,7 @@ _HTTP_CODES: dict[int, tuple[str, str]] = {
 }
 
 
-async def _app_error_handler(_: Request, exc: Exception) -> JSONResponse:
+def _app_error_handler(_: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, AppError)  # noqa: S101 - garantizado por el registro del handler
     return JSONResponse(
         status_code=exc.status_code,
@@ -60,7 +60,7 @@ async def _app_error_handler(_: Request, exc: Exception) -> JSONResponse:
     )
 
 
-async def _validation_error_handler(_: Request, exc: Exception) -> JSONResponse:
+def _validation_error_handler(_: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, RequestValidationError)  # noqa: S101
     fields = [
         {"field": ".".join(str(p) for p in err["loc"][1:]), "issue": err["type"]}
@@ -72,7 +72,7 @@ async def _validation_error_handler(_: Request, exc: Exception) -> JSONResponse:
     )
 
 
-async def _http_error_handler(_: Request, exc: Exception) -> JSONResponse:
+def _http_error_handler(_: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, StarletteHTTPException)  # noqa: S101
     code, message = _HTTP_CODES.get(exc.status_code, ("HTTP_ERROR", "No se pudo procesar."))
     return JSONResponse(
@@ -80,7 +80,7 @@ async def _http_error_handler(_: Request, exc: Exception) -> JSONResponse:
     )
 
 
-async def _unhandled_error_handler(_: Request, exc: Exception) -> JSONResponse:
+def _unhandled_error_handler(_: Request, exc: Exception) -> JSONResponse:
     logger.exception("Error no controlado", exc_info=exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

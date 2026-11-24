@@ -71,7 +71,7 @@ def _zone_not_found() -> AppError:
     )
 
 
-@router.get("/current", response_model=CurrentRoundResponse, responses={404: _NO_ROUND_DOC})
+@router.get("/current", responses={404: _NO_ROUND_DOC})
 def get_current_round(
     evaluator: EvaluatorUserDep, use_case: ViewCurrentRoundDep
 ) -> CurrentRoundResponse:
@@ -82,9 +82,7 @@ def get_current_round(
         raise _no_open_round() from exc
 
 
-@router.get(
-    "/current/zones/{zone_id}", response_model=ZoneCardsResponse, responses={404: _ZONE_DOC}
-)
+@router.get("/current/zones/{zone_id}", responses={404: _ZONE_DOC})
 def get_zone_cards(
     zone_id: ZoneIdPath, evaluator: EvaluatorUserDep, use_case: ViewZoneDep
 ) -> ZoneCardsResponse:
@@ -128,7 +126,6 @@ def get_blind_photo_thumbnail(report_id: uuid.UUID, use_case: GetBlindPhotoDep) 
 @router.put(
     "/current/zones/{zone_id}/order",
     status_code=status.HTTP_201_CREATED,
-    response_model=OrderSubmittedResponse,
     responses={
         404: _ZONE_DOC,
         409: {"description": "Ya envió el orden de esta zona (EVALUATION_ORDER_ALREADY_SUBMITTED)"},
