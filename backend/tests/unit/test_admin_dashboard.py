@@ -69,15 +69,18 @@ def test_ranking_with_empty_status_filter_uses_active() -> None:
 
 def test_ranking_rejects_limit_over_100() -> None:
     assert MAX_PAGE_SIZE == 100
+    read_dashboard = ReadDashboard(FakeReader())
     with pytest.raises(ValueError, match="limit"):
-        ReadDashboard(FakeReader()).ranking(None, limit=MAX_PAGE_SIZE + 1, offset=0)
+        read_dashboard.ranking(None, limit=MAX_PAGE_SIZE + 1, offset=0)
 
 
 def test_ranking_rejects_non_positive_limit_and_negative_offset() -> None:
+    read_dashboard = ReadDashboard(FakeReader())
     with pytest.raises(ValueError, match="limit"):
-        ReadDashboard(FakeReader()).ranking(None, limit=0, offset=0)
+        read_dashboard.ranking(None, limit=0, offset=0)
+    read_dashboard = ReadDashboard(FakeReader())
     with pytest.raises(ValueError, match="offset"):
-        ReadDashboard(FakeReader()).ranking(None, limit=20, offset=-1)
+        read_dashboard.ranking(None, limit=20, offset=-1)
 
 
 def test_summary_comes_from_the_reader() -> None:

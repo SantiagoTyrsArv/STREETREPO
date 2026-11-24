@@ -281,8 +281,9 @@ def test_update_weights_with_stale_base_raises_and_rolls_back() -> None:
     current = engine.weights.get_current()
     transaction = FakeTransaction()
 
+    update_weights = _update_weights(engine, transaction)
     with pytest.raises(StaleWeightsVersionError) as error:
-        _update_weights(engine, transaction).execute(DEFAULT_WEIGHTS, ADMIN_ID, stale)
+        update_weights.execute(DEFAULT_WEIGHTS, ADMIN_ID, stale)
 
     assert current is not None
     assert error.value.current_id == current.id
@@ -295,8 +296,9 @@ def test_update_weights_without_any_version_is_stale() -> None:
     engine = _engine(weights=FakeWeights(current=None))
     transaction = FakeTransaction()
 
+    update_weights = _update_weights(engine, transaction)
     with pytest.raises(StaleWeightsVersionError) as error:
-        _update_weights(engine, transaction).execute(NEW_WEIGHTS, ADMIN_ID, 1)
+        update_weights.execute(NEW_WEIGHTS, ADMIN_ID, 1)
 
     assert error.value.current_id is None
     assert engine.weights.versions == []
@@ -338,8 +340,10 @@ def test_update_weights_rolls_back_if_a_recalculation_fails() -> None:
     engine = _engine(_report(), _report(), evaluations=FakeEvaluations(fail_on_call=2))
     transaction = FakeTransaction()
 
+    update_weights = _update_weights(engine, transaction)
+    current_id = _current_id(engine)
     with pytest.raises(RuntimeError, match="fallo al guardar"):
-        _update_weights(engine, transaction).execute(NEW_WEIGHTS, ADMIN_ID, _current_id(engine))
+        update_weights.execute(NEW_WEIGHTS, ADMIN_ID, current_id)
 
     assert transaction == FakeTransaction(commits=0, rollbacks=1)
 

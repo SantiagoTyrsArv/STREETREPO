@@ -69,5 +69,6 @@ def test_returns_the_detail() -> None:
 
 
 def test_missing_report_raises_not_found() -> None:
+    get_admin_report = GetAdminReport(FakeReader(None))
     with pytest.raises(ReportNotFoundError):
-        GetAdminReport(FakeReader(None)).execute(REPORT_ID)
+        get_admin_report.execute(REPORT_ID)

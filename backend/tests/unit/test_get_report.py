@@ -110,10 +110,14 @@ def test_confirmer_gets_the_limited_view_without_notes() -> None:
 
 
 def test_stranger_gets_not_visible() -> None:
+    get_report = GetReport(FakeReader(confirmed_by={CONFIRMER}))
+    viewer = _citizen(STRANGER)
     with pytest.raises(ReportNotVisibleError):
-        GetReport(FakeReader(confirmed_by={CONFIRMER})).execute(REPORT, _citizen(STRANGER))
+        get_report.execute(REPORT, viewer)
 
 
 def test_missing_report_gets_not_visible() -> None:
+    get_report = GetReport(FakeReader(exists=False))
+    viewer = _citizen(AUTHOR)
     with pytest.raises(ReportNotVisibleError):
-        GetReport(FakeReader(exists=False)).execute(REPORT, _citizen(AUTHOR))
+        get_report.execute(REPORT, viewer)

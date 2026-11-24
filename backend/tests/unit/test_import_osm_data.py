@@ -102,8 +102,9 @@ def test_source_failure_writes_nothing() -> None:
         FakeTransaction(),
     )
 
+    use_case = _use_case(FakeSource(fail=True), roads, services, tx)
     with pytest.raises(OsmSourceError):
-        _use_case(FakeSource(fail=True), roads, services, tx).execute(AREA)
+        use_case.execute(AREA)
 
     assert roads.saved == []
     assert services.saved == []
@@ -113,13 +114,14 @@ def test_source_failure_writes_nothing() -> None:
 def test_write_failure_rolls_back() -> None:
     tx = FakeTransaction()
 
+    use_case = _use_case(
+        FakeSource(),
+        FakeRepository[OsmRoad](),
+        FakeRepository[OsmCriticalService](fail=True),
+        tx,
+    )
     with pytest.raises(RuntimeError):
-        _use_case(
-            FakeSource(),
-            FakeRepository[OsmRoad](),
-            FakeRepository[OsmCriticalService](fail=True),
-            tx,
-        ).execute(AREA)
+        use_case.execute(AREA)
 
     assert tx.rolled_back
     assert not tx.committed

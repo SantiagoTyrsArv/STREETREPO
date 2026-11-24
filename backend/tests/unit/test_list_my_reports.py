@@ -29,15 +29,18 @@ def test_reader_receives_the_user_and_page() -> None:
 
 
 def test_page_size_is_capped() -> None:
+    list_my_reports = ListMyReports(FakeReader())
     with pytest.raises(ValueError, match="limit"):
-        ListMyReports(FakeReader()).execute(USER_ID, limit=MAX_PAGE_SIZE + 1, offset=0)
+        list_my_reports.execute(USER_ID, limit=MAX_PAGE_SIZE + 1, offset=0)
 
 
 def test_page_size_must_be_positive() -> None:
+    list_my_reports = ListMyReports(FakeReader())
     with pytest.raises(ValueError, match="limit"):
-        ListMyReports(FakeReader()).execute(USER_ID, limit=0, offset=0)
+        list_my_reports.execute(USER_ID, limit=0, offset=0)
 
 
 def test_negative_offset_is_rejected() -> None:
+    list_my_reports = ListMyReports(FakeReader())
     with pytest.raises(ValueError, match="offset"):
-        ListMyReports(FakeReader()).execute(USER_ID, limit=20, offset=-1)
+        list_my_reports.execute(USER_ID, limit=20, offset=-1)

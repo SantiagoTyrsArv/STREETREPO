@@ -98,8 +98,9 @@ def test_exactly_the_limit_is_not_truncated() -> None:
 def test_rejects_a_limit_out_of_range(limit: int) -> None:
     reader = FakeReader(total=1)
 
+    use_case = _use_case(reader)
     with pytest.raises(ValueError, match="limit"):
-        _use_case(reader).execute(VIEWER, AREA, None, limit)
+        use_case.execute(VIEWER, AREA, None, limit)
 
     assert reader.calls == []
 

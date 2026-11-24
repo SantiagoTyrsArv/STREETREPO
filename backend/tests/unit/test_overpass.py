@@ -178,16 +178,18 @@ def test_client_fetches_critical_services() -> None:
     ],
 )
 def test_client_turns_failures_into_source_error(response: httpx.Response) -> None:
+    client = _client(lambda _: response)
     with pytest.raises(OsmSourceError):
-        _client(lambda _: response).fetch_roads(AREA)
+        client.fetch_roads(AREA)
 
 
 def test_client_turns_network_errors_into_source_error() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         raise httpx.ConnectError("sin red", request=request)
 
+    client = _client(handler)
     with pytest.raises(OsmSourceError):
-        _client(handler).fetch_roads(AREA)
+        client.fetch_roads(AREA)
 
 
 def test_factory_sends_identifiable_user_agent() -> None:
@@ -237,8 +239,9 @@ def test_client_stops_after_max_attempts() -> None:
         calls.append(request)
         return httpx.Response(503)
 
+    client = _client(handler)
     with pytest.raises(OsmSourceError, match="503"):
-        _client(handler).fetch_roads(AREA)
+        client.fetch_roads(AREA)
 
     assert len(calls) == MAX_ATTEMPTS
 
@@ -250,7 +253,8 @@ def test_client_does_not_retry_bad_query() -> None:
         calls.append(request)
         return httpx.Response(400)
 
+    client = _client(handler)
     with pytest.raises(OsmSourceError):
-        _client(handler).fetch_roads(AREA)
+        client.fetch_roads(AREA)
 
     assert len(calls) == 1

@@ -211,8 +211,9 @@ def test_seed_twice_creates_nothing_new(
 def test_seed_without_osm_data_fails_and_leaves_nothing(
     session: Session, conn: Connection, photo_dir: Path
 ) -> None:
+    seed = _seed(session, photo_dir)
     with pytest.raises(NotEnoughOsmDataError):
-        _seed(session, photo_dir).execute()
+        seed.execute()
 
     assert _count(conn, "SELECT count(*) FROM usuario WHERE correo LIKE '%@demo.invalid'") == 0
     assert _photo_files(photo_dir) == []

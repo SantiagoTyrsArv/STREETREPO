@@ -340,8 +340,9 @@ def test_retry_with_the_same_key_but_other_data_is_rejected(changed: dict[str, o
     key = uuid.uuid4()
     harness.use_case.execute(_submission(key=key))
 
+    submission = _submission(key=key, **changed)
     with pytest.raises(IdempotencyKeyReusedError):
-        harness.use_case.execute(_submission(key=key, **changed))  # type: ignore[arg-type]
+        harness.use_case.execute(submission)
     assert len(harness.reports.saved) == 1
     assert harness.processor.calls == 1
 
@@ -389,8 +390,9 @@ def test_concurrent_retry_returns_the_report_that_won_and_removes_the_photo() ->
 def test_location_outside_the_area_is_rejected_without_using_the_quota() -> None:
     harness = Harness()
 
+    submission = _submission(location=BOGOTA)
     with pytest.raises(LocationOutsideServiceAreaError):
-        harness.use_case.execute(_submission(location=BOGOTA))
+        harness.use_case.execute(submission)
 
     assert harness.processor.calls == 0
     for _ in range(TWO_PER_HOUR.max_requests):
@@ -400,8 +402,9 @@ def test_location_outside_the_area_is_rejected_without_using_the_quota() -> None
 def test_photo_over_the_size_limit_is_rejected_before_processing() -> None:
     harness = Harness()
 
+    submission = _submission(photo=b"x" * (MAX_PHOTO_BYTES + 1))
     with pytest.raises(PhotoTooLargeError):
-        harness.use_case.execute(_submission(photo=b"x" * (MAX_PHOTO_BYTES + 1)))
+        harness.use_case.execute(submission)
 
     assert harness.processor.calls == 0
 
@@ -411,8 +414,9 @@ def test_user_over_the_hourly_limit_is_rejected() -> None:
     for _ in range(TWO_PER_HOUR.max_requests):
         harness.use_case.execute(_submission())
 
+    submission = _submission()
     with pytest.raises(RateLimitExceededError) as exceeded:
-        harness.use_case.execute(_submission())
+        harness.use_case.execute(submission)
 
     assert exceeded.value.retry_after == timedelta(hours=1)
     assert len(harness.reports.saved) == TWO_PER_HOUR.max_requests
@@ -421,8 +425,9 @@ def test_user_over_the_hourly_limit_is_rejected() -> None:
 def test_invalid_photo_creates_nothing() -> None:
     harness = Harness(processor=FakeProcessor(UnsupportedPhotoTypeError("gif")))
 
+    submission = _submission()
     with pytest.raises(UnsupportedPhotoTypeError):
-        harness.use_case.execute(_submission())
+        harness.use_case.execute(submission)
 
     assert harness.reports.saved == {}
     assert harness.storage.files == {}
@@ -431,8 +436,9 @@ def test_invalid_photo_creates_nothing() -> None:
 def test_failure_during_the_transaction_rolls_back_and_removes_the_files() -> None:
     harness = Harness(evaluator=FakeEvaluator(fail=True))
 
+    submission = _submission()
     with pytest.raises(RuntimeError, match="motor"):
-        harness.use_case.execute(_submission())
+        harness.use_case.execute(submission)
 
     assert harness.transaction.rollbacks == 1
     assert harness.transaction.commits == 0
@@ -449,8 +455,9 @@ def test_a_failed_cleanup_does_not_hide_the_original_error() -> None:
 
     harness.storage.delete = broken_delete  # type: ignore[method-assign]
 
+    submission = _submission()
     with pytest.raises(RuntimeError, match="motor"):
-        harness.use_case.execute(_submission())
+        harness.use_case.execute(submission)
 
 
 # --- Posible duplicado a 25 m (propuesta 36) -------------------------------------
@@ -461,8 +468,9 @@ def test_active_report_nearby_is_offered_instead_of_creating_another() -> None:
     existing = candidate()
     harness.nearby.default = [existing]
 
+    submission = _submission()
     with pytest.raises(PossibleDuplicateError) as duplicate:
-        harness.use_case.execute(_submission())
+        harness.use_case.execute(submission)
 
     assert duplicate.value.candidates == (existing,)
     assert harness.nearby.calls == [(PASTO, DEDUPLICATION_RADIUS_M)]
@@ -502,8 +510,9 @@ def test_the_check_is_repeated_inside_the_transaction_with_the_lock_held() -> No
     # Libre en la primera consulta; otro ciudadano crea uno cercano antes del candado.
     harness.nearby.responses = [[], [candidate(distance_m=4.0)]]
 
+    submission = _submission()
     with pytest.raises(PossibleDuplicateError):
-        harness.use_case.execute(_submission())
+        harness.use_case.execute(submission)
 
     assert harness.events == ["lock"]
     assert len(harness.nearby.calls) == 2
@@ -558,8 +567,9 @@ def test_the_409_records_a_warning_and_commits_it_before_answering() -> None:
     existing = candidate()
     harness.nearby.default = [existing]
 
+    submission = _submission()
     with pytest.raises(PossibleDuplicateError) as duplicate:
-        harness.use_case.execute(_submission())
+        harness.use_case.execute(submission)
 
     assert duplicate.value.warning_id == WARNING_ID
     assert harness.warnings.recorded == [(USER_ID, PASTO, (existing,))]
@@ -580,8 +590,9 @@ def test_the_check_with_the_lock_held_does_not_record_a_warning() -> None:
     harness = Harness()
     harness.nearby.responses = [[], [candidate(distance_m=4.0)]]
 
+    submission = _submission()
     with pytest.raises(PossibleDuplicateError) as duplicate:
-        harness.use_case.execute(_submission())
+        harness.use_case.execute(submission)
 
     assert duplicate.value.warning_id is None
     assert harness.warnings.recorded == []
