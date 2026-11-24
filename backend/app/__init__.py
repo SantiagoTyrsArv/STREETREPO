@@ -1,4 +1,4 @@
 """API de Street Repo."""
 
 # Única fuente de la versión en tiempo de ejecución; una prueba la compara con pyproject.toml.
-__version__ = "0.7.0"
+__version__ = "0.8.0"

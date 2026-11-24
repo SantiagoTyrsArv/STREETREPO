@@ -4,6 +4,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+## [0.8.0] - 2026-11-24
+
+Objetivo 4 de la tesis (comparación con el panel de referencia, HU-09) y fase 8 (endurecimiento
+para la sustentación): Sonar en cero avisos, límite global de solicitudes, revisión de seguridad
+contra la guía 15, accesibilidad del panel (axe, 0 hallazgos) y de la app, y pruebas de carga con
+Locust. Las cifras de carga son medidas en un equipo local, no resultados de campo.
+
 ### Añadido
 - Pruebas de carga con Locust (`infra/scripts/load-test.sh`, `loadtest-accounts`) e informe
   `docs/rendimiento/informe-carga-fase-8.md`: listados con p95 < 35 ms y envío de reporte con p95 de
