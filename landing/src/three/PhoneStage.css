@@ -17,6 +17,20 @@
   height: 100%;
 }
 
+/* Las tres capturas ocupan la misma celda: las del abanico quedan detrás de la principal. */
+.phone-stage__flat img {
+  grid-area: 1 / 1;
+}
+
+.phone-stage__main {
+  position: relative;
+  z-index: 1;
+}
+
+.phone-stage__fan {
+  transform-origin: 50% 100%;
+}
+
 .phone-stage__flat img {
   display: block;
   height: min(100%, 38rem);

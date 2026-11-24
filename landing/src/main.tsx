@@ -7,6 +7,12 @@ import "./styles/global.css";
 import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { App } from "./App";
+import { ScrollTrigger } from "./scroll/gsap";
+import { resetScrollOnReload } from "./scroll/reloadToTop";
+
+// Antes de hidratar: al recargar, la página vuelve a la portada. ScrollTrigger guarda la posición
+// y la restaura al recalcular (y vuelve a poner `scrollRestoration` en `auto`): se borra esa memoria.
+resetScrollOnReload(window, performance, () => ScrollTrigger.clearScrollMemory("manual"));
 
 const root = document.getElementById("root");
 if (!root) {

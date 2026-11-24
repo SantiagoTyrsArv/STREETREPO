@@ -12,10 +12,19 @@ interface PhoneCanvasProps {
   progress: number;
   screens: readonly PhoneScreen[];
   index: number;
+  fan: readonly PhoneScreen[];
+  opening: number;
   isVisible: () => boolean;
 }
 
-export default function PhoneCanvas({ progress, screens, index, isVisible }: PhoneCanvasProps) {
+export default function PhoneCanvas({
+  progress,
+  screens,
+  index,
+  fan,
+  opening,
+  isVisible,
+}: PhoneCanvasProps) {
   const maxDpr = window.matchMedia(MOBILE_QUERY).matches ? MAX_DPR_MOBILE : MAX_DPR_DESKTOP;
   return (
     <Canvas
@@ -28,7 +37,14 @@ export default function PhoneCanvas({ progress, screens, index, isVisible }: Pho
       aria-hidden="true"
     >
       <Suspense fallback={null}>
-        <PhoneModel progress={progress} screens={screens} index={index} isVisible={isVisible} />
+        <PhoneModel
+          progress={progress}
+          screens={screens}
+          index={index}
+          fan={fan}
+          opening={opening}
+          isVisible={isVisible}
+        />
       </Suspense>
     </Canvas>
   );

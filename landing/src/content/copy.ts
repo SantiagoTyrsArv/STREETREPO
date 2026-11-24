@@ -70,6 +70,19 @@ export const COPY = {
         alt: "Captura real de la app: mapa de reportes de Pasto con su estado, con datos de demostración.",
       },
     ],
+    /** Abanico: dos teléfonos que salen detrás del principal al final del capítulo (diseño 6.10). */
+    fan: [
+      {
+        src: "/media/app/captura-duplicado.webp",
+        alt: "Captura real de la app: aviso de que ya existe un reporte activo a 6 m, dentro del radio de 25 m.",
+      },
+      {
+        src: "/media/app/captura-confirmar.webp",
+        alt: "Captura real de la app: ficha de un reporte en el mapa con el botón «Confirmar este daño».",
+      },
+    ],
+    fanCaption:
+      "Al final, tres teléfonos en abanico: el mapa de reportes, el aviso de posible duplicado y la ficha para confirmar un daño que ya reportó otra persona. Datos de demostración.",
   },
   priorizar: {
     kicker: "03 · Priorizar",

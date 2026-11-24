@@ -8,8 +8,11 @@ import { ProximityText } from "../text/ProximityText";
 import { KICKER_AXES, LEAD_AXES } from "../text/proximity";
 import "./Reportar.css";
 
-/** Duración de la reproducción al entrar (diseño 4.1). */
-const DURATION_MS = 6000;
+/**
+ * Duración de la reproducción al entrar (diseño 4.1): cuatro pantallas y luego el abanico de tres
+ * teléfonos. Más larga que antes (6 s) para que cada pantalla se alcance a ver (fila 134).
+ */
+const DURATION_MS = 10000;
 
 export function Reportar() {
   const ref = useRef<HTMLElement>(null);
@@ -60,7 +63,12 @@ export function Reportar() {
           still={still}
         />
       </div>
-      <PhoneStage progress={progress} screens={copy.screens} />
+      <PhoneStage
+        progress={progress}
+        screens={copy.screens}
+        fan={copy.fan}
+        fanCaption={copy.fanCaption}
+      />
     </section>
   );
 }

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { SRGBColorSpace, type Group, type Texture } from "three";
 import { damp, tiltFromPointer } from "../interaction/motion";
 import { pointer } from "../interaction/pointer";
+import { FAN_ANGLE, FAN_SPREAD, fanFitScale } from "./fan";
 import { phoneWakeKey } from "./phoneWake";
 import type { PhoneScreen } from "./types";
 
@@ -22,6 +23,30 @@ const SETTLED = 1e-4;
 
 /** Color de la carcasa: el token --ink (#1B2430). */
 const INK = "#1b2430";
+/** Abanico (diseño 6.10): fondo y escala de los teléfonos laterales. */
+const FAN_DEPTH = -0.22;
+const FAN_SCALE = 0.92;
+const FAN = { bodyWidth: BODY.width, bodyHeight: BODY.height, sideScale: FAN_SCALE };
+
+/** Carcasa con la captura como textura de la pantalla. */
+function PhoneBody({ texture }: { texture: Texture | undefined }) {
+  return (
+    <>
+      <RoundedBox
+        args={[BODY.width, BODY.height, BODY.depth]}
+        radius={0.11}
+        smoothness={6}
+        creaseAngle={0.4}
+      >
+        <meshStandardMaterial color={INK} metalness={0.55} roughness={0.32} />
+      </RoundedBox>
+      <mesh position={[0, 0, BODY.depth / 2 + 0.001]}>
+        <planeGeometry args={[SCREEN_WIDTH, SCREEN_HEIGHT]} />
+        <meshBasicMaterial map={texture} toneMapped={false} />
+      </mesh>
+    </>
+  );
+}
 
 function easeOutCubic(t: number): number {
   return 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
@@ -31,13 +56,18 @@ interface PhoneModelProps {
   progress: number;
   screens: readonly PhoneScreen[];
   index: number;
+  /** Pantallas de los teléfonos laterales del abanico. */
+  fan: readonly PhoneScreen[];
+  /** Apertura del abanico: 0 cerrado (solo el teléfono principal), 1 abierto. */
+  opening: number;
   /** Si el lienzo está en pantalla: fuera de ella el puntero no lo despierta. */
   isVisible: () => boolean;
 }
 
 /** Teléfono hecho en código (sin modelos externos) con la captura como textura de la pantalla. */
-export function PhoneModel({ progress, screens, index, isVisible }: PhoneModelProps) {
-  const textures = useTexture(screens.map((s) => s.src)) as Texture[];
+export function PhoneModel({ progress, screens, index, fan, opening, isVisible }: PhoneModelProps) {
+  const textures = useTexture([...screens, ...fan].map((s) => s.src)) as Texture[];
+  const fanTextures = textures.slice(screens.length);
   useMemo(() => {
     for (const texture of textures) {
       texture.colorSpace = SRGBColorSpace;
@@ -49,6 +79,7 @@ export function PhoneModel({ progress, screens, index, isVisible }: PhoneModelPr
   // puntero se mueve o el teléfono aún no se asienta, así en reposo no gasta batería.
   const tiltRef = useRef<Group>(null);
   const invalidate = useThree((state) => state.invalidate);
+  const viewportWidth = useThree((state) => state.viewport.width);
   useEffect(() => {
     let last: string | null = null;
     const wake = () => {
@@ -78,7 +109,8 @@ export function PhoneModel({ progress, screens, index, isVisible }: PhoneModelPr
 
   // Entra desde abajo y girado; a mitad del recorrido queda casi de frente y sigue girando suave.
   const enter = easeOutCubic(progress / 0.18);
-  const rotationY = -0.75 + enter * 0.6 + progress * 0.35;
+  // Al abrirse el abanico el teléfono principal vuelve de frente para que se lean los tres.
+  const rotationY = (-0.75 + enter * 0.6 + progress * 0.35) * (1 - opening);
   const rotationX = 0.18 - enter * 0.12;
   const positionY = -2.6 * (1 - enter);
 
@@ -97,20 +129,25 @@ export function PhoneModel({ progress, screens, index, isVisible }: PhoneModelPr
           scale={[1, 4, 1]}
         />
       </Environment>
-      <group ref={tiltRef}>
+      <group ref={tiltRef} scale={fanFitScale(opening, viewportWidth, FAN)}>
         <group rotation={[rotationX, rotationY, 0]} position={[0, positionY, 0]}>
-          <RoundedBox
-            args={[BODY.width, BODY.height, BODY.depth]}
-            radius={0.11}
-            smoothness={6}
-            creaseAngle={0.4}
-          >
-            <meshStandardMaterial color={INK} metalness={0.55} roughness={0.32} />
-          </RoundedBox>
-          <mesh position={[0, 0, BODY.depth / 2 + 0.001]}>
-            <planeGeometry args={[SCREEN_WIDTH, SCREEN_HEIGHT]} />
-            <meshBasicMaterial map={textures[index]} toneMapped={false} />
-          </mesh>
+          <PhoneBody texture={textures[index]} />
+          {/* Abanico: salen de detrás del principal, girados a cada lado. */}
+          {opening > 0
+            ? fanTextures.slice(0, 2).map((texture, i) => {
+                const side = i === 0 ? -1 : 1;
+                return (
+                  <group
+                    key={fan[i]?.src ?? i}
+                    position={[side * FAN_SPREAD * opening, -0.06 * opening, FAN_DEPTH]}
+                    rotation={[0, 0, -side * FAN_ANGLE * opening]}
+                    scale={FAN_SCALE}
+                  >
+                    <PhoneBody texture={texture} />
+                  </group>
+                );
+              })
+            : null}
         </group>
       </group>
     </>
