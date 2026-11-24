@@ -24,7 +24,7 @@ class HealthResponse(BaseModel):
     version: str = __version__
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get("/health")
 def health() -> HealthResponse:
     """La aplicación está viva."""
     return HealthResponse(status="ok")

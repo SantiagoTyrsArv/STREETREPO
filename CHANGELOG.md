@@ -32,6 +32,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   campo opcional del mismo nombre al crear con `create_anyway` y al confirmar.
 
 ### Cambiado
+- Backend sin avisos de Sonar en el código de la aplicación (fila 138): sin cambios en la API.
 - Página de presentación: cada capítulo ocupa una pantalla y su animación corre sola al llegar,
   una vez por carga, con un imán de proximidad entre capítulos; «Pruébalo» cabe en una pantalla y
   las letras de la portada empiezan en ámbar. La página pasa de ~22 a 7,95 pantallas en el

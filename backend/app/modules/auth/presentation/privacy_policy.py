@@ -8,7 +8,7 @@ from app.modules.auth.presentation.schemas import PrivacyPolicyResponse
 router = APIRouter(prefix="/privacy-policy", tags=["política de datos"])
 
 
-@router.get("", response_model=PrivacyPolicyResponse)
+@router.get("")
 def get_privacy_policy(settings: SettingsDep) -> PrivacyPolicyResponse:
     """Versión vigente de la política y dónde leerla; el registro exige aceptar esta versión."""
     url = settings.privacy_policy_url

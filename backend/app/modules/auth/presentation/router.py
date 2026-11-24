@@ -67,7 +67,6 @@ def _token_response(tokens: TokenPair) -> TokenResponse:
 
 @router.post(
     "/register",
-    response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(limit_registrations_per_ip)],
     responses={
@@ -133,7 +132,6 @@ def register(
 
 @router.post(
     "/login",
-    response_model=TokenResponse,
     dependencies=[Depends(limit_per_client_ip("login", LOGIN_LIMIT_PER_IP))],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Credenciales incorrectas"},
@@ -180,7 +178,6 @@ def login(
 
 @router.post(
     "/refresh",
-    response_model=TokenResponse,
     responses={status.HTTP_401_UNAUTHORIZED: {"description": "Sesión no válida o vencida"}},
 )
 def refresh(body: RefreshRequest, session: SessionDep, sessions: SessionIssuerDep) -> TokenResponse:

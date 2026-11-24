@@ -5,7 +5,7 @@ from enum import Enum
 from geoalchemy2 import Geometry
 from sqlalchemy.dialects.postgresql import ENUM
 
-# Todo dato geográfico se guarda en WGS 84 (guía 5, diagrama ER).
+# Los datos geográficos se guardan en WGS 84 (guía 5, diagrama ER).
 SRID_WGS84 = 4326
 
 

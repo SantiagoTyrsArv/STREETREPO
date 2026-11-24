@@ -64,5 +64,5 @@ class WebTokenResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     access_token: str
-    token_type: Literal["bearer"] = "bearer"  # noqa: S105 - esquema OAuth 2, no un secreto
+    token_type: Literal["bearer"] = "bearer"  # noqa: S105 - esquema OAuth 2 y no un secreto
     expires_in: int

@@ -20,7 +20,7 @@ from app.modules.roads.domain.classification import (
     flow_factor,
 )
 from app.modules.roads.domain.entities import OsmRoad
-from app.shared.domain.geo import BoundingBox, GeoPoint, InvalidGeometryError
+from app.shared.domain.geo import BoundingBox, GeoPoint
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ def parse_road(element: OsmElement) -> OsmRoad | None:
             flow_factor=flow_factor(road_class),
             points=points,
         )
-    except (InvalidGeometryError, KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError):  # ValueError incluye InvalidGeometryError
         logger.warning("Vía OSM %s descartada por geometría inválida", element.get("id"))
         return None
 
@@ -134,7 +134,7 @@ def parse_critical_service(element: OsmElement) -> OsmCriticalService | None:
             service_type=service_type,
             location=location,
         )
-    except (InvalidGeometryError, KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError):  # ValueError incluye InvalidGeometryError
         logger.warning("Servicio OSM %s descartado por ubicación inválida", element.get("id"))
         return None
 

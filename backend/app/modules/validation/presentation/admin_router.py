@@ -67,7 +67,7 @@ def _not_found() -> AppError:
     )
 
 
-@router.get("/zones", response_model=ZonesResponse)
+@router.get("/zones")
 def list_zones(use_case: ListZonesDep) -> ZonesResponse:
     """Zonas del piloto con sus reportes activos (todo salvo Reparado) y totales."""
     return ZonesResponse.from_summaries(use_case.execute())
@@ -76,7 +76,6 @@ def list_zones(use_case: ListZonesDep) -> ZonesResponse:
 @router.post(
     "/evaluation-rounds",
     status_code=status.HTTP_201_CREATED,
-    response_model=RoundCreatedResponse,
     responses={
         409: {"description": "Ya hay una ronda abierta (EVALUATION_ROUND_ALREADY_OPEN)"},
         422: {
@@ -120,7 +119,7 @@ def open_round(
     return RoundCreatedResponse(id=round_id)
 
 
-@router.get("/evaluation-rounds", response_model=RoundsResponse)
+@router.get("/evaluation-rounds")
 def list_rounds(
     use_case: ReadRoundsDep,
     limit: Annotated[int, Query(ge=1, le=MAX_ROUNDS_PAGE)] = DEFAULT_ROUNDS_PAGE,
@@ -136,7 +135,6 @@ def list_rounds(
 
 @router.get(
     "/evaluation-rounds/{round_id}",
-    response_model=RoundProgressResponse,
     responses=_NOT_FOUND_DOC,
 )
 def get_round(round_id: uuid.UUID, use_case: ReadRoundsDep) -> RoundProgressResponse:
@@ -149,7 +147,6 @@ def get_round(round_id: uuid.UUID, use_case: ReadRoundsDep) -> RoundProgressResp
 
 @router.post(
     "/evaluation-rounds/{round_id}/close",
-    response_model=RoundSummaryResponse,
     responses={
         404: {"description": "La ronda no existe (EVALUATION_ROUND_NOT_FOUND)"},
         409: {"description": "La ronda ya estaba cerrada (EVALUATION_ROUND_CLOSED)"},
@@ -207,7 +204,6 @@ def _csv_doc(description: str, errors: dict[int | str, dict[str, Any]]) -> dict[
 
 @router.get(
     "/evaluation-rounds/{round_id}/results",
-    response_model=RoundResultsResponse,
     responses=_RESULTS_DOC,
 )
 def get_round_results(round_id: uuid.UUID, use_case: RoundResultsDep) -> RoundResultsResponse:
