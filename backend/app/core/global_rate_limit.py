@@ -20,7 +20,7 @@ from app.shared.application.clock import Clock
 from app.shared.application.rate_limit import RateLimit, RateLimiter, RateLimitExceededError
 
 GLOBAL_RATE_LIMIT_EXEMPT_PATHS: Final[frozenset[str]] = frozenset(
-    {"/health", "/ready", "/docs", "/openapi.json"}
+    {"/health", "/ready", "/docs", "/docs/oauth2-redirect", "/openapi.json"}
 )
 _UNKNOWN_CLIENT: Final = "desconocido"
 _MESSAGE: Final = "Demasiadas solicitudes desde tu conexión. Intenta de nuevo en unos minutos."

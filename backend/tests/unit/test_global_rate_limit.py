@@ -81,7 +81,13 @@ def test_exempt_paths_are_never_limited(path: str) -> None:
 
 
 def test_probes_and_docs_are_exempt_by_default() -> None:
-    assert {"/health", "/ready", "/docs", "/openapi.json"} <= GLOBAL_RATE_LIMIT_EXEMPT_PATHS
+    assert {
+        "/health",
+        "/ready",
+        "/docs",
+        "/docs/oauth2-redirect",
+        "/openapi.json",
+    } <= GLOBAL_RATE_LIMIT_EXEMPT_PATHS
 
 
 def test_rejected_request_does_not_consume_quota() -> None:

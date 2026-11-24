@@ -4,6 +4,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 
 ## [Sin publicar]
 
+### Cambiado
+- `/docs/oauth2-redirect` exenta del límite global; la prueba de carga no expone la contraseña en los
+  argumentos y guarda cada corrida en su propia carpeta (fila 149).
+
 ## [0.8.0] - 2026-11-24
 
 Objetivo 4 de la tesis (comparación con el panel de referencia, HU-09) y fase 8 (endurecimiento
