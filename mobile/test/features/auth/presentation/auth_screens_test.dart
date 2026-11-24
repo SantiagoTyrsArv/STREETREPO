@@ -10,6 +10,7 @@ import 'package:street_repo/features/auth/domain/session.dart';
 import 'package:street_repo/features/my_reports/application/my_reports_controller.dart';
 import 'package:street_repo/features/my_reports/presentation/my_reports_screen.dart';
 
+import '../../../support/accessibility.dart';
 import '../../../support/fake_auth_repository.dart';
 import '../../../support/fake_my_reports_repository.dart';
 import '../../../support/load_fonts.dart';
@@ -287,6 +288,45 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(MyReportsScreen), findsOneWidget);
+    });
+  });
+
+  group('Pautas de accesibilidad (fase 8)', () {
+    testWidgets('Bienvenida', (tester) async {
+      await pumpApp(tester);
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Registro', (tester) async {
+      await openRegister(tester);
+      await fillRegister(tester);
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Política de datos', (tester) async {
+      auth.onPrivacyPolicy = () async =>
+          PrivacyPolicy(version: '1.0', url: Uri.parse('https://streetrepo.co/politica'));
+      await openRegister(tester);
+      await tester.tap(find.text('Leer la política'));
+      await tester.pumpAndSettle();
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Iniciar sesión con el aviso de error', (tester) async {
+      auth.loginFailure = const ApiError(
+        status: 401,
+        code: 'INVALID_CREDENTIALS',
+        message: 'Correo o contraseña incorrectos.',
+      );
+      await pumpApp(tester);
+      await tester.tap(find.text('Ya tengo cuenta'));
+      await tester.pumpAndSettle();
+      await tester.enterText(field('Correo electrónico'), 'ana@correo.co');
+      await tester.enterText(field('Contraseña'), 'mala');
+      await tester.tap(find.text('Entrar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Correo o contraseña incorrectos.'), findsOneWidget);
+      await expectMeetsAccessibilityGuidelines(tester);
     });
   });
 

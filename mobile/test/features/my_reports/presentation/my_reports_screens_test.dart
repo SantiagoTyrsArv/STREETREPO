@@ -15,6 +15,7 @@ import 'package:street_repo/features/auth/domain/session.dart';
 import 'package:street_repo/features/my_reports/application/my_reports_controller.dart';
 import 'package:street_repo/features/my_reports/domain/report_detail.dart';
 
+import '../../../support/accessibility.dart';
 import '../../../support/fake_auth_repository.dart';
 import '../../../support/fake_my_reports_repository.dart';
 import '../../../support/load_fonts.dart';
@@ -210,6 +211,38 @@ void main() {
         GoRouter.of(tester.element(find.byType(Scaffold).last)).state.matchedLocation,
         AppRoutes.welcome,
       );
+    });
+  });
+
+  group('Pautas de accesibilidad (fase 8)', () {
+    testWidgets('Mis reportes', (tester) async {
+      repository.reports = [ownReport(), confirmedReport()];
+      await pumpApp(tester);
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Mis reportes vacío', (tester) async {
+      await pumpApp(tester);
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Detalle del reporte', (tester) async {
+      repository.details['own-1'] = ReportDetail(
+        relation: ReportRelation.own,
+        report: ownReport(needsRoadReview: true),
+        history: [
+          HistoryEntry(status: ReportStatus.registered, changedAt: DateTime.utc(2026, 10, 12)),
+        ],
+      );
+      await pumpApp(tester);
+      await openDetail(tester, 'own-1');
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Perfil y privacidad', (tester) async {
+      await pumpApp(tester);
+      await tapVisible(tester, find.bySemanticsLabel('Perfil'));
+      await expectMeetsAccessibilityGuidelines(tester);
     });
   });
 

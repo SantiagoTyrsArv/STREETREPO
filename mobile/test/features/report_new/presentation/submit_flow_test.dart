@@ -15,6 +15,7 @@ import 'package:street_repo/features/report_new/domain/nearby_report.dart';
 import 'package:street_repo/features/report_new/application/report_draft_controller.dart';
 import 'package:street_repo/features/report_new/application/submit_report_controller.dart';
 
+import '../../../support/accessibility.dart';
 import '../../../support/fake_auth_repository.dart';
 import '../../../support/fake_device_services.dart';
 import '../../../support/fake_my_reports_repository.dart';
@@ -233,6 +234,34 @@ void main() {
 
       expect(repository.createCalls.single.createAnyway, isTrue);
       expect(find.text('¡Gracias! Tu reporte quedó registrado'), findsOneWidget);
+    });
+  });
+
+  group('Pautas de accesibilidad (fase 8)', () {
+    testWidgets('Severidad', (tester) async {
+      await openStep2(tester);
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Posible duplicado', (tester) async {
+      repository.onNearby = [
+        () async => NearbyResult(
+          candidates: [
+            nearbyReport(),
+            nearbyReport(id: 'r2', distance: 20, isMine: true),
+          ],
+        ),
+      ];
+      await openStep2(tester);
+      await chooseMediumAndSend(tester);
+      expect(find.text('Ya existen reportes cerca'), findsOneWidget);
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Reporte enviado', (tester) async {
+      await openStep2(tester);
+      await chooseMediumAndSend(tester);
+      await expectMeetsAccessibilityGuidelines(tester);
     });
   });
 
