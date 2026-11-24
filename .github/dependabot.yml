@@ -54,6 +54,11 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@eslint/js"
         update-types: ["version-update:semver-major"]
+  # App Flutter (fila 141 de la bitácora): la revisión de seguridad de la fase 8 encontró que no se vigilaba.
+  - package-ecosystem: pub
+    directory: /mobile
+    schedule:
+      interval: weekly
   - package-ecosystem: github-actions
     directory: /
     schedule:
