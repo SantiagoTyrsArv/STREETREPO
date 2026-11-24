@@ -120,41 +120,46 @@ class _ReportMapScreenState extends ConsumerState<ReportMapScreen> {
           Expanded(
             child: Stack(
               children: [
-                FlutterMap(
-                  mapController: _map,
-                  options: MapOptions(
-                    initialCenter: _pastoCenter,
-                    initialZoom: _initialZoom,
-                    minZoom: _minZoom,
-                    maxZoom: _maxZoom,
-                    backgroundColor: AppTokens.mapGround,
-                    // Sin rotación: el área visible es siempre un rectángulo norte-sur.
-                    interactionOptions: const InteractionOptions(
-                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                // El lector de pantalla anuncia la superficie del mapa, que se toca y se arrastra
+                // (fase 8, fila 145); cada marcador lleva su propia etiqueta.
+                Semantics(
+                  label: 'Mapa de reportes. Toca un marcador para ver su ficha',
+                  child: FlutterMap(
+                    mapController: _map,
+                    options: MapOptions(
+                      initialCenter: _pastoCenter,
+                      initialZoom: _initialZoom,
+                      minZoom: _minZoom,
+                      maxZoom: _maxZoom,
+                      backgroundColor: AppTokens.mapGround,
+                      // Sin rotación: el área visible es siempre un rectángulo norte-sur.
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                      ),
+                      onMapReady: _onReady,
+                      onPositionChanged: (_, _) => _onMoved(),
+                      onTap: (_, _) => controller.select(null),
                     ),
-                    onMapReady: _onReady,
-                    onPositionChanged: (_, _) => _onMoved(),
-                    onTap: (_, _) => controller.select(null),
-                  ),
-                  children: [
-                    ref.watch(mapTileLayerProvider),
-                    MarkerLayer(
-                      markers: [
-                        for (final report in state.reports)
-                          Marker(
-                            point: LatLng(report.latitude, report.longitude),
-                            width: AppTokens.minTouchTarget,
-                            height: AppTokens.minTouchTarget,
-                            child: _Pin(
-                              report: report,
-                              selected: report.id == state.selectedId,
-                              onTap: () => controller.select(report.id),
+                    children: [
+                      ref.watch(mapTileLayerProvider),
+                      MarkerLayer(
+                        markers: [
+                          for (final report in state.reports)
+                            Marker(
+                              point: LatLng(report.latitude, report.longitude),
+                              width: AppTokens.minTouchTarget,
+                              height: AppTokens.minTouchTarget,
+                              child: _Pin(
+                                report: report,
+                                selected: report.id == state.selectedId,
+                                onTap: () => controller.select(report.id),
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
-                    const _Attribution(),
-                  ],
+                        ],
+                      ),
+                      const _Attribution(),
+                    ],
+                  ),
                 ),
                 if (state.loading)
                   const Positioned(

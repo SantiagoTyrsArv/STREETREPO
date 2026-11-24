@@ -5,6 +5,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- Revisión de accesibilidad de la app (pautas de Flutter en 18 estados de pantalla y contraste exacto
+  de los tokens) e informe `docs/accesibilidad/revision-fase-8.md` (fila 145).
 - Revisión de accesibilidad del panel con axe (`e2e/accesibilidad.spec.ts`, WCAG 2.2 AA): 0 hallazgos en
   11 pantallas (fila 143).
 - Revisión de seguridad de la fase 8 (`docs/seguridad/revision-fase-8.md`, fila 142) con pruebas que
@@ -39,6 +41,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   campo opcional del mismo nombre al crear con `create_anyway` y al confirmar.
 
 ### Cambiado
+- App: el mapa se anuncia al lector de pantalla («Mapa de reportes…») (fila 145).
 - Backend sin avisos de Sonar en el código de la aplicación (fila 138): sin cambios en la API.
 - Pruebas del backend sin avisos de Sonar ni de Starlette (fila 139).
 - Página de presentación: cada capítulo ocupa una pantalla y su animación corre sola al llegar,

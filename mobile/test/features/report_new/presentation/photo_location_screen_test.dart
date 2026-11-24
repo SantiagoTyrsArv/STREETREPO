@@ -13,6 +13,7 @@ import 'package:street_repo/features/my_reports/application/my_reports_controlle
 import 'package:street_repo/features/report_new/application/report_draft_controller.dart';
 import 'package:street_repo/features/report_new/domain/device_services.dart';
 
+import '../../../support/accessibility.dart';
 import '../../../support/fake_auth_repository.dart';
 import '../../../support/fake_device_services.dart';
 import '../../../support/fake_my_reports_repository.dart';
@@ -127,6 +128,11 @@ void main() {
 
     await tapVisible(tester, find.widgetWithText(FilledButton, 'Permitir cámara y ubicación'));
     expect(find.text('Foto y ubicación del daño'), findsOneWidget);
+  });
+
+  testWidgets('pautas de accesibilidad: Foto y ubicación (fase 8)', (tester) async {
+    await openStep1(tester);
+    await expectMeetsAccessibilityGuidelines(tester);
   });
 
   testWidgets('con el texto del sistema al doble no se desborda (Review Focus 4)', (tester) async {

@@ -10,6 +10,7 @@ import 'package:street_repo/features/auth/application/auth_providers.dart';
 import 'package:street_repo/features/auth/data/token_store.dart';
 import 'package:street_repo/features/my_reports/application/my_reports_controller.dart';
 
+import '../../../support/accessibility.dart';
 import '../../../support/fake_auth_repository.dart';
 import '../../../support/fake_my_reports_repository.dart';
 import '../../../support/load_fonts.dart';
@@ -263,6 +264,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(location(tester), AppRoutes.welcome);
+  });
+
+  group('Pautas de accesibilidad (fase 8)', () {
+    testWidgets('Editar datos y hoja de contraseña', (tester) async {
+      await pumpProfile(tester);
+      await tapVisible(tester, find.text('Conocer y actualizar mis datos'));
+      await expectMeetsAccessibilityGuidelines(tester);
+      await tester.enterText(field('Correo electrónico'), 'nueva@correo.co');
+      await tapVisible(tester, button('Guardar cambios'));
+      expect(find.text('Confirma tu contraseña'), findsOneWidget);
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
+
+    testWidgets('Eliminar mis datos y constancia', (tester) async {
+      await pumpProfile(tester);
+      await tapVisible(tester, find.text('Solicitar supresión de mis datos'));
+      await expectMeetsAccessibilityGuidelines(tester);
+      await tester.enterText(field('Contraseña actual'), 'una-clave-larga');
+      await tapVisible(tester, button('Eliminar mis datos'));
+      expect(find.text('Tus datos fueron eliminados'), findsOneWidget);
+      await expectMeetsAccessibilityGuidelines(tester);
+    });
   });
 
   group('texto del sistema al doble', () {
