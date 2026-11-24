@@ -73,16 +73,17 @@ test("ronda de evaluación completa", async ({ page, browser }) => {
   const handle = evalPage.getByRole("button", { name: `Arrastrar ${before[0]}` }).first();
   await handle.focus();
   // @dnd-kit mide las tarjetas al tomar una: cada tecla espera el estado que deja la anterior.
+  // Se espera el anuncio para el lector de pantalla tras cada tecla: así se sabe que
+  // @dnd-kit terminó de tomar y de mover la tarjeta. Enviar la flecha antes fallaba a veces.
   await evalPage.keyboard.press("Space");
   await expect(handle).toHaveAttribute("aria-pressed", "true");
+  // Al tomarla, @dnd-kit reemplaza «Tomaste…» por «… sobre la posición 1 de 5».
+  await expect(evalPage.getByText(/ sobre la posición 1 de 5\.$/)).toBeAttached();
   const cards = evalPage
     .getByRole("list", { name: "Reportes de la zona, del más urgente al menos urgente" })
     .getByRole("listitem");
-  const top = async (index: number) => (await cards.nth(index).boundingBox())?.y ?? 0;
   await evalPage.keyboard.press("ArrowDown");
-  // Durante el arrastre la tarjeta solo se desplaza (y la página puede moverse con ella):
-  // basta con que quede por debajo de su vecina.
-  await expect.poll(async () => (await top(0)) - (await top(1))).toBeGreaterThan(0);
+  await expect(evalPage.getByText(/ sobre la posición 2 de 5\.$/)).toBeAttached();
   await evalPage.keyboard.press("Space");
   await expect.poll(() => cardTitles(evalPage)).toEqual([before[1], before[0], ...before.slice(2)]);
   // Y con los botones: la última sube una posición. Se busca el botón dentro de la quinta
