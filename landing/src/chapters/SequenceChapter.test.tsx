@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SEQUENCE_CHAPTERS, SequenceChapter } from "./SequenceChapter";
+import { SCENE_DURATION_MS, SEQUENCE_CHAPTERS, SequenceChapter } from "./SequenceChapter";
 
 vi.mock("../scroll/useChapterPlayback", () => ({
   useChapterPlayback: () => ({ progress: 1, near: true }),
@@ -11,17 +11,13 @@ afterEach(() => {
 });
 
 describe("SEQUENCE_CHAPTERS", () => {
-  it("los capítulos de escena duran lo del diseño", () => {
-    expect(SEQUENCE_CHAPTERS.map((c) => [c.id, c.durationMs])).toEqual([
-      ["apertura", 4500],
-      ["problema", 3000],
-      ["priorizar", 3500],
-      ["reparado", 3000],
-    ]);
+  it("las escenas se reproducen a su velocidad real (129 cuadros a 16 fps)", () => {
+    expect(SCENE_DURATION_MS).toBeGreaterThanOrEqual((129 / 16) * 1000 - 100);
+    expect(SEQUENCE_CHAPTERS.every((c) => c.durationMs === SCENE_DURATION_MS)).toBe(true);
   });
 
-  it("solo la apertura se reproduce al cargar", () => {
-    expect(SEQUENCE_CHAPTERS.filter((c) => c.autoplay).map((c) => c.id)).toEqual(["apertura"]);
+  it("solo la portada sigue al scroll; ninguna se reproduce al cargar", () => {
+    expect(SEQUENCE_CHAPTERS.filter((c) => c.scrub).map((c) => c.id)).toEqual(["apertura"]);
   });
 });
 

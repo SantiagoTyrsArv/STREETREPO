@@ -1,43 +1,64 @@
 import { useEffect, useState, type RefObject } from "react";
 import { gsap, ScrollTrigger } from "./gsap";
-import { MAX_FRAME_WAIT_MS, NEAR_START, shouldStart, TRIGGER_END, TRIGGER_START } from "./playback";
+import {
+  MAX_FRAME_WAIT_MS,
+  NEAR_START,
+  SCRUB_END,
+  SCRUB_START,
+  shouldStart,
+  TRIGGER_END,
+  TRIGGER_START,
+} from "./playback";
 
 interface PlaybackOptions {
-  /** Duración de la reproducción del capítulo. */
+  /** Duración de la reproducción del capítulo (no aplica con `scrub`). */
   durationMs: number;
   /** Con `false` (movimiento reducido) el capítulo queda en su estado final, sin disparadores. */
   enabled: boolean;
   /** `true` cuando los cuadros de la escena están cargados. */
   ready: boolean;
-  /** Se reproduce al montar (la portada), sin esperar a entrar. */
-  autoplay?: boolean;
-  /** Curva de la reproducción (GSAP). */
-  ease?: string;
+  /**
+   * El progreso sigue al *scroll* dentro de la sección en lugar de reproducirse solo (la
+   * portada): avanza y retrocede con la persona, y sus cuadros se cargan desde el inicio.
+   */
+  scrub?: boolean;
 }
 
 interface Playback {
-  /** Progreso del capítulo entre 0 y 1; avanza en el tiempo, no con el *scroll*. */
+  /** Progreso del capítulo entre 0 y 1. */
   progress: number;
   /** `true` cuando el capítulo está cerca: es hora de cargar sus cuadros. */
   near: boolean;
 }
 
 /**
- * Reproduce un capítulo una sola vez, en el tiempo, cuando entra en la ventana (diseño 4.1).
- * Devuelve el mismo `progress` que antes daba el *scroll*, así los hijos no cambian.
+ * Reproduce un capítulo una sola vez, en el tiempo, cuando entra en la ventana (diseño 4.1), o lo
+ * hace seguir al *scroll* (`scrub`). Devuelve el mismo `progress` en los dos casos.
  */
 export function useChapterPlayback(
   ref: RefObject<HTMLElement | null>,
-  { durationMs, enabled, ready, autoplay = false, ease = "power2.out" }: PlaybackOptions,
+  { durationMs, enabled, ready, scrub = false }: PlaybackOptions,
 ): Playback {
   const [progress, setProgress] = useState(0);
-  const [near, setNear] = useState(autoplay);
-  const [triggered, setTriggered] = useState(autoplay);
+  const [near, setNear] = useState(scrub);
+  const [triggered, setTriggered] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
     const element = ref.current;
-    if (!enabled || autoplay || !element) return undefined;
+    if (!enabled || !scrub || !element) return undefined;
+    const scrubTrigger = ScrollTrigger.create({
+      trigger: element,
+      start: SCRUB_START,
+      end: SCRUB_END,
+      onUpdate: (self) => setProgress(self.progress),
+    });
+    return () => scrubTrigger.kill();
+  }, [ref, enabled, scrub]);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!enabled || scrub || !element) return undefined;
     const nearTrigger = ScrollTrigger.create({
       trigger: element,
       start: NEAR_START,
@@ -56,7 +77,7 @@ export function useChapterPlayback(
       nearTrigger.kill();
       playTrigger.kill();
     };
-  }, [ref, enabled, autoplay]);
+  }, [ref, enabled, scrub]);
 
   useEffect(() => {
     if (!enabled || !triggered || ready) return undefined;
@@ -65,7 +86,7 @@ export function useChapterPlayback(
   }, [enabled, triggered, ready]);
 
   const waitedMs = timedOut ? MAX_FRAME_WAIT_MS : 0;
-  const start = enabled && shouldStart({ triggered, ready, waitedMs });
+  const start = enabled && !scrub && shouldStart({ triggered, ready, waitedMs });
 
   useEffect(() => {
     // `start` solo pasa de falso a verdadero (entrar, cuadros listos y tope no se deshacen): una
@@ -75,13 +96,13 @@ export function useChapterPlayback(
     const tween = gsap.to(state, {
       value: 1,
       duration: durationMs / 1000,
-      ease,
+      ease: "power2.out",
       onUpdate: () => setProgress(state.value),
     });
     return () => {
       tween.kill();
     };
-  }, [start, durationMs, ease]);
+  }, [start, durationMs]);
 
   return enabled ? { progress, near } : { progress: 1, near: false };
 }

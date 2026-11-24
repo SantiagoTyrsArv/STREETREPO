@@ -5,6 +5,12 @@ export const TRIGGER_START = "top 60%";
 export const TRIGGER_END = "bottom 40%";
 /** Sus cuadros empiezan a cargar cuando falta ~1,5 pantallas para llegar. */
 export const NEAR_START = "top 250%";
+/**
+ * Capítulo guiado por el *scroll* (la portada): el progreso va de 0, con la sección arriba, a 1,
+ * cuando su final llega al final de la ventana. Mientras tanto la escena queda fija (CSS `sticky`).
+ */
+export const SCRUB_START = "top top";
+export const SCRUB_END = "bottom bottom";
 
 interface StartState {
   triggered: boolean;

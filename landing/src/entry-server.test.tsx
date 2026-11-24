@@ -17,7 +17,6 @@ describe("render", () => {
       COPY.problema.title,
       COPY.reportar.title,
       COPY.priorizar.title,
-      COPY.calculadora.title,
       COPY.panel.title,
       COPY.reparado.title,
       COPY.descarga.title,
@@ -25,6 +24,12 @@ describe("render", () => {
     for (const title of titles) {
       expect(html).toContain(escape(title));
     }
+  });
+
+  it("la calculadora va como burbuja, no como capítulo", () => {
+    const html = render();
+    expect(html).toContain(COPY.calculadora.open);
+    expect(html).not.toContain('id="prueba"');
   });
 });
 

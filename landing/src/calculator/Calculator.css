@@ -1,21 +1,15 @@
-/* «Pruébalo»: sección propia, translúcida al fondo azul (diseño 6.6). Cabe en una pantalla
-   para que el imán la acomode entera (diseño 2026-11-23, 4.3). */
+/* «Pruébalo» dentro de la burbuja flotante (fila 133 de la bitácora): una sola columna. */
 .calc {
-  position: relative;
   display: grid;
-  align-content: center;
-  gap: clamp(1rem, 3vh, 2.5rem);
-  min-height: 100vh;
-  min-height: 100svh;
-  padding: clamp(4.5rem, 9vh, 6rem) var(--gutter) clamp(1.5rem, 4vh, 3rem);
+  gap: 1rem;
 }
 
 .calc__intro {
-  max-width: 46rem;
+  padding-right: 3rem;
 }
 
 .calc__kicker {
-  margin: 0 0 1rem;
+  margin: 0 0 0.5rem;
   font-family: var(--font-brand);
   font-size: var(--fs-label);
   font-weight: 700;
@@ -28,34 +22,21 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--fs-title);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
   line-height: 1;
   letter-spacing: -0.02em;
 }
 
 .calc__lead {
-  margin: 0.75rem 0 0;
-  font-size: var(--fs-lead);
+  margin: 0.5rem 0 0;
+  font-size: var(--fs-body);
   line-height: 1.45;
   color: var(--mist);
 }
 
 .calc__panel {
   display: grid;
-  gap: clamp(1rem, 3vw, 3rem);
-  padding: clamp(1rem, 3vw, 2.5rem);
-  border: 1px solid color-mix(in srgb, var(--paper) 14%, transparent);
-  border-radius: 1.25rem;
-  background: color-mix(in srgb, var(--night) 78%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
-}
-
-@media (min-width: 900px) {
-  .calc__panel {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    align-items: center;
-  }
+  gap: 1.25rem;
 }
 
 .calc__controls {
@@ -145,7 +126,7 @@
   margin: 0.25rem 0 0;
   font-family: var(--font-brand);
   font-weight: 800;
-  font-size: clamp(2.75rem, min(9vw, 9vh), 6.5rem);
+  font-size: clamp(2.75rem, 8vw, 3.75rem);
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--paper);

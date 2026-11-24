@@ -33,12 +33,14 @@ describe("Calculator", () => {
     expect(slider).toHaveAttribute("aria-valuetext", "180 m");
   });
 
-  it("es un capítulo con su ancla y el acento azul", () => {
-    const { container } = render(<Calculator />);
-    const section = container.querySelector("section");
-    expect(section).toHaveAttribute("id", "prueba");
-    expect(section).toHaveAttribute("data-accent", "signal");
-    expect(section).toHaveAttribute("data-ambient", "visible");
+  it("ya no es un capítulo: no tiene sección ni ancla propias", () => {
+    const { container } = render(<Calculator titleId="calc-titulo" />);
+    expect(container.querySelector("section")).toBeNull();
+    expect(container.querySelector("#prueba")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Calcula una urgencia." })).toHaveAttribute(
+      "id",
+      "calc-titulo",
+    );
   });
 
   it("solo anuncia la urgencia (y la marca de vía), no el desglose ni la nota", () => {

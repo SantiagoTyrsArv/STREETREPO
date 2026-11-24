@@ -35,8 +35,10 @@ export function useSmoothScroll(enabled: boolean): void {
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
     const snap = new Snap(lenis, SNAP_OPTIONS);
+    // La portada guiada por el scroll no es un punto del imán: soltar a mitad del zoom no debe
+    // devolver la página al inicio.
     document
-      .querySelectorAll<HTMLElement>("main > section")
+      .querySelectorAll<HTMLElement>("main > section:not(.chapter--scrub)")
       .forEach((section) => snap.addElement(section, { align: "start" }));
     // Salto inmediato: recorrer suavemente todas las escenas obligaría a cargar sus cuadros.
     const unbindAnchors = bindAnchorNavigation(document, (target) =>

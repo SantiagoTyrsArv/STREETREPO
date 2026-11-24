@@ -19,8 +19,11 @@ const INITIAL = { severity: "alta" as Severity, road: "secundaria" as RoadKind, 
 const MAX_DISTANCE = 600;
 const STEP = 10;
 
-/** «Pruébalo»: calculadora de urgencia en vivo con las reglas reales del modelo. */
-export function Calculator() {
+/**
+ * «Pruébalo»: calculadora de urgencia en vivo con las reglas reales del modelo. Vive dentro de la
+ * burbuja flotante (`CalculatorBubble`), no como capítulo (fila 133 de la bitácora).
+ */
+export function Calculator({ titleId }: { titleId?: string } = {}) {
   const copy = COPY.calculadora;
   const id = useId();
   const [severity, setSeverity] = useState<Severity>(INITIAL.severity);
@@ -34,13 +37,7 @@ export function Calculator() {
   const w = DEFAULT_WEIGHTS;
 
   return (
-    <section
-      id="prueba"
-      className="calc"
-      aria-labelledby={`${id}-titulo`}
-      data-accent="signal"
-      data-ambient="visible"
-    >
+    <div className="calc">
       <div className="calc__intro">
         <ProximityText
           as="p"
@@ -49,7 +46,7 @@ export function Calculator() {
           by="char"
           axes={KICKER_AXES}
         />
-        <h2 id={`${id}-titulo`} className="calc__title">
+        <h2 id={titleId ?? `${id}-titulo`} className="calc__title">
           {copy.title}
         </h2>
         <p className="calc__lead">{copy.lead}</p>
@@ -128,6 +125,6 @@ export function Calculator() {
           <p className="calc__note">{copy.note}</p>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

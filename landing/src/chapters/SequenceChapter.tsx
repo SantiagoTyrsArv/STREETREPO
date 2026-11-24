@@ -20,19 +20,22 @@ export interface SequenceChapterConfig {
   accent: Accent;
   /** El título hace de lupa sobre la escena (Reparado). */
   lens?: boolean;
-  /** Se reproduce al cargar la página (la portada). */
-  autoplay?: boolean;
-  /** Curva de la reproducción; por defecto la del hook. */
-  ease?: string;
+  /** El progreso sigue al *scroll* con la escena fija (la portada): nada avanza solo. */
+  scrub?: boolean;
 }
+
+/**
+ * Las escenas tienen 129 cuadros a 16 fps (unos 8 s): se reproducen a su velocidad real. Antes
+ * duraban 3 a 4,5 s y pasaban demasiado rápido para apreciarlas (fila 133 de la bitácora).
+ */
+export const SCENE_DURATION_MS = 8000;
 
 /** Capítulos con escena generada, en el orden del guion (diseño, sección 6). */
 export const SEQUENCE_CHAPTERS: readonly SequenceChapterConfig[] = [
-  // La portada usa curva lineal: con una que frena, el zoom de las letras pasaría en un instante.
-  { id: "apertura", durationMs: 4500, accent: "none", autoplay: true, ease: "none" },
-  { id: "problema", durationMs: 3000, accent: "amber" },
-  { id: "priorizar", durationMs: 3500, accent: "signal" },
-  { id: "reparado", durationMs: 3000, accent: "repair", lens: true },
+  { id: "apertura", durationMs: SCENE_DURATION_MS, accent: "none", scrub: true },
+  { id: "problema", durationMs: SCENE_DURATION_MS, accent: "amber" },
+  { id: "priorizar", durationMs: SCENE_DURATION_MS, accent: "signal" },
+  { id: "reparado", durationMs: SCENE_DURATION_MS, accent: "repair", lens: true },
 ];
 
 interface SequenceChapterProps {
@@ -67,8 +70,7 @@ export function SequenceChapter({
     durationMs: chapter.durationMs,
     enabled: !still,
     ready: framesReady,
-    autoplay: chapter.autoplay,
-    ease: chapter.ease,
+    scrub: chapter.scrub,
   });
   const copy = SEQUENCE_COPY[chapter.id];
   const driftRef = useRef<HTMLDivElement>(null);
@@ -77,76 +79,80 @@ export function SequenceChapter({
   return (
     <section
       ref={ref}
-      className={`chapter chapter--${chapter.accent}`}
+      className={`chapter chapter--${chapter.accent}${chapter.scrub ? " chapter--scrub" : ""}`}
       id={chapter.id}
       data-accent={chapter.accent}
       aria-labelledby={`${chapter.id}-titulo`}
     >
-      <div className="chapter__scene">
-        {/* En reposo la escena «respira» (CSS) y se desplaza hacia el puntero o el dedo. */}
-        <div className="chapter__breath">
-          <div className="chapter__drift" ref={driftRef}>
-            {still ? (
-              <img
-                className="chapter__still"
-                src={`/media/${chapter.id}/key.webp`}
-                alt={copy.alt}
-              />
-            ) : (
-              <FrameSequence
-                chapter={chapter.id}
-                progress={progress}
-                alt={copy.alt}
-                load={near}
-                onReady={() => setFramesReady(true)}
-              />
-            )}
+      {/* En la portada la sección es más alta que la ventana y este contenedor queda fijo
+          mientras el *scroll* avanza el zoom; en los demás capítulos ocupa la sección. */}
+      <div className="chapter__pin">
+        <div className="chapter__scene">
+          {/* En reposo la escena «respira» (CSS) y se desplaza hacia el puntero o el dedo. */}
+          <div className="chapter__breath">
+            <div className="chapter__drift" ref={driftRef}>
+              {still ? (
+                <img
+                  className="chapter__still"
+                  src={`/media/${chapter.id}/key.webp`}
+                  alt={copy.alt}
+                />
+              ) : (
+                <FrameSequence
+                  chapter={chapter.id}
+                  progress={progress}
+                  alt={copy.alt}
+                  load={near}
+                  onReady={() => setFramesReady(true)}
+                />
+              )}
+            </div>
           </div>
+          <div className="chapter__shade" aria-hidden="true" />
         </div>
-        <div className="chapter__shade" aria-hidden="true" />
-      </div>
-      {overlay?.(progress, still)}
-      <div
-        className={introText ? "chapter__content chapter__content--intro" : "chapter__content"}
-        style={
-          still
-            ? undefined
-            : {
-                opacity:
-                  revealAfter > 0 ? Math.min(1, Math.max(0, (progress - revealAfter) / 0.06)) : 1,
-              }
-        }
-      >
-        {before}
-        <ProximityText
-          as="p"
-          className="chapter__kicker"
-          text={copy.kicker}
-          by="char"
-          axes={KICKER_AXES}
-        />
-        <RevealText
-          as={level}
-          id={`${chapter.id}-titulo`}
-          className="chapter__title"
-          text={copy.title}
-          progress={progress}
-          from={0.05}
-          to={0.35}
-          still={still || introText}
-        />
-        <RevealText
-          className="chapter__lead"
-          text={copy.lead}
-          proximity={LEAD_AXES}
-          split="words"
-          progress={progress}
-          from={0.3}
-          to={0.6}
-          still={still || introText}
-        />
-        {children?.(progress, still)}
-        {chapter.lens && !still ? <TitleLens section={ref} /> : null}
+        {overlay?.(progress, still)}
+        <div
+          className={introText ? "chapter__content chapter__content--intro" : "chapter__content"}
+          style={
+            still
+              ? undefined
+              : {
+                  opacity:
+                    revealAfter > 0 ? Math.min(1, Math.max(0, (progress - revealAfter) / 0.06)) : 1,
+                }
+          }
+        >
+          {before}
+          <ProximityText
+            as="p"
+            className="chapter__kicker"
+            text={copy.kicker}
+            by="char"
+            axes={KICKER_AXES}
+          />
+          <RevealText
+            as={level}
+            id={`${chapter.id}-titulo`}
+            className="chapter__title"
+            text={copy.title}
+            progress={progress}
+            from={0.05}
+            to={0.35}
+            still={still || introText}
+          />
+          <RevealText
+            className="chapter__lead"
+            text={copy.lead}
+            proximity={LEAD_AXES}
+            split="words"
+            progress={progress}
+            from={0.3}
+            to={0.6}
+            still={still || introText}
+          />
+          {children?.(progress, still)}
+          {chapter.lens && !still ? <TitleLens section={ref} /> : null}
+        </div>
       </div>
     </section>
   );

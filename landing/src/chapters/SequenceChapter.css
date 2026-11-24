@@ -6,6 +6,36 @@
   isolation: isolate;
 }
 
+/* Contenedor de la escena y el texto: ocupa la sección (o queda fijo en la portada). */
+.chapter__pin {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Portada guiada por el scroll: la sección mide tres pantallas y la escena queda fija dos de
+   ellas, en las que el scroll hace el zoom. `clip` (no `hidden`) para no romper el `sticky`. */
+.chapter--scrub {
+  height: 300vh;
+  height: 300svh;
+  overflow: clip;
+}
+
+.chapter--scrub .chapter__pin {
+  position: sticky;
+  inset: auto;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter--scrub {
+    height: 100vh;
+    height: 100svh;
+  }
+}
+
 .chapter__scene {
   position: absolute;
   inset: 0;

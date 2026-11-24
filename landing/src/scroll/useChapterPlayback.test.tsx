@@ -1,11 +1,13 @@
 import { act, renderHook } from "@testing-library/react";
 import { StrictMode, useRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NEAR_START, TRIGGER_START } from "./playback";
+import { NEAR_START, SCRUB_START, TRIGGER_START } from "./playback";
 import { useChapterPlayback } from "./useChapterPlayback";
 
 interface TriggerConfig {
   start: string;
+  end?: string;
+  onUpdate?: (self: { progress: number }) => void;
   onEnter?: () => void;
   onToggle?: (self: { isActive: boolean; direction: number }) => void;
 }
@@ -117,15 +119,24 @@ describe("useChapterPlayback", () => {
     expect(tweens).toHaveLength(1);
   });
 
-  it("autoplay reproduce al montar", () => {
-    const { result } = setup({ durationMs: 4500, enabled: true, ready: true, autoplay: true });
-    expect(tweens).toHaveLength(1);
+  it("con scrub el progreso sigue al scroll y no se reproduce solo", () => {
+    const { result } = setup({ durationMs: 8000, enabled: true, ready: true, scrub: true });
     expect(result.current.near).toBe(true);
+    const scrub = created.find((c) => c.start === SCRUB_START);
+    expect(scrub?.end).toBe("bottom bottom");
+    expect(created.find((c) => c.start === TRIGGER_START)).toBeUndefined();
+    act(() => scrub?.onUpdate?.({ progress: 0.4 }));
+    expect(result.current.progress).toBe(0.4);
+    act(() => scrub?.onUpdate?.({ progress: 0.1 }));
+    expect(result.current.progress).toBe(0.1);
+    act(() => vi.advanceTimersByTime(10_000));
+    expect(tweens).toHaveLength(0);
   });
 
-  it("acepta otra curva", () => {
-    setup({ durationMs: 4500, enabled: true, ready: true, autoplay: true, ease: "none" });
-    expect(tweens[0]!.vars.ease).toBe("none");
+  it("con scrub y movimiento reducido queda en el estado final", () => {
+    const { result } = setup({ durationMs: 8000, enabled: false, ready: true, scrub: true });
+    expect(result.current.progress).toBe(1);
+    expect(created).toHaveLength(0);
   });
 
   it("near se activa al acercarse", () => {
@@ -139,14 +150,15 @@ describe("useChapterPlayback", () => {
     renderHook(
       () => {
         const ref = useRef<HTMLElement>(document.createElement("section"));
-        return useChapterPlayback(ref, {
-          durationMs: 4500,
-          enabled: true,
-          ready: true,
-          autoplay: true,
-        });
+        const playback = useChapterPlayback(ref, { durationMs: 8000, enabled: true, ready: true });
+        return playback;
       },
       { wrapper: StrictMode },
+    );
+    act(() =>
+      created
+        .filter((c) => c.start === TRIGGER_START)
+        .forEach((c) => c.onToggle?.({ isActive: true, direction: 1 })),
     );
     expect(tweens.some((t) => !t.killed)).toBe(true);
   });

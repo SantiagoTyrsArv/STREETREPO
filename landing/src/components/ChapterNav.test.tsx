@@ -62,7 +62,7 @@ describe("ChapterNav", () => {
   it("cada enlace de la barra lleva a una sección de la página", () => {
     render(<App />);
     const nav = screen.getByRole("navigation", { name: "Capítulos" });
-    expect(nav.querySelector('a[href="#prueba"]')).not.toBeNull();
+    expect(nav.querySelector('a[href="#prueba"]')).toBeNull();
     for (const a of nav.querySelectorAll("a")) {
       const id = a.getAttribute("href")?.slice(1) ?? "";
       expect(document.getElementById(id)).not.toBeNull();

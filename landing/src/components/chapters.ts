@@ -4,7 +4,6 @@ export const CHAPTER_IDS = [
   "problema",
   "reportar",
   "priorizar",
-  "prueba",
   "panel",
   "reparado",
   "descarga",
