@@ -52,7 +52,7 @@ function settings(axes: ProximityAxes, t: number): string {
  * apoyado, y vuelve exactamente al reposo al alejarse o soltar.
  */
 export function useProximity(
-  ref: RefObject<HTMLElement>,
+  ref: RefObject<HTMLElement | null>,
   {
     selector,
     axes,

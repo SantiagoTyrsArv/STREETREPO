@@ -13,7 +13,11 @@ const round = (n: number) => Number(n.toFixed(2)) + 0;
  * *Warp* en las palabras (`.reveal__word`) de un título: se apartan e inclinan cerca del puntero o
  * del dedo y vuelven a su sitio al alejarse. `version` cambia cuando el título se vuelve a partir.
  */
-export function useWarp(ref: RefObject<HTMLElement>, enabled: boolean, version: number): void {
+export function useWarp(
+  ref: RefObject<HTMLElement | null>,
+  enabled: boolean,
+  version: number,
+): void {
   useEffect(() => {
     const root = ref.current;
     if (!enabled || !root) return;
