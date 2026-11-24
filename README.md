@@ -145,6 +145,15 @@ Si el volumen de la base se creó antes de existir `infra/db/init/`, crear la ba
 Para activar los *hooks* de formato, lint y detección de secretos (gitleaks) antes de cada commit:
 `uvx pre-commit install`.
 
+### Evidencia de calidad (fase 8)
+
+- **Carga:** `infra/scripts/load-test.sh` corre Locust contra un stack aparte (guía en
+  [`backend/loadtests/README.md`](backend/loadtests/README.md); informe en
+  [`docs/rendimiento/informe-carga-fase-8.md`](docs/rendimiento/informe-carga-fase-8.md)).
+- **Seguridad:** revisión contra la guía 15 en [`docs/seguridad/revision-fase-8.md`](docs/seguridad/revision-fase-8.md).
+- **Accesibilidad:** axe en el panel (`infra/scripts/e2e-panel.sh e2e/accesibilidad.spec.ts`) y
+  pautas de Flutter en la app; informe en [`docs/accesibilidad/revision-fase-8.md`](docs/accesibilidad/revision-fase-8.md).
+
 ## Integración continua
 
 La CI (`.github/workflows/ci.yml`) corre en cada *push* a cualquier rama: gitleaks, lint, tipos,

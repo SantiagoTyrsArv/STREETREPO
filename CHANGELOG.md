@@ -5,6 +5,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
 ## [Sin publicar]
 
 ### Añadido
+- Pruebas de carga con Locust (`infra/scripts/load-test.sh`, `loadtest-accounts`) e informe
+  `docs/rendimiento/informe-carga-fase-8.md`: listados con p95 < 35 ms y envío de reporte con p95 de
+  140 ms en un equipo local (fila 146).
 - Revisión de accesibilidad de la app (pautas de Flutter en 18 estados de pantalla y contraste exacto
   de los tokens) e informe `docs/accesibilidad/revision-fase-8.md` (fila 145).
 - Revisión de accesibilidad del panel con axe (`e2e/accesibilidad.spec.ts`, WCAG 2.2 AA): 0 hallazgos en
@@ -71,6 +74,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   vigila también `landing/`.
 - `httpx2` 2.16.2 (desarrollo) para `starlette.testclient`.
 - Panel: `@axe-core/playwright` 4.14.1 y `playwright-core` 1.65.0 (desarrollo).
+- Backend: `locust` 2.47.0 (desarrollo); `filelock` 4.3.1 (corrige 2 CVE en el lock de desarrollo).
 - Segunda tanda (fila 136): `setup-uv` 10.4.0; `prettier` 3.10.1, `jsdom` 31.0.1, `vite` 8.3.8 y
   `@testing-library/jest-dom` 8.0.0 en el panel y la página; `@tanstack/react-query` 5.108.2.
   React 19 en la página se pospone.
