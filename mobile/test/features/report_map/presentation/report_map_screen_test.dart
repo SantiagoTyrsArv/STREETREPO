@@ -16,6 +16,7 @@ import 'package:street_repo/features/report_map/presentation/report_map_screen.d
 import 'package:street_repo/features/report_new/application/report_draft_controller.dart';
 import 'package:street_repo/features/report_new/application/submit_report_controller.dart';
 
+import '../../../support/accessibility.dart';
 import '../../../support/fake_auth_repository.dart';
 import '../../../support/fake_device_services.dart';
 import '../../../support/fake_my_reports_repository.dart';
@@ -267,6 +268,17 @@ void main() {
 
     expect(map.calls.length, before + 1);
     expect(map.calls.last.area.west, greaterThan(map.calls.first.area.west));
+  });
+
+  testWidgets('pautas de accesibilidad: mapa y ficha abierta (fase 8)', (tester) async {
+    map.reports = [mapReport()];
+    await pumpMap(tester);
+    await expectMeetsAccessibilityGuidelines(tester);
+
+    await tester.tap(pin('Reporte Priorizado en Av. Los Estudiantes'));
+    await tester.pumpAndSettle();
+    expect(find.text('Confirmar este daño'), findsOneWidget);
+    await expectMeetsAccessibilityGuidelines(tester);
   });
 
   testWidgets('con el texto del sistema al doble no se desborda', (tester) async {
