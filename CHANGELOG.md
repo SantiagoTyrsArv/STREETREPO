@@ -9,6 +9,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); v
   OSM en caché para no llamar a Overpass en cada ejecución (fila 151).
 
 ### Cambiado
+- La app declara la versión 0.8.0+8, alineada con el proyecto; antes decía 1.0.0+1 (fila 154).
 - Página de presentación en React 19 con `@react-three/fiber` 9, `drei` 10 y `three` 0.187 (fila 150);
   sin cambios visibles.
 - `/docs/oauth2-redirect` exenta del límite global; la prueba de carga no expone la contraseña en los

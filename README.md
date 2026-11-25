@@ -235,7 +235,7 @@ Cada cálculo se guarda en `evaluacion_prioridad` con los factores, la distancia
   con salto y no retrocesos, y todo cambio queda en `historial_estado`.
 
 Código: `backend/app/modules/priority/` y `backend/app/modules/reports/domain/status_machine.py`.
-Las rutas HTTP del panel (pesos, ranking, cambio de estado) llegan en la fase 6.
+Las rutas HTTP del panel (pesos, ranking, cambio de estado) se describen en «Panel administrativo».
 
 ## Reportes
 
